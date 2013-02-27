@@ -18,7 +18,7 @@ package views
 	import mx.resources.ResourceManager;
 	
 	import streaming.PrivacyManager;
-	import streaming.StreamingManager;
+	import streaming.NetConnectionClient;
 
 	public class PrivacyPanel extends Sprite
 	{

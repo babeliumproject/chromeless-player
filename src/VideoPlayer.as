@@ -27,7 +27,7 @@ package
 	import model.SharedData;
 	
 	import streaming.NetStreamClient;
-	import streaming.StreamingManager;
+	import streaming.NetConnectionClient;
 
 	public class VideoPlayer extends Sprite
 	{
@@ -149,18 +149,7 @@ package
 			return _autoPlay;
 		}
 		
-		public function enableControls():void{
-			
-		}
-		
-		public function disableControls():void{
-			
-		}
-		
-		public function set controlsEnabled(value:Boolean):void{
-			
-		}
-
+	
 		/**
 		 * Smooting
 		 */

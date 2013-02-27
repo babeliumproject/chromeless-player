@@ -23,7 +23,7 @@ package
 	import org.as3commons.logging.setup.SimpleTargetSetup;
 	import org.as3commons.logging.setup.target.TraceTarget;
 	
-	import streaming.StreamingManager;
+	import streaming.NetConnectionClient;
 	
 	[SWF(width="640", height="480")]
 	public class babeliumPlayer extends Sprite

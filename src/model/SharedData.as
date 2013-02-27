@@ -1,7 +1,7 @@
 package model
 {
 	import streaming.PrivacyManager;
-	import streaming.StreamingManager;
+	import streaming.NetConnectionClient;
 
 	/** 
 	 * @author 
@@ -12,7 +12,7 @@ package model
 		public static var instance:SharedData;
 		
 		public var privacyManager:PrivacyManager;
-		public var streamingManager:StreamingManager;
+		public var streamingManager:NetConnectionClient;
 		
 		
 		
@@ -35,7 +35,7 @@ package model
 		public function SharedData()
 		{
 			privacyManager=new PrivacyManager();
-			streamingManager=new StreamingManager();
+			streamingManager=new NetConnectionClient();
 		}
 		
 		

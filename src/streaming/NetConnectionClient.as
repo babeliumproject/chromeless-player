@@ -12,12 +12,13 @@ package streaming
 	import flash.media.Microphone;
 	import flash.net.FileReference;
 	import flash.net.NetConnection;
+	import flash.net.ObjectEncoding;
 	import flash.utils.Dictionary;
 	
 	import org.osmf.net.NetClient;
 
 
-	public class StreamingManager extends EventDispatcher
+	public class NetConnectionClient extends EventDispatcher implements INetConnectionCallbacks
 	{
 		//RTMP protocol constants
 		public static const RTMP:String = "rtmp";
@@ -53,15 +54,20 @@ package streaming
 		
 		private var encapsulateRTMP:Boolean=false;
 		private var proxy:String='none';
-		private var encoding:uint=3;
+		private var encoding:uint=ObjectEncoding.DEFAULT;
 		
-		public function StreamingManager()
+		public function NetConnectionClient()
 		{
 			netConnection=new NetConnection();
 		}
 		
 		public function parseUrl(url:String):void{
+			var rtmpUrl:Boolean=false;
 			//TODO
+			if(rtmpUrl)
+				connect(url);
+			else
+				connect(null);
 		}
 		
 		private function retrieveVideoById():void{
@@ -89,10 +95,10 @@ package streaming
 				netConnection.objectEncoding=encoding;
 				netConnection.proxyType=proxy;
 				// Setup the NetConnection and listen for NetStatusEvent and SecurityErrorEvent events.
-				netConnection.addEventListener(NetStatusEvent.NET_STATUS, netStatus);
-				netConnection.addEventListener(AsyncErrorEvent.ASYNC_ERROR, netASyncError);
-				netConnection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, netSecurityError);
-				netConnection.addEventListener(IOErrorEvent.IO_ERROR, netIOError);
+				netConnection.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
+				netConnection.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onNetASyncError);
+				netConnection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onNetSecurityError);
+				netConnection.addEventListener(IOErrorEvent.IO_ERROR, onNetIOError);
 				// connect to server
 				try
 				{
@@ -161,7 +167,7 @@ package streaming
 		 * Callback dispatched when info about the current connection attempt is received from the server
 		 * @param event
 		 */
-		protected function netStatus(event:NetStatusEvent):void
+		protected function onNetStatus(event:NetStatusEvent):void
 		{
 			netConnectOngoingAttempt=false;
 
@@ -230,6 +236,37 @@ package streaming
 				dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 			}
 		}
+
+		/**
+		 *
+		 * @param event
+		 */
+		protected function onNetSecurityError(event:SecurityErrorEvent):void
+		{
+			netConnectOngoingAttempt=false;
+			trace("Security error - " + event.text);
+		}
+
+		/**
+		 *
+		 * @param event
+		 */
+		protected function onNetIOError(event:IOErrorEvent):void
+		{
+			netConnectOngoingAttempt=false;
+			trace("Input/output error - " + event.text);
+		}
+
+		/**
+		 *
+		 * @param event
+		 */
+		protected function onNetASyncError(event:AsyncErrorEvent):void
+		{
+			netConnectOngoingAttempt=false;
+			trace("Asynchronous code error - " + event.error);
+		}
+		
 		
 		/**
 		 * Details of the ongoing bandwidth measurement between the client and the server
@@ -259,37 +296,6 @@ package streaming
 				bandwidthInfo = info;
 				trace("[bwDone] deltaDown: "+info.deltaDown+" deltaTime: "+info.deltaTime+" kbitDown: "+info.kbitDown+" latency: "+info.latency);
 			}
-		}
-		
-
-		/**
-		 *
-		 * @param event
-		 */
-		protected function netSecurityError(event:SecurityErrorEvent):void
-		{
-			netConnectOngoingAttempt=false;
-			trace("Security error - " + event.text);
-		}
-
-		/**
-		 *
-		 * @param event
-		 */
-		protected function netIOError(event:IOErrorEvent):void
-		{
-			netConnectOngoingAttempt=false;
-			trace("Input/output error - " + event.text);
-		}
-
-		/**
-		 *
-		 * @param event
-		 */
-		protected function netASyncError(event:AsyncErrorEvent):void
-		{
-			netConnectOngoingAttempt=false;
-			trace("Asynchronous code error - " + event.error);
 		}
 
 	}

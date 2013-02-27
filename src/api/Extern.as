@@ -13,7 +13,7 @@ package api
 	
 	import model.SharedData;
 	
-	import streaming.StreamingManager;
+	import streaming.NetConnectionClient;
 	
 	public class Extern
 	{
@@ -182,10 +182,11 @@ package api
 		 * Tunneling VP Properties
 		 ************************/
 		
+		/*
 		private function arrows(flag:Boolean):void
 		{
 			VP.arrows = flag;
-		}
+		}*/
 		
 		private function autoPlay(flag:Boolean):void
 		{
@@ -197,23 +198,26 @@ package api
 			VP.scaleToFit = flag;
 		}
 		
+		/*
 		private function controlsEnabled(flag:Boolean):void
 		{
 			VP.controlsEnabled = flag;
-		}
+		}*/
 		
 		private function duration():Number
 		{
 			return VP.duration;
 		}
 		
+		/*
 		private function subtitlePanelVisible():Boolean{
 			return VP.subtitlePanelVisible;
-		}
+		}*/
 		
+		/*
 		private function setSubtitle(text:String, color:uint):void{
 			VP.setSubtitle(text,color);
-		}
+		}*/
 		
 		private function secondSource(video:String):void
 		{
@@ -262,15 +266,17 @@ package api
 				return -1;
 		}
 		
+		/*
 		private function subtitles(flag:Boolean):void
 		{
 			VP.subtitles = flag;
-		}
+		}*/
 		
+		/*
 		private function subtitlingControls(flag:Boolean):void
 		{
 			VP.subtitlingControls = flag;
-		}	
+		}*/	
 		
 		private function exerciseSource(video:String):void
 		{

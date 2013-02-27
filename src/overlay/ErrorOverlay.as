@@ -19,7 +19,7 @@ package overlay
 	import mx.resources.ResourceBundle;
 	import mx.resources.ResourceManager;
 	
-	import streaming.StreamingManager;
+	import streaming.NetConnectionClient;
 	
 	public class ErrorOverlay extends Sprite
 	{
