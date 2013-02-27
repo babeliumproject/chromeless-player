@@ -1,0 +1,7 @@
+# Don't forget to put a trailing <whitespace> at the end of each line to separate one rule from another 
+build.properties 
+Config.php 
+
+dist/ 
+bin-debug/ 
+
