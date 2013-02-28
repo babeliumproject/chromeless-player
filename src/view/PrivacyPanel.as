@@ -1,4 +1,4 @@
-package views
+package view
 {
 	import assets.MicImage;
 	import assets.UnlockImage;
@@ -17,8 +17,8 @@ package views
 	import mx.resources.IResourceManager;
 	import mx.resources.ResourceManager;
 	
-	import streaming.PrivacyManager;
-	import streaming.NetConnectionClient;
+	import media.PrivacyManager;
+	import media.NetConnectionClient;
 
 	public class PrivacyPanel extends Sprite
 	{

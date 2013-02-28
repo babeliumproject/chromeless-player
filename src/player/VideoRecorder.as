@@ -1,4 +1,4 @@
-package 
+package player 
 {
 	import assets.MicImage;
 	
@@ -26,18 +26,18 @@ package
 	
 	import mx.resources.ResourceManager;
 	
-	import overlay.ErrorOverlay;
+	import view.ErrorOverlay;
 	
-	import streaming.NetStreamClient;
-	import streaming.PrivacyManager;
-	import streaming.NetConnectionClient;
+	import media.NetStreamClient;
+	import media.PrivacyManager;
+	import media.NetConnectionClient;
 	
-	import views.PrivacyButton;
-	import views.PrivacyPanel;
+	import view.PrivacyButton;
+	import view.PrivacyPanel;
 	
 	//import vo.ResponseVO;
 
-	public class VideoPlayerBabelia extends VideoPlayer
+	public class VideoRecorder extends VideoPlayer
 	{
 		/**
 		 * Recording related variables
@@ -104,7 +104,7 @@ package
 		/**
 		 * CONSTRUCTOR
 		 */
-		public function VideoPlayerBabelia()
+		public function VideoRecorder()
 		{
 			super();
 

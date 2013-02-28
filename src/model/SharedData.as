@@ -1,7 +1,7 @@
 package model
 {
-	import streaming.PrivacyManager;
-	import streaming.NetConnectionClient;
+	import media.PrivacyManager;
+	import media.NetConnectionClient;
 
 	/** 
 	 * @author 

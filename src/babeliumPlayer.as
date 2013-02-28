@@ -1,7 +1,7 @@
 package
 {
 	
-	import api.Extern;
+	import api.JavascriptAPI;
 	
 	import events.VideoPlayerEvent;
 	
@@ -23,7 +23,8 @@ package
 	import org.as3commons.logging.setup.SimpleTargetSetup;
 	import org.as3commons.logging.setup.target.TraceTarget;
 	
-	import streaming.NetConnectionClient;
+	import media.NetConnectionClient;
+	import player.VideoRecorder;
 	
 	[SWF(width="640", height="480")]
 	public class babeliumPlayer extends Sprite
@@ -34,7 +35,7 @@ package
 		private var videoId:String=null;
 		private var explicit_locale:String=null;
 		
-		private var VP:VideoPlayerBabelia;
+		private var VP:VideoRecorder;
 		
 		private var appWidth:uint;
 		private var appHeight:uint;
@@ -53,7 +54,7 @@ package
 			
 			videoId=this.root.loaderInfo.parameters.videoId;
 			
-			VP = new VideoPlayerBabelia();
+			VP = new VideoRecorder();
 			VP.addEventListener(VideoPlayerEvent.CONNECTED, onConnect);
 			addChild(VP);
 			
@@ -72,7 +73,7 @@ package
 				VP.videoSource=SharedData.getInstance().streamingManager.exerciseStreamsFolder + "/" + videoId;
 			stage.color=0x00ff00;
 			// Setups javascripts external controls
-			Extern.getInstance().setup(VP);
+			JavascriptAPI.getInstance().setup(VP);
 			//addChild(VP);
 			VP.width=appWidth;
 			VP.height=appHeight;
@@ -139,7 +140,7 @@ package
 		private function onConnect(e:Event):void
 		{
 			//Extern.getInstance().onConnectionReady();
-			Extern.getInstance().onBabeliumPlayerReady();
+			JavascriptAPI.getInstance().onBabeliumPlayerReady();
 		}
 		
 		private function set onUpdateVPHeight(height:int):void

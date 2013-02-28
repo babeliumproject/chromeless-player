@@ -1,4 +1,4 @@
-package streaming
+package media
 {
 	import events.StreamingEvent;
 	

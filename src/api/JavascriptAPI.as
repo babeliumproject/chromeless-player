@@ -13,25 +13,26 @@ package api
 	
 	import model.SharedData;
 	
-	import streaming.NetConnectionClient;
+	import media.NetConnectionClient;
+	import player.VideoRecorder;
 	
-	public class Extern
+	public class JavascriptAPI
 	{
-		private static var instance:Extern;
-		private var VP:VideoPlayerBabelia;
+		private static var instance:JavascriptAPI;
+		private var VP:VideoRecorder;
 		
 		private var jsListeners:Dictionary = new Dictionary();
 		
 		/**
 		 * Constructor
 		 */
-		public function Extern(){}
+		public function JavascriptAPI(){}
 		
 		/**
 		 * Initialize
 		 * Adds CallBacks
 		 */
-		public function setup(VP:VideoPlayerBabelia):void
+		public function setup(VP:VideoRecorder):void
 		{
 			this.VP = VP;
 			
@@ -90,10 +91,10 @@ package api
 		/**
 		 * Instance of Extern
 		 */
-		public static function getInstance():Extern
+		public static function getInstance():JavascriptAPI
 		{
 			if ( !instance )
-				instance = new Extern()
+				instance = new JavascriptAPI()
 			
 			return instance;
 		}
@@ -288,7 +289,7 @@ package api
 		}
 		
 		private function recordVideo(method:int, cuePoints:Object):void{
-			VP.state = method ? VideoPlayerBabelia.RECORD_BOTH_STATE : VideoPlayerBabelia.RECORD_MIC_STATE;
+			VP.state = method ? VideoRecorder.RECORD_BOTH_STATE : VideoRecorder.RECORD_MIC_STATE;
 		}
 		
 		private function abortRecording():void{

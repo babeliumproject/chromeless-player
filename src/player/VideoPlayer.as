@@ -1,4 +1,4 @@
-package
+package player
 {
 	import events.NetStreamClientEvent;
 	import events.PlayPauseEvent;
@@ -26,8 +26,8 @@ package
 	
 	import model.SharedData;
 	
-	import streaming.NetStreamClient;
-	import streaming.NetConnectionClient;
+	import media.NetStreamClient;
+	import media.NetConnectionClient;
 
 	public class VideoPlayer extends Sprite
 	{

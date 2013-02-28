@@ -1,4 +1,4 @@
-package streaming
+package media
 {
 	/**
 	 * Callbacks of the client object from the NetConnection class

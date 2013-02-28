@@ -1,4 +1,4 @@
-package overlay
+package view
 {
 	import flash.display.Bitmap;
 	import flash.display.GradientType;
@@ -19,7 +19,7 @@ package overlay
 	import mx.resources.ResourceBundle;
 	import mx.resources.ResourceManager;
 	
-	import streaming.NetConnectionClient;
+	import media.NetConnectionClient;
 	
 	public class ErrorOverlay extends Sprite
 	{

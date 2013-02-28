@@ -1,4 +1,4 @@
-package views
+package view
 {
 	import flash.display.DisplayObject;
 	import flash.display.GradientType;
