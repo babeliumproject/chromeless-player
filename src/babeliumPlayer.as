@@ -128,13 +128,17 @@ package
 		public function parseUrl(url:String):void{
 			if (url.length >=4096) return;
 			
-			var prRegExp:RegExp=new RegExp("^http[s]?\:\\/\\/([^\\/]+)");
-			var stRegExp:RegExp=new RegExp("^rtmp[t|e|s]?\:\\/\\/([^\\/]+)");
-			var resultPr:Object=prRegExp.exec(url);
+			//var prRegExp:RegExp=new RegExp("(^http[s]?\:\\/\\/+)([^\\/]+$)");
+			//var stRegExp:RegExp=new RegExp("^rtmp[t|e|s]?\:\\/\\/([^\\/]+)");
+			var stRegExp:RegExp=new RegExp("(^rtmp[t|e|s]?\:\\/\\/.+)\\/(.+)");
+			//var resultPr:Object=prRegExp.exec(url);
 			var resultSt:Object=stRegExp.exec(url);
-			if (!resultPr && !resultSt){
-			
-			}
+			//trace(""+resultPr.toString());
+			if(resultSt)
+			trace("Parse: "+resultSt[0]+"\t"+resultSt[1]+"\t"+resultSt[2]);
+			//if (!resultPr && !resultSt){
+			//
+			//}
 		}
 		
 		private function onConnect(e:Event):void
