@@ -1,7 +1,13 @@
-# Don't forget to put a trailing <whitespace> at the end of each line to separate one rule from another 
-build.properties 
-Config.php 
+#Ignore config files
+build.properties
+Config.php
 
-dist/ 
-bin-debug/ 
+#Ignore temp files
+*.~
+*.swp
+
+#Ignore compilation folders
+bin-debug/
+bin-release/
+dist/
 
