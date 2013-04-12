@@ -80,7 +80,6 @@ package media
 				_streamStatus=STREAM_UNREADY;
 				_ns=new NetStream(connection);
 				_ns.client=this;
-				displayTrace("Info [" + name + "] Making a new netstreamclient call");
 				_ns.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onAsyncError);
 				_ns.addEventListener(DRMErrorEvent.DRM_ERROR, onDrmError);
 				_ns.addEventListener(DRMStatusEvent.DRM_STATUS, onDrmStatus);
@@ -98,28 +97,20 @@ package media
 			{
 				//netconnection is not connected
 				_connected=false;
-				displayTrace("Error [" + e.name + "] " + e.message);
+				logger.error("Instantiation Error [{0}] {1}", [e.name, e.message]);
 			}
-		}
-
-		private function displayTrace(message:String, level:uint=0x0001):void
-		{
-			var msg:String=message;
-			if (_name)
-				msg="[" + _name + "] " + message;
-			trace(msg);
 		}
 
 		public function play(params:Object):void
 		{
 			try
 			{
-				displayTrace("Play " + params);
+				logger.info("Play {0}", [printObject(params)]);
 				_ns.play(params);
 			}
 			catch (e:Error)
 			{
-				displayTrace("Error [" + e.name + "] " + e.message);
+				logger.error("Play Error [{0}] {1}", [e.name, e.message]);
 			}
 		}
 
@@ -181,27 +172,28 @@ package media
 		 */
 		public function onAsyncError(event:AsyncErrorEvent):void
 		{
-			displayTrace("AsyncError " + event.error.name + " " + event.error.message);
+
+			logger.error("AsyncError {0} {1}", [event.error.name, event.error.message]);
 		}
 
 		public function onDrmError(event:DRMErrorEvent):void
 		{
-			displayTrace("DRMError");
+			logger.error("DRM Error");
 		}
 
 		public function onDrmStatus(event:DRMStatusEvent):void
 		{
-			displayTrace("DRMStatus");
+			logger.error("DRM Status");
 		}
 
 		public function onIoError(event:IOErrorEvent):void
 		{
-			displayTrace("IOError " + event.target.toString() + " " + event.text);
+			logger.error("AsyncError {0} {1}", [event.target.toString(), event.text]);
 		}
 
 		public function onMediaTypeData(event:NetDataEvent):void
 		{
-			displayTrace("MediaTypeData event listener", INFO);
+			logger.info("MediaTypeData callback");
 		}
 
 		public function onNetStatus(event:NetStatusEvent):void
@@ -212,7 +204,7 @@ package media
 			var messageDescription:String=info.description ? info.description : '';
 			var messageDetails:String=info.details ? info.details : '';
 			var messageLevel:String=info.level;
-			logger.debug("NetStatus [" + messageLevel + "] " + messageCode + " " + messageDescription);
+			logger.debug("NetStatus [{0}] {1} {2}", [messageLevel, messageCode, messageDescription]);
 			switch (messageCode)
 			{
 				case "NetStream.Buffer.Empty":
@@ -283,30 +275,29 @@ package media
 
 		public function onStatus(event:StatusEvent):void
 		{
-			//displayTrace(ObjectUtil.toString(event));
-			displayTrace("Status callback", INFO);
+			logger.info("Status callback");
+			logger.debug("Status {0}", [printObject(event)]);
 		}
-
 
 		/*
 		 * Client object callbacks
 		 */
 		public function onCuePoint(cuePoint:Object):void
 		{
-			//displayTrace(ObjectUtil.toString(cuePoint));
-			displayTrace("CuePoint callback", INFO);
+			logger.info("CuePoint callback");
+			logger.debug("CuePoint {0}", [printObject(cuePoint)]);
 		}
 
 		public function onImageData(imageData:Object):void
 		{
 			var rawData:ByteArray=imageData.data as ByteArray;
-			displayTrace("ImageData callback", INFO);
+			logger.info("ImageData callback");
 		}
 
 		public function onMetaData(metaData:Object):void
 		{
-			displayTrace("MetaData callback", INFO);
-			//displayTrace(ObjectUtil.toString(metaData),DEBUG);
+			logger.info("MetaData callback");
+			logger.debug("MetaData {0}", [printObject(metaData)]);
 
 			_metaData=metaData;
 			_duration=metaData.duration ? metaData.duration : _duration;
@@ -332,41 +323,77 @@ package media
 			dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.METADATA_RETRIEVED));
 		}
 
-		public function traceObject(o:Object):void
-		{
-			trace('\n');
-			for (var val:* in o)
-			{
-				trace('   [' + typeof(o[val]) + '] ' + val + ' => ' + o[val]);
-			}
-			trace('\n');
-		}
-
 		public function onPlayStatus(playStatus:Object):void
 		{
 			//level, code
-			displayTrace("PlayStatus callback", INFO);
-			//displayTrace(ObjectUtil.toString(playStatus));
+			logger.info("PlayStatus callback");
+			logger.debug("PlayStatus {0}", [printObject(playStatus)]);
 		}
 
 		public function onSeekPoint(seekPoint:Object):void
 		{
-			displayTrace("SeekPoint callback", INFO);
-			//displayTrace(ObjectUtil.toString(seekPoint));
+			logger.info("SeekPoint callback");
+			logger.debug("SeekPoint {0}", [printObject(seekPoint)]);
 		}
 
 		public function onTextData(textData:Object):void
 		{
-			displayTrace("TextData callback", INFO);
-			//displayTrace(ObjectUtil.toString(textData));
+			logger.info("TextData callback");
+			logger.debug("TextData {0}", [printObject(textData)]);
 		}
 
 		public function onXMPData(xmpData:Object):void
 		{
 			//data, a string The string is generated from a top-level UUID box. 
 			//(The 128-bit UUID of the top level box is BE7ACFCB-97A9-42E8-9C71-999491E3AFAC.) This top-level UUID box contains exactly one XML document represented as a null-terminated UTF-8 string.
-			displayTrace("XMPData callback", INFO);
-			//displayTrace(ObjectUtil.toString(xmpData));
+			logger.info("XMPData callback");
+			logger.debug("XMPData {0}",[printObject(xmpData)]);
 		}
+		
+		public function printObject(value:Object):String
+		{		
+			var str:String;
+			var type:String = value == null ? "null" : typeof(value);	
+			
+			switch (type)
+			{
+				case "boolean":
+				case "number":
+				{
+					return value.toString();
+				}	
+				case "string":
+				{
+					return "\"" + value.toString() + "\"";
+				}
+				case "object":
+				{
+					str = "\n("+ type + ") {\n";
+					for(var v:* in value){	
+						str += "    "+printObject(v)+": "+printObject(value[v])+"\n";
+					}
+					str += '}';
+					return str;
+				}
+				case "xml":
+				{
+					return value.toXMLString();
+				}
+				default:
+				{
+					return "(" + type + ")";
+				}
+			}
+		}
+		
+		/*
+		private function displayTrace(message:String, level:uint=0x0001):void
+		{
+		var msg:String=message;
+		if (_name)
+		msg="[" + _name + "] " + message;
+		trace(msg);
+		}
+		*/
 	}
 }

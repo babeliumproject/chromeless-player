@@ -43,7 +43,7 @@ package api
 			//addCB("muteRecording",VP.muteRecording);
 			
 			addCB("pauseVideo",VP.pauseVideo);
-			addCB("playVideo",VP.loadVideo);
+			addCB("playVideo",VP.playVideo);
 			//addCB("removeArrows",VP.removeArrows);
 			//addCB("resumeVideo",VP.resumeVideo);
 			//addCB("seekTo",VP.seekTo);

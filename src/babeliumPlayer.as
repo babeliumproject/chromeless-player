@@ -15,22 +15,23 @@ package
 	import flash.system.Security;
 	import flash.system.System;
 	
+	import media.NetConnectionClient;
+	
 	import model.SharedData;
 	
 	import mx.resources.ResourceManager;
 	
 	import org.as3commons.logging.api.LOGGER_FACTORY;
-	import org.as3commons.logging.setup.SimpleTargetSetup;
+	import org.as3commons.logging.setup.LevelTargetSetup;
+	import org.as3commons.logging.setup.LogSetupLevel;
 	import org.as3commons.logging.setup.target.TraceTarget;
 	
-	import media.NetConnectionClient;
 	import player.VideoRecorder;
 	
 	[SWF(width="640", height="480")]
 	public class babeliumPlayer extends Sprite
 	{
-		
-		LOGGER_FACTORY.setup = new SimpleTargetSetup( new TraceTarget );
+		LOGGER_FACTORY.setup = new LevelTargetSetup( new TraceTarget, LogSetupLevel.DEBUG );
 		
 		private var videoId:String=null;
 		private var explicit_locale:String=null;

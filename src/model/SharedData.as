@@ -15,7 +15,6 @@ package model
 		public var streamingManager:NetConnectionClient;
 		
 		
-		
 		/**
 		 * Retrieves the current instance of SharedData or creates a new one 
 		 * @return 

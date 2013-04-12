@@ -62,6 +62,17 @@
 	      /*
 	       * Chromeless player has no controls.
 	       */
+	     
+	      var playerStates = {
+	    		"-1": "Stream not ready",
+	    		"0": "Stream ready",
+	    		"1": "Stream playing",
+	    		"2": "Stream stopped",
+	    		"3": "Stream finished",
+	    		"4": "Stream paused",
+	    		"5": "Stream unpaused",
+	    		"6": "Stream buffering"
+	      };
 	      
 	      // Update a particular HTML element with a new value
 	      function updateHTML(elmId, value) {
@@ -75,7 +86,7 @@
 	      
 	      // This function is called when the player changes state
 	      function onPlayerStateChange(newState) {
-	        updateHTML("playerState", newState);
+	        updateHTML("playerState", playerStates[newState]);
 	      }
 	      
 	      function onDeviceStateChange(newState) {
