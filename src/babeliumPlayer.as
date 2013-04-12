@@ -58,11 +58,11 @@ package
 			VP.addEventListener(VideoPlayerEvent.CONNECTED, onConnect);
 			addChild(VP);
 			
-			parseUrl("rtmp://babelium/exercises/567b5464v");
-			parseUrl("rtmpt://babeliumproject.com/sdflkjsdf/sdflkjsdf/sdfkdfk444");
-			parseUrl("rtmpe://babelium/exeffi001.flv");
-			parseUrl("rtmps://babbelum:19234/sdfeif.flv");
-			parseUrl("rtp://babeliumproject.com/sdfoisjef/sfei.fvl");
+			//parseUrl("rtmp://babelium/exercises/567b5464v");
+			//parseUrl("rtmpt://babeliumproject.com/sdflkjsdf/sdflkjsdf/sdfkdfk444");
+			//parseUrl("rtmpe://babelium/exeffi001.flv");
+			//parseUrl("rtmps://babbelum:19234/sdfeif.flv");
+			//parseUrl("rtp://babeliumproject.com/sdfoisjef/sfei.fvl");
 			
 			explicit_locale=this.root.loaderInfo.parameters.locale;
 			explicit_locale=parseLocale(explicit_locale);

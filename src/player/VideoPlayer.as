@@ -24,10 +24,10 @@ package player
 	import flash.utils.Dictionary;
 	import flash.utils.Timer;
 	
-	import model.SharedData;
-	
-	import media.NetStreamClient;
 	import media.NetConnectionClient;
+	import media.NetStreamClient;
+	
+	import model.SharedData;
 
 	public class VideoPlayer extends Sprite
 	{
@@ -439,12 +439,12 @@ package player
 		/**
 		 * On video information retrieved
 		 */
-		public function onMetaData(event:Event):void
+		public function onMetaData(event:NetStreamClientEvent):void
 		{
 			_duration = _nsc.duration;
 			_video.width = _nsc.videoWidth;
 			_video.height = _nsc.videoHeight;
-
+			
 			this.dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.METADATA_RETRIEVED));
 
 			scaleVideo();
