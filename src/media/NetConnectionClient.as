@@ -15,6 +15,8 @@ package media
 	import flash.net.ObjectEncoding;
 	import flash.utils.Dictionary;
 	
+	import org.as3commons.logging.api.ILogger;
+	import org.as3commons.logging.api.getLogger;
 	import org.osmf.net.NetClient;
 
 
@@ -49,12 +51,11 @@ package media
 		public var responseStreamsFolder:String="responses";
 		public var exerciseStreamsFolder:String="exercises";
 		
-	
-	
-		
 		private var encapsulateRTMP:Boolean=false;
 		private var proxy:String='none';
 		private var encoding:uint=ObjectEncoding.DEFAULT;
+		
+		private static const logger:ILogger=getLogger(NetConnectionClient);
 		
 		public function NetConnectionClient()
 		{
@@ -172,11 +173,16 @@ package media
 			netConnectOngoingAttempt=false;
 
 			var info:Object=event.info;
-			var statusCode:String=info.code;
+			var messageClientId:int=info.clientid ? info.clientid : -1;
+			var messageCode:String=info.code;
+			var messageDescription:String=info.description ? info.description : '';
+			var messageDetails:String=info.details ? info.details : '';
+			var messageLevel:String=info.level;
+			logger.debug("NetStatus [{0}] {1} {2}", [messageLevel, messageCode, messageDescription]);
 
 			try
 			{
-				switch (statusCode)
+				switch (messageCode)
 				{
 					case "NetConnection.Connect.Success":
 						//Set a flag in the model to denote the successful connection

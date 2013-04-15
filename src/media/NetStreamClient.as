@@ -119,7 +119,7 @@ package media
 		 */
 		public function get netStream():NetStream
 		{
-			return (_ns && _connected) ? _ns : null;
+			return (_ns && _nc && _nc.connected) ? _ns : null;
 		}
 
 		public function get hasVideo():Boolean
@@ -194,6 +194,7 @@ package media
 		public function onMediaTypeData(event:NetDataEvent):void
 		{
 			logger.info("MediaTypeData callback");
+			logger.debug("MediaTypeData {0}", [printObject(event.toString())]);
 		}
 
 		public function onNetStatus(event:NetStatusEvent):void

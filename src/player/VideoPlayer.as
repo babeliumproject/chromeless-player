@@ -29,6 +29,9 @@ package player
 
 	import model.SharedData;
 
+	import org.as3commons.logging.api.ILogger;
+	import org.as3commons.logging.api.getLogger;
+
 	public class VideoPlayer extends Sprite
 	{
 
@@ -72,9 +75,8 @@ package player
 
 		private var playPauseStatus:Boolean=true;
 
-		/**
-		 * CONSTRUCTOR
-		 **/
+		private static const logger:ILogger=getLogger(VideoPlayer);
+
 		public function VideoPlayer()
 		{
 			drawGraphics();
@@ -238,7 +240,15 @@ package player
 
 		public function get volume():Number
 		{
-			return _nsc.netStream ? _nsc.netStream.soundTransform.volume * 100 : 0;
+			try
+			{
+				return _nsc.netStream ? _nsc.netStream.soundTransform.volume * 100 : 0;
+			}
+			catch (e:Error)
+			{
+				logger.error("Error while retrieving stream volume. [{0}] {1}", [e.errorID, e.message]);
+			}
+			return NaN;
 		}
 
 		public function set volume(value:Number):void
@@ -268,8 +278,8 @@ package player
 		}
 */
 	/**
-			 * Set total width/height of videoplayer
-			 */
+				 * Set total width/height of videoplayer
+				 */
 		protected function set totalWidth(w:Number):void
 		{
 			super.width=w;
@@ -381,28 +391,35 @@ package player
 		 */
 		public function loadVideo():void
 		{
-			if (!_nc || !_nc.connected || !SharedData.getInstance().streamingManager.netConnected)
+			try
 			{
-				playPauseStatus=true;
-				return;
+				if (!_nc || !_nc.connected || !SharedData.getInstance().streamingManager.netConnected)
+				{
+					playPauseStatus=true;
+					return;
+				}
+
+				if (_nsc && _nsc.netStream)
+					_nsc.netStream.dispose();
+
+				_nsc=new NetStreamClient(_nc, "playbackStream");
+				_video.attachNetStream(_nsc.netStream);
+				_video.visible=true;
+				_currentVolume=new SoundTransform();
+				_nsc.netStream.soundTransform=_currentVolume;
+				_nsc.addEventListener(NetStreamClientEvent.METADATA_RETRIEVED, onMetaData);
+				_nsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
+
+				if (_videoSource != '')
+				{
+					_nsc.play(_videoSource);
+
+					_started=true;
+				}
 			}
-
-			if (_nsc && _nsc.netStream)
-				_nsc.netStream.dispose();
-
-			_nsc=new NetStreamClient(_nc, "playbackStream");
-			_video.attachNetStream(_nsc.netStream);
-			_video.visible=true;
-			_currentVolume=new SoundTransform();
-			_nsc.netStream.soundTransform=_currentVolume;
-			_nsc.addEventListener(NetStreamClientEvent.METADATA_RETRIEVED, onMetaData);
-			_nsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
-
-			if (_videoSource != '')
+			catch (e:Error)
 			{
-				_nsc.play(_videoSource);
-
-				_started=true;
+				logger.error("Error while loading video. [{0}] {1}", [e.errorID, e.message]);
 			}
 		}
 

@@ -301,7 +301,7 @@ package player
 		 */
 		private function onEnterFrame(e:TimerEvent):void
 		{
-			if (_nsc != null)
+			if (_nsc && _nsc.netStream)
 				this.dispatchEvent(new StreamEvent(StreamEvent.ENTER_FRAME, _nsc.netStream.time));
 		}
 
