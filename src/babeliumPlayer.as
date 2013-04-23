@@ -20,10 +20,12 @@ package
 	import model.SharedData;
 	
 	import mx.resources.ResourceManager;
+
 	
 	import org.as3commons.logging.api.LOGGER_FACTORY;
 	import org.as3commons.logging.setup.LevelTargetSetup;
 	import org.as3commons.logging.setup.LogSetupLevel;
+	import org.as3commons.logging.setup.target.FirebugTarget;
 	import org.as3commons.logging.setup.target.TraceTarget;
 	
 	import player.VideoRecorder;
@@ -31,7 +33,8 @@ package
 	[SWF(width="640", height="480")]
 	public class babeliumPlayer extends Sprite
 	{
-		LOGGER_FACTORY.setup = new LevelTargetSetup( new TraceTarget, LogSetupLevel.DEBUG );
+		//LOGGER_FACTORY.setup = new LevelTargetSetup( new TraceTarget, LogSetupLevel.DEBUG );
+		LOGGER_FACTORY.setup = new LevelTargetSetup(new FirebugTarget(), LogSetupLevel.DEBUG );
 		
 		private var videoId:String=null;
 		private var explicit_locale:String=null;

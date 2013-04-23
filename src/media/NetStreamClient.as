@@ -114,12 +114,23 @@ package media
 			}
 		}
 
-		/*
-		 * Getters and setters
-		 */
+		/**
+		 * if netstream uses a connection check the status if not (null nc for http connections) return the ns as is 
+		 *
+		 */	
 		public function get netStream():NetStream
 		{
-			return (_ns && _nc && _nc.connected) ? _ns : null;
+			if(_ns){
+				if(_nc){
+					return _nc.connected ? _ns : null;
+				} else {
+					return _ns;
+				}
+			} else {
+				return null;
+			}
+			
+			//return (_ns && _nc && _nc.connected) ? _ns : null;
 		}
 
 		public function get hasVideo():Boolean

@@ -147,10 +147,69 @@
 	      
 	      function recordVideo(){
 	    	  if (babeliumPlayer) {
-	    		  //The state listener should determine when the recording is finished
+	    		  //The state listener should determine when the recording is finished	    		  
 	    		  
 	    		  //Get the selected role and make an object with the cuepoints
-	    		  var cuepoints = {};
+	    		  var cuepoints_shaman = {
+	    				  'character': 'Shaman',
+	    				  'eventpoints': { 
+	    					  '00:00:02.090': {
+	    					  	'exercise': {'action': 'volumechange', 'value': '0'},
+	    					  	'response': {'action': 'volumechange', 'value': '100'},
+	    				  	  },
+	    				      '00:00:06.000': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
+	    				    	'response': {'action': 'volumechange', 'value': '0'}
+	    				      },
+	    				      '00:00:10.500': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
+	    				    	'response': {'action': 'volumechange', 'value': '100'},
+	    				      },
+	    				      '00:00:14.130': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
+	    				    	'response': {'action': 'volumechange', 'value': '0'}
+	    				      },
+	    				      '00:00:22.880': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
+	    				    	'response': {'action': 'volumechange', 'value': '100'},
+	    				      },
+	    				      '00:00:25.600': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
+	    				    	'response': {'action': 'volumechange', 'value': '0'}
+	    				      }
+						  }
+	    		  };
+	    		  
+	    		  var cuepoints_sintel = {
+	    				  'character': 'Sintel',
+	    				  'eventpoints': { 
+	    					  '00:00:07.000': {
+	    					  	'exercise': {'action': 'volumechange', 'value': '0'},
+	    					  	'response': {'action': 'volumechange', 'value': '100'},
+	    				  	  },
+	    				      '00:00:10.000': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
+	    				    	'response': {'action': 'volumechange', 'value': '0'}
+	    				      },
+	    				      '00:00:17.050': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
+	    				    	'response': {'action': 'volumechange', 'value': '100'},
+	    				      },
+	    				      '00:00:18.370': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
+	    				    	'response': {'action': 'volumechange', 'value': '0'}
+	    				      },
+	    				      '00:00:27.240': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
+	    				    	'response': {'action': 'volumechange', 'value': '100'},
+	    				      },
+	    				      '00:00:30.000': {
+	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
+	    				    	'response': {'action': 'volumechange', 'value': '0'}
+	    				      }
+						  }
+	    		  };
+	    		  
 	    		  
 	    		  //Get the recording method
 	    		  var method = 0;
@@ -161,7 +220,7 @@
 	    				  	method = rmet[i].value;
 	    			  }
 	    		  }
-	    		  babeliumPlayer.recordVideo(method, cuepoints);
+	    		  babeliumPlayer.recordVideo(method, cuepoints_shaman);
 	    	  }
 	      }
 	      
