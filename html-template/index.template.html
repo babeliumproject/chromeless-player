@@ -154,28 +154,28 @@
 	    				  'character': 'Shaman',
 	    				  'eventpoints': { 
 	    					  '00:00:02.090': {
-	    					  	'exercise': {'action': 'volumechange', 'value': '0'},
-	    					  	'response': {'action': 'volumechange', 'value': '100'},
+	    					  	'exercise': {'action': 'muteVideo'},
+	    					  	'response': {'action': 'muteRecording', 'value': 'false'},
 	    				  	  },
 	    				      '00:00:06.000': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
-	    				    	'response': {'action': 'volumechange', 'value': '0'}
+	    				    	'exercise': {'action': 'unmuteVideo'},
+	    				    	'response': {'action': 'muteRecording', 'value': 'true'}
 	    				      },
 	    				      '00:00:10.500': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
-	    				    	'response': {'action': 'volumechange', 'value': '100'},
+	    				    	'exercise': {'action': 'muteVideo'},
+	    				    	'response': {'action': 'muteRecording', 'value': 'false'},
 	    				      },
 	    				      '00:00:14.130': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
-	    				    	'response': {'action': 'volumechange', 'value': '0'}
+	    				    	'exercise': {'action': 'unmuteVideo'},
+	    				    	'response': {'action': 'muteRecording', 'value': 'true'}
 	    				      },
 	    				      '00:00:22.880': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
-	    				    	'response': {'action': 'volumechange', 'value': '100'},
+	    				    	'exercise': {'action': 'muteVideo'},
+	    				    	'response': {'action': 'muteRecording', 'value': 'false'},
 	    				      },
 	    				      '00:00:25.600': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
-	    				    	'response': {'action': 'volumechange', 'value': '0'}
+	    				    	'exercise': {'action': 'unmuteVideo'},
+	    				    	'response': {'action': 'muteRecording', 'value': 'true'}
 	    				      }
 						  }
 	    		  };
@@ -212,15 +212,15 @@
 	    		  
 	    		  
 	    		  //Get the recording method
-	    		  var method = 0;
+	    		  var useWebcam = 0;
 	    		  var rmet = document.getElementsByName("recMethod");
 	    		  if (rmet.length > 1){
 	    			  for (var i=0; i<rmet.length; i++){
 	    				  if(rmet[i].checked)
-	    				  	method = rmet[i].value;
+	    				  	useWebcam = rmet[i].value - 0;
 	    			  }
 	    		  }
-	    		  babeliumPlayer.recordVideo(method, cuepoints_shaman);
+	    		  babeliumPlayer.recordVideo(useWebcam, "U1MbBtkIGZQ.flv", cuepoints_shaman);
 	    	  }
 	      }
 	      

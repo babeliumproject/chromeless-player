@@ -44,7 +44,7 @@ package player
 
 		private var _videoSource:String=null;
 		protected var _streamSource:String=null;
-		private var _state:String=null;
+
 		private var _autoPlay:Boolean=true;
 		private var _smooth:Boolean=true;
 		private var _currentTime:Number=0;
@@ -238,7 +238,7 @@ package player
 			}
 		}
 
-		public function get volume():Number
+		public function getVolume():Number
 		{
 			try
 			{
@@ -251,7 +251,7 @@ package player
 			return NaN;
 		}
 
-		public function set volume(value:Number):void
+		public function setVolume(value:Number):void
 		{
 			if (!isNaN(value) && value >= 0 && value <= 100 && _nsc.netStream)
 			{

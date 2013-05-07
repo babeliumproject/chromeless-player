@@ -11,9 +11,10 @@ package api
 	import flash.external.ExternalInterface;
 	import flash.utils.Dictionary;
 	
+	import media.NetConnectionClient;
+	
 	import model.SharedData;
 	
-	import media.NetConnectionClient;
 	import player.VideoRecorder;
 	
 	public class JavascriptAPI
@@ -231,20 +232,20 @@ package api
 		}
 		
 		private function getState():int{
-			return VP.state;
+			return VP.getState();
 		}
 		
 		private function setState(st:int):void
 		{
-			VP.state = st;
+			VP.setState(st);
 		}
 		
 		private function getVolume():Number{
-			return VP.volume;
+			return VP.getVolume();
 		}
 		
 		private function setVolume(value:Number):void{
-			VP.volume=value;
+			VP.setVolume(value);
 		}
 		
 		private function muteVideo():void{
@@ -288,8 +289,8 @@ package api
 			VP.videoSource = SharedData.getInstance().streamingManager.responseStreamsFolder + "/" + video;
 		}
 		
-		private function recordVideo(method:int, cuePoints:Object):void{
-			VP.state = method ? VideoRecorder.RECORD_BOTH_STATE : VideoRecorder.RECORD_MIC_STATE;
+		private function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
+			VP.recordVideo(useWebcam, exerciseId, recdata);
 		}
 		
 		private function abortRecording():void{

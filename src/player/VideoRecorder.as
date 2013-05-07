@@ -2,6 +2,8 @@ package player
 {
 	import assets.MicImage;
 	
+	import commands.EventPointManager;
+	
 	import events.PlayPauseEvent;
 	import events.PrivacyEvent;
 	import events.RecordingEvent;
@@ -17,21 +19,21 @@ package player
 	import flash.geom.Matrix;
 	import flash.media.*;
 	import flash.net.*;
+	import flash.sampler.getInvocationCount;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
 	import flash.utils.*;
+	
+	import media.NetConnectionClient;
+	import media.NetStreamClient;
+	import media.PrivacyManager;
 	
 	import model.SharedData;
 	
 	import mx.resources.ResourceManager;
 	
 	import view.ErrorOverlay;
-	
-	import media.NetStreamClient;
-	import media.PrivacyManager;
-	import media.NetConnectionClient;
-	
 	import view.PrivacyButton;
 	import view.PrivacyPanel;
 	
@@ -39,10 +41,6 @@ package player
 
 	public class VideoRecorder extends VideoPlayer
 	{
-		/**
-		 * Recording related variables
-		 */
-
 		/**
 		 * States
 		 * NOTE:
@@ -59,12 +57,13 @@ package player
 		private const RECORD_FLAG:int=2; // XXXX XX1X
 		private const UPLOAD_FLAG:int=4; // XXXX X1XX
 
-		private var _state:int;
-
+		
 		// Other constants
 		private const RESPONSE_FOLDER:String=SharedData.getInstance().streamingManager.responseStreamsFolder;
 		private const DEFAULT_VOLUME:Number=40;
 		private const COUNTDOWN_TIMER_SECS:int=5;
+		
+		private var _state:int;
 
 		private var _outNs:NetStreamClient;
 		private var _inNs:NetStreamClient;
@@ -97,6 +96,7 @@ package player
 		
 		private var _onTop:Sprite;
 
+		private var eventPointManager:EventPointManager;
 		private var noConnectionSprite:ErrorOverlay;
 		private var privacySprite:PrivacyPanel;
 		private var _micImage:MicImage;
@@ -107,7 +107,11 @@ package player
 		public function VideoRecorder()
 		{
 			super();
+			_state=VideoRecorder.PLAY_STATE;
+			drawGraphics();
+		}
 
+		private function drawGraphics():void{
 			var _textFormat:TextFormat = new TextFormat();
 			_textFormat.color = 0xffffff;
 			_textFormat.align = "center";
@@ -124,10 +128,10 @@ package player
 			_countdownTxt.x = _spriteWidth/2 - _countdownTxt.textWidth/2;
 			_countdownTxt.y = _spriteHeight/2 - _countdownTxt.textHeight/2;
 			_countdownTxt.visible=false;
-
+			
 			_camVideo=new Video();
 			_camVideo.visible=false;
-
+			
 			_micImage=new MicImage();
 			//_micImage.height = 128; 128 /
 			//_micImage.width = 128;
@@ -152,31 +156,25 @@ package player
 			_overlayButton.buttonMode=true;
 			_overlayButton.visible=false;
 			_overlayButton.addEventListener(MouseEvent.CLICK, overlayClicked);
-*/
+			*/
 			
 			//_recStopBtn.addEventListener(RecStopButtonEvent.BUTTON_CLICK, onRecStopEvent);
 			
-			
-			
 			addChild(_micImage);
 			addChild(_camVideo);
-
+			
 			addChild(_countdownTxt);
 			
-
 			//addChild(_overlayButton);
-
-
+			
 			noConnectionSprite=new ErrorOverlay();
 			privacySprite = new PrivacyPanel();
 			privacyRights=new PrivacyManager();
 			privacyRights.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, onPrivacyStateChange);
-
+			
 			_onTop=new Sprite();
 			addChild(_onTop);
-
 		}
-
 		
 	
 		/**
@@ -191,12 +189,12 @@ package player
 		/**
 		 * Video player's state
 		 */
-		public function get state():int
+		public function getState():int
 		{
 			return _state;
 		}
 
-		public function set state(state:int):void
+		public function setState(newState:int):void
 		{
 			//Do nothing if there's not an active connection
 			if (!SharedData.getInstance().streamingManager.netConnected)
@@ -204,15 +202,13 @@ package player
 
 			stopVideo();
 
-			if (state == PLAY_BOTH_STATE || state == PLAY_STATE)
+			if (newState == PLAY_BOTH_STATE || newState == PLAY_STATE){
 				//enableControls();
+			}
 
-			_state=state;
+			_state=newState;
 			switchPerspective();
 		}
-
-		
-
 
 		public function muteRecording(flag:Boolean):void
 		{
@@ -220,9 +216,9 @@ package player
 				return;
 			_recordingMuted=flag;
 
-			if (state & RECORD_FLAG)
+			if (getState() & RECORD_FLAG)
 				(flag) ? _mic.gain=0 : _mic.gain=DEFAULT_VOLUME;
-			else if (state == PLAY_BOTH_STATE)
+			else if (getState() == PLAY_BOTH_STATE)
 			{
 				if (flag && _inNs && _inNs.netStream){
 					_inNs.netStream.soundTransform=new SoundTransform(0);
@@ -238,7 +234,7 @@ package player
 		public function set secondSource(source:String):void
 		{
 			trace("[INFO] Video player: Second video added to stage");
-			if (state != PLAY_BOTH_STATE)
+			if (getState() != PLAY_BOTH_STATE)
 				return;
 
 			_secondStreamSource=source;
@@ -284,7 +280,7 @@ package player
 		override public function loadVideo():void
 		{
 			super.loadVideo();
-			if(state == PLAY_BOTH_STATE)
+			if(getState() == PLAY_BOTH_STATE)
 				playSecondStream();
 
 			if (!_cuePointTimer)
@@ -317,10 +313,10 @@ package player
 			//if (_roleTalkingPanel.talking)
 			//	_roleTalkingPanel.pauseTalk();
 
-			if (state & RECORD_FLAG && _micCamEnabled) // TODO: test
+			if (getState() & RECORD_FLAG && _micCamEnabled) // TODO: test
 				_outNs.netStream.pause();
 
-			if (state == PLAY_BOTH_STATE){
+			if (getState() == PLAY_BOTH_STATE){
 				_inNs.netStream.pause();
 			}
 		}
@@ -337,10 +333,10 @@ package player
 			//if (_roleTalkingPanel.talking)
 			//	_roleTalkingPanel.resumeTalk();
 
-			if (state & RECORD_FLAG && _micCamEnabled) // TODO: test
+			if (getState() & RECORD_FLAG && _micCamEnabled) // TODO: test
 				_outNs.netStream.resume();
 
-			if (state == PLAY_BOTH_STATE){
+			if (getState() == PLAY_BOTH_STATE){
 				_inNs.netStream.resume();
 			}
 		}
@@ -357,10 +353,10 @@ package player
 			//if (_roleTalkingPanel.talking)
 			//	_roleTalkingPanel.stopTalk();
 
-			if (state & RECORD_FLAG && _micCamEnabled)
+			if (getState() & RECORD_FLAG && _micCamEnabled)
 				_outNs.netStream.close();
 
-			if (state == PLAY_BOTH_STATE)
+			if (getState() == PLAY_BOTH_STATE)
 			{
 				if (_inNs && _inNs.netStream)
 				{
@@ -375,7 +371,7 @@ package player
 		{
 			super.endVideo();
 
-			if (state == PLAY_BOTH_STATE && _inNs && _inNs.netStream)
+			if (getState() == PLAY_BOTH_STATE && _inNs && _inNs.netStream)
 			{
 				_inNs.netStream.dispose();
 				_inNs=null;
@@ -405,7 +401,7 @@ package player
 		 */
 		private function switchPerspective():void
 		{
-			switch (_state)
+			switch (getState())
 			{
 				case RECORD_BOTH_STATE:
 					prepareDevices();
@@ -458,9 +454,9 @@ package player
 				//Unattach user devices if they were attached (connection failed while recording)
 				unattachUserDevices();
 				//If status is different than PLAY_STATE switch to that state
-				if (_state != PLAY_STATE)
+				if (getState() != PLAY_STATE)
 				{
-					_state=PLAY_STATE;
+					setState(PLAY_STATE);
 					//arrows=false;
 					//removeArrows();
 				}
@@ -487,7 +483,7 @@ package player
 				_countdownTxt.visible=false;
 				_video.visible=true;
 
-				if (state == RECORD_BOTH_STATE || state == UPLOAD_MODE_STATE)
+				if (getState() == RECORD_BOTH_STATE || getState() == UPLOAD_MODE_STATE)
 				{
 					_camVideo.visible=true;
 					_micImage.visible=true;
@@ -500,7 +496,7 @@ package player
 
 				startRecording();
 			}
-			else if (state != PLAY_STATE)
+			else if (getState() != PLAY_STATE)
 				_countdownTxt.text=new String(5 - _countdown.currentCount);
 		}
 
@@ -512,17 +508,17 @@ package player
 		{
 			var privacyManager:PrivacyManager=SharedData.getInstance().privacyManager;
 			//The devices are permitted and initialized. Time to configure them
-			if ((state == RECORD_MIC_STATE && privacyManager.microphoneReady()) || 
-				(state == RECORD_BOTH_STATE && privacyManager.cameraReady() && privacyManager.microphoneReady()) ||
-				(state == UPLOAD_MODE_STATE && privacyManager.cameraReady() && privacyManager.microphoneReady()))
+			if ((getState() == RECORD_MIC_STATE && privacyManager.microphoneReady()) || 
+				(getState() == RECORD_BOTH_STATE && privacyManager.cameraReady() && privacyManager.microphoneReady()) ||
+				(getState() == UPLOAD_MODE_STATE && privacyManager.cameraReady() && privacyManager.microphoneReady()))
 			{
 				configureDevices();
 			}
 			else
 			{
-				if (state == RECORD_BOTH_STATE || state == UPLOAD_MODE_STATE)
+				if (getState() == RECORD_BOTH_STATE || getState() == UPLOAD_MODE_STATE)
 					privacyManager.useMicAndCamera=true;
-				if (state == RECORD_MIC_STATE)
+				if (getState() == RECORD_MIC_STATE)
 					privacyManager.useMicAndCamera=false;
 				
 				_onTop.removeChildren();
@@ -536,7 +532,7 @@ package player
 		private function configureDevices():void
 		{	
 			var privacyManager:PrivacyManager=SharedData.getInstance().privacyManager;
-			if (state == RECORD_BOTH_STATE || state == UPLOAD_MODE_STATE)
+			if (getState() == RECORD_BOTH_STATE || getState() == UPLOAD_MODE_STATE)
 			{
 				_camera=privacyManager.camera;
 				_camera.setMode(privacyManager.defaultCameraWidth, privacyManager.defaultCameraHeight, 15, false);
@@ -583,14 +579,14 @@ package player
 			_onTop.removeChildren();
 
 			_micCamEnabled=privacyManager.deviceAccessGranted;
-			if (state == RECORD_MIC_STATE)
+			if (getState() == RECORD_MIC_STATE)
 			{
 				if (_micCamEnabled && privacyManager.microphoneFound)
 					configureDevices();
 				else
 					dispatchEvent(new RecordingEvent(RecordingEvent.ABORTED));
 			}
-			if (state == RECORD_BOTH_STATE || state == UPLOAD_MODE_STATE)
+			if (getState() == RECORD_BOTH_STATE || getState() == UPLOAD_MODE_STATE)
 			{
 				if (_micCamEnabled && privacyManager.microphoneFound && privacyManager.cameraFound)
 					configureDevices();
@@ -606,7 +602,7 @@ package player
 			seekable=false;
 			_mic.setLoopBack(false);
 
-			if (state & SPLIT_FLAG)
+			if (getState() & SPLIT_FLAG)
 			{
 				// Attach Camera
 				_camVideo.attachCamera(_camera);
@@ -618,13 +614,13 @@ package player
 				//disableControls();
 			}
 
-			if (state & RECORD_FLAG)
+			if (getState() & RECORD_FLAG)
 			{
 				_outNs=new NetStreamClient(_nc,"outNs");
 				//disableControls();
 			}
 			
-			if(state & UPLOAD_FLAG){
+			if(getState() & UPLOAD_FLAG){
 				// Attach Camera
 				_camVideo.attachCamera(_camera);
 				_camVideo.smoothing=true;
@@ -646,7 +642,7 @@ package player
 		 */
 		private function startRecording():void
 		{
-			if (!(state & RECORD_FLAG))
+			if (!(getState() & RECORD_FLAG))
 				return; // security check
 
 			var d:Date=new Date();
@@ -658,13 +654,13 @@ package player
 			//else
 			loadVideo();
 
-			if (state & RECORD_FLAG)
+			if (getState() & RECORD_FLAG)
 			{
 				_outNs.netStream.attachAudio(_mic);
 				muteRecording(true); // mic starts muted
 			}
 
-			if (state == RECORD_BOTH_STATE)
+			if (getState() == RECORD_BOTH_STATE)
 				_outNs.netStream.attachCamera(_camera);
 
 			//_ppBtn.State=PlayButton.PAUSE_STATE;
@@ -684,7 +680,7 @@ package player
 		private function splitVideoPanel():void
 		{
 			//The stage should be splitted only when the right state is set
-			if (!(state & SPLIT_FLAG))
+			if (!(getState() & SPLIT_FLAG))
 				return;
 
 			var w:Number=_spriteWidth / 2 - _blackPixelsBetweenVideos;
@@ -731,8 +727,8 @@ package player
 
 			scaleVideo();
 
-			_camVideo.visible=false;
-			_micImage.visible=false;
+			if(_camVideo) _camVideo.visible=false;
+			if(_micImage) _micImage.visible=false;
 			//_micActivityBar.visible=false;
 			//dispatchEvent(new ControlDisplayEvent(ControlDisplayEvent.MIC_ACTIVITY_BAR,false);
 
@@ -770,7 +766,6 @@ package player
 				_camVideo.x=_defaultMargin + 2;
 				_camVideo.width-=4;
 			}
-
 			
 			_micImage.y=(_spriteHeight - _micImage.height)/2;
 			_micImage.x=_spriteWidth - _micImage.width - (_camVideo.width - _micImage.width)/2;
@@ -779,7 +774,7 @@ package player
 		override protected function scaleVideo():void
 		{
 			super.scaleVideo();
-			if (state & SPLIT_FLAG)
+			if (getState() & SPLIT_FLAG)
 			{
 				var w:Number=_spriteWidth / 2 - _blackPixelsBetweenVideos;
 				var h:int=Math.ceil(w * 0.75);
@@ -808,7 +803,7 @@ package player
 		{
 			super.resetAppearance();
 
-			if (state & SPLIT_FLAG)
+			if (getState() & SPLIT_FLAG)
 			{
 				_camVideo.attachNetStream(null);
 				_camVideo.clear();
@@ -825,7 +820,7 @@ package player
 		{
 			super.onVideoFinishedPlaying(e);
 
-			if (state & RECORD_FLAG || state == UPLOAD_MODE_STATE)
+			if (getState() & RECORD_FLAG || getState() == UPLOAD_MODE_STATE)
 			{
 				//addDummyVideo();
 				unattachUserDevices();
@@ -896,6 +891,27 @@ package player
 				//_ppBtn.State=PlayButton.PAUSE_STATE;
 				//playPauseStatus=false;
 			}
+		}
+		
+		public function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
+			//Parse the eventpoints and prepare the events
+			trace(recdata.character);
+			eventPointManager = EventPointManager.getInstance();
+			if(!eventPointManager.parseEventPoints(recdata.eventpoints, this))
+				trace("No eventpoints found");
+			
+			addEventListener(StreamEvent.ENTER_FRAME, eventPointManager.monitorCuePoints);
+			
+			var exerciseId:String = exerciseId;
+			
+			//Set the video player state to recording
+			var newState:int = useWebcam ? VideoRecorder.RECORD_BOTH_STATE : VideoRecorder.RECORD_MIC_STATE;
+			setState(newState);
+		}
+		
+		
+		public function setVolumeRecording(value:uint):void{
+			
 		}
 	}
 }

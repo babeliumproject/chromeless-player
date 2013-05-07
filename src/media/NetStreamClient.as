@@ -260,6 +260,19 @@ package media
 					break;
 				case "NetStream.Play.UnpublishNotify":
 					break;
+				case "NetStream.Play.Failed":
+					break;
+				case "NetStream.Play.FileStructureInvalid":
+					break;
+				case "NetStream.Play.InsufficientBW":
+					break;
+				case "NetStream.Play.NoSupportedTrackFound":
+					break;
+				case "NetStream.Play.StreamNotFound":
+					dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.STREAM_NOT_FOUND));
+					break;
+				case "NetStream.Play.Transition":
+					break;
 				case "NetStream.Pause.Notify":
 					_streamStatus=STREAM_PAUSED;
 					break;

@@ -10,7 +10,7 @@ package events
 		public static const METADATA_RETRIEVED:String="metadataRetrieved";
 		public static const RECORDING_STARTED:String="recordingStarted";
 		public static const RECORDING_FINISHED:String="recordingFinished";
-		
+		public static const STREAM_NOT_FOUND:String="streamNotFound";
 		
 		public static const STATE_CHANGED:String="stateChanged";
 		public var state:int;
