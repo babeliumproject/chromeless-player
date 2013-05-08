@@ -161,14 +161,14 @@ package commands
 					if (points[timestamp].hasOwnProperty('exercise'))
 					{
 						var ex:Object=points[timestamp].exercise;
-						var funcex:Function=parseActionValue('exercise', ex);
-						if(funcex != null) actval.push({func: funcex, params: ex.value});
+						var funcex:*=parseActionValue('exercise', ex);
+						if(funcex != null) actval.push({func: (funcex as Function), params: ex.value});
 					}
 					if (points[timestamp].hasOwnProperty('response'))
 					{
 						var rp:Object=points[timestamp].response;
-						var funcrp:Function=parseActionValue('response', rp);
-						if(funcrp != null) actval.push({func: funcex, params: ex.value});
+						var funcrp:*=parseActionValue('response', rp);
+						if(funcrp != null) actval.push({func: (funcrp as Function), params: ex.value});
 					}
 					var event:EventTrigger=new EventTrigger(actval);
 					var cueobj:Object = {time: time, event: event};
@@ -179,17 +179,16 @@ package commands
 			return true;
 		}
 
-		public function parseActionValue(targetStream:String, actions:Object):Function
+		public function parseActionValue(targetStream:String, actions:Object):*
 		{
 			if (!actions || !actions.hasOwnProperty('action') /*|| !actions.hasOwnProperty('value')*/)
 				return null;
 			var action:String=actions.action;
-			//var value:String=actions.value;
+			var value:String= actions.hasOwnProperty(value) ? actions.value : null;
 
 			
-			return targetInstance.hasOwnProperty(action) ? targetInstance[action] : null;
+			//return targetInstance.hasOwnProperty(action) ? targetInstance[action] : null;
 			
-			/*
 			switch (action)
 			{
 				case 'volumechange':
@@ -207,7 +206,21 @@ package commands
 					return null;
 			}
 			return null;
-			*/
+		}
+		
+		public function mapActionToFunction(label:String, stream:String):String{
+			var func:String;
+			switch(label)
+			{
+				case 'volumechange':
+					break;
+				case 'mute':
+					func = stream ? 'muteRecording' : 'mute';
+					break;
+				
+				default:
+			}
+			return func;
 		}
 
 		public function timeToSeconds(time:String):Number

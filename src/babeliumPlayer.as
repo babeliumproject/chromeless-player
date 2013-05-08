@@ -33,8 +33,8 @@ package
 	[SWF(width="640", height="480")]
 	public class babeliumPlayer extends Sprite
 	{
-		//LOGGER_FACTORY.setup = new LevelTargetSetup( new TraceTarget, LogSetupLevel.DEBUG );
-		LOGGER_FACTORY.setup = new LevelTargetSetup(new FirebugTarget(), LogSetupLevel.DEBUG );
+		LOGGER_FACTORY.setup = new LevelTargetSetup( new TraceTarget, LogSetupLevel.DEBUG );
+		//LOGGER_FACTORY.setup = new LevelTargetSetup(new FirebugTarget(), LogSetupLevel.DEBUG );
 		
 		private var videoId:String=null;
 		private var explicit_locale:String=null;

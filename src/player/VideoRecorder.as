@@ -910,8 +910,11 @@ package player
 		}
 		
 		
-		public function setVolumeRecording(value:uint):void{
-			
+		public function setVolumeRecording(value:Number):void{
+			if (!isNaN(value) && value >= 0 && value <= 100){
+				if (value == 0) muteRecording(true);
+				if (value == 100) muteRecording(false);
+			}
 		}
 	}
 }

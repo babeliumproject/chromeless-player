@@ -16,7 +16,9 @@ package view
 
 		private var btn:SimpleButton=new SimpleButton();
 
-		private var txt:TextField=new TextField();
+		private var upTxt:TextField=new TextField();
+		private var overTxt:TextField=new TextField();
+		private var downTxt:TextField=new TextField();
 		private var tf:TextFormat=new TextFormat();
 
 		private var upBg:Sprite=new Sprite();
@@ -27,12 +29,17 @@ package view
 		private const BG_FILL_OVERSTATE:Array=[0xBBBDBD, 0x9FA0A1];
 		private const BG_FILL_DOWNSTATE:Array=[0xAAAAAA, 0x929496];
 
-		private const LABEL_FILL_UPSTATE:uint=0x000000;
+		private const LABEL_FILL_UPSTATE:uint=0xFFFFFF;
 		private const LABEL_FILL_OVERSTATE:uint=0x000000;
 		private const LABEL_FILL_DOWNSTATE:uint=0x000000;
 
-		private const ALPHAS:Array=[0.85, 0.85];
+		//private const ALPHAS:Array=[0.85, 0.85];
+		private const ALPHAS:Array=[0,0];
 		private const RATIOS:Array=[127, 255];
+		
+		private const LINE_COLOR:uint = 0xFFFFFF;
+		private const LINE_THICKNESS:uint = 1;
+		private const LINE_ALPHA:Number = 1.0;
 
 		public function PrivacyButton()
 		{
@@ -42,7 +49,9 @@ package view
 			tf.font="Arial";
 			tf.size=20;
 			tf.align="center";
-			txt.defaultTextFormat=tf;
+			upTxt.defaultTextFormat=tf;
+			overTxt.defaultTextFormat=tf;
+			downTxt.defaultTextFormat=tf;
 			updateChildren(defWidth, defHeight);
 		}
 
@@ -52,23 +61,26 @@ package view
 			matr.createGradientBox(newHeight, newHeight, 90 * Math.PI / 180, 0, 0);
 
 			upBg.graphics.clear();
+			upBg.graphics.lineStyle(LINE_THICKNESS, LINE_COLOR, LINE_ALPHA);
 			upBg.graphics.beginGradientFill(GradientType.LINEAR, BG_FILL_UPSTATE, ALPHAS, RATIOS, matr);
-			upBg.graphics.drawRect(0, 0, newWidth, newHeight);
+			upBg.graphics.drawRoundRect(0, 0, newWidth, newHeight, 8, 8);
 			upBg.graphics.endFill();
 
 			overBg.graphics.clear();
+			overBg.graphics.lineStyle(LINE_THICKNESS, LINE_COLOR, LINE_ALPHA);
 			overBg.graphics.beginGradientFill(GradientType.LINEAR, BG_FILL_OVERSTATE, ALPHAS, RATIOS, matr);
-			overBg.graphics.drawRect(0, 0, newWidth, newHeight);
+			overBg.graphics.drawRoundRect(0, 0, newWidth, newHeight, 8, 8);
 			overBg.graphics.endFill();
 
 			downBg.graphics.clear();
+			downBg.graphics.lineStyle(LINE_THICKNESS, LINE_COLOR, LINE_ALPHA);
 			downBg.graphics.beginGradientFill(GradientType.LINEAR, BG_FILL_DOWNSTATE, ALPHAS, RATIOS, matr);
-			downBg.graphics.drawRect(0, 0, newWidth, newHeight);
+			downBg.graphics.drawRoundRect(0, 0, newWidth, newHeight, 8, 8);
 			downBg.graphics.endFill();
 
-			upBg.addChild(txt);
-			//overBg.addChild(txt);
-			//downBg.addChild(txt);
+			upBg.addChild(upTxt);
+			overBg.addChild(overTxt);
+			downBg.addChild(downTxt);
 
 			btn.upState=upBg;
 			btn.overState=overBg;
@@ -81,15 +93,15 @@ package view
 
 		public function get label():String
 		{
-			return txt.text;
+			return upTxt.text;
 		}
 
 		public function set label(text:String):void
 		{
-			txt.text=text;
-			var nWidth:uint=txt.textWidth < (defWidth - 20) ? defWidth : txt.textWidth + 20;
-			txt.width=nWidth;
-			txt.height=defHeight;
+			upTxt.text=overTxt.text=downTxt.text=text;
+			var nWidth:uint=upTxt.textWidth < (defWidth - 20) ? defWidth : upTxt.textWidth + 20;
+			upTxt.width=overTxt.width=downTxt.width=nWidth;
+			upTxt.height=overTxt.height=downTxt.height=defHeight;
 			updateChildren(nWidth, defHeight);
 		}
 	}

@@ -70,7 +70,6 @@ package view
 
 		private function deviceStateChangeHandler(event:PrivacyEvent):void
 		{
-			trace("Privacy State: " + event.state);
 			switch (event.state)
 			{
 				case PrivacyEvent.AV_HARDWARE_DISABLED:
@@ -144,7 +143,7 @@ package view
 
 			container.graphics.clear();
 			container.graphics.lineStyle(1, 0xA7A7A7);
-			container.graphics.beginFill(0xFFFFFF, 1.0);
+			container.graphics.beginFill(0x000000, 0.0);
 			container.graphics.drawRect(0, 0, nWidth - (2 * padding), nHeight - (2 * padding) - title.textHeight - gap);
 			container.graphics.endFill();
 			container.x=padding;
