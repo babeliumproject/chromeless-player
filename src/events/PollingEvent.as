@@ -2,13 +2,13 @@ package events
 {
 	import flash.events.TimerEvent;
 
-	public class StreamEvent extends TimerEvent
+	public class PollingEvent extends TimerEvent
 	{
 		
 		public static const ENTER_FRAME:String = "FrameEntered";
 		public var time:Number;
 		
-		public function StreamEvent(type:String, time:Number, bubbles:Boolean=false, cancelable:Boolean=false)
+		public function PollingEvent(type:String, time:Number, bubbles:Boolean=false, cancelable:Boolean=false)
 		{
 			super(type, bubbles, cancelable);
 			this.time = time;

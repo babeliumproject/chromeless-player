@@ -39,12 +39,12 @@ package media
 		
 		public function cameraReady():Boolean
 		{
-			return (microphone && !microphone.muted);
+			return (camera && !camera.muted);
 		}
 		
 		public function microphoneReady():Boolean
 		{
-			return (camera && !camera.muted);
+			return (microphone && !microphone.muted);
 		}
 		
 		public function initDevices():void

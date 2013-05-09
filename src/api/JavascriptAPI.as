@@ -4,7 +4,7 @@ package api
 	
 	import events.PrivacyEvent;
 	import events.RecordingEvent;
-	import events.StreamEvent;
+	import events.PollingEvent;
 	import events.VideoPlayerEvent;
 	
 	import flash.events.Event;
@@ -152,7 +152,7 @@ package api
 		/**
 		 * Event handlers
 		 */
-		public function onEnterFrame(e:StreamEvent):void{
+		public function onEnterFrame(e:PollingEvent):void{
 			ExternalInterface.call(jsListeners['onEnterFrame'], e.time);
 		}
 		
@@ -309,7 +309,7 @@ package api
 			switch(event){
 				case 'onEnterFrame':
 					jsListeners['onEnterFrame'] = listener;
-					VP.addEventListener(StreamEvent.ENTER_FRAME, onEnterFrame);
+					VP.addEventListener(PollingEvent.ENTER_FRAME, onEnterFrame);
 					break;
 				case 'onRecordingAborted':
 					jsListeners['onRecordingAborted'] = listener;
@@ -355,7 +355,7 @@ package api
 				case 'onEnterFrame':
 					if(jsListeners['onEnterFrame'])
 						delete jsListeners['onEnterFrame'];
-					VP.removeEventListener(StreamEvent.ENTER_FRAME, onEnterFrame);
+					VP.removeEventListener(PollingEvent.ENTER_FRAME, onEnterFrame);
 					break;
 				case 'onRecordingAborted':
 					if(jsListeners['onRecordingAborted'])

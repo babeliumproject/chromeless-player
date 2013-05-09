@@ -1,6 +1,6 @@
 package commands
 {
-	import events.StreamEvent;
+	import events.PollingEvent;
 	
 	import flash.events.*;
 	import flash.net.*;
@@ -10,103 +10,25 @@ package commands
 
 	public class EventPointManager extends EventDispatcher
 	{
-		private static var instance:EventPointManager=new EventPointManager();
-
+		
 		private var targetInstance:Object;
-
-		public var cuelist:Array=new Array();
-
+		private var eventList:Array;
 		private var currentEventTime:Number;
 
-
-		/**
-		 * Constructor - Singleton Pattern
-		 **/
 		public function EventPointManager()
 		{
-			if (instance)
-				throw new Error("CuePointManager can only be accessed through CuePointManager.getInstance()");
-
-			cuelist=new Array();
+			eventList = new Array();
 		}
 
-		public static function getInstance():EventPointManager
-		{
-			return instance;
-		}
-
-		/**
-		 * Reset CuePointManager on module change
-		 **/
-		public function reset():void
-		{
-			cuelist.removeAll();
-			cuelist=new Array();
-		}
-
-		/**
-		 * Cuelist manage functions
-		 **/
-		public function addCue(cueobj:Object):void
-		{
-			cuelist.addItem(cueobj);
-		}
-
-		public function setCueAt(cueobj:Object, pos:int):void
-		{
-			cuelist.setItemAt(cueobj, pos);
-		}
-
-		public function getCueAt(pos:int):Object
-		{
-			return cuelist.getItemAt(pos) as Object;
-		}
-
-		public function removeCueAt(pos:int):Object
-		{
-			return cuelist.removeItemAt(pos) as Object;
-		}
-
-		public function getCueIndex(cueobj:Object):int
-		{
-			return cuelist.getItemIndex(cueobj);
-		}
-
-		public function removeAllCue():void
-		{
-			cuelist.removeAll();
-		}
-
-		public function setCueList(cuelist:Array):void
-		{
-			this.cuelist=cuelist;
-		}
-
-		public function setCueListStartCommand(command:Function):void
-		{
-			for each (var cuepoint:Object in cuelist)
-			{
-				cuepoint.setStartCommand(command);
-			}
-		}
-
-		public function setCueListEndCommand(command:Function):void
-		{
-			for each (var cuepoint:Object in cuelist)
-			{
-				cuepoint.setEndCommand(command);
-			}
-		}
-
-
-		public function monitorCuePoints(ev:StreamEvent):void
+		public function pollEventPoints(ev:PollingEvent):void
 		{
 			var curTime:Number=ev.time * 1000;
-			var threshold:Number = 80;
-			for each (var cueobj:Object in cuelist)
+			var delayThreshold:Number = 80;
+			for each (var cueobj:Object in eventList)
 			{
-				if (((curTime - threshold) < cueobj.time && cueobj.time < (curTime + threshold)) && cueobj.time != currentEventTime)
+				if (((curTime - delayThreshold) < cueobj.time && cueobj.time < (curTime + delayThreshold)) && cueobj.time != currentEventTime)
 				{
+					//Don't fire the same event more than once
 					currentEventTime=cueobj.time;
 					cueobj.event.executeActions();
 					break;
@@ -114,44 +36,13 @@ package commands
 			}
 		}
 
-
-
-
-		public function addCueFromSubtitleLine(subline:Object):void
-		{
-			//var cueObj:Object=new Object(subline.subtitleId, subline.showTime, subline.hideTime, subline.text, subline.exerciseRoleId, subline.exerciseRoleName,null,null,0x000000);
-			//this.addCue(cueObj);
-		}
-
-		/**
-		 * Getting cuelists for set their commands
-		 **/
-		public function getCuelist():Array
-		{
-			return cuelist;
-		}
-
-		/**
-		 * Return cuepoint list in array mode with startTime and role
-		 **/
-		public function cues2rolearray():Array
-		{
-			var arrows:Array=new Array();
-
-			for each (var cue:Object in getCuelist())
-				arrows.addItem({startTime: cue.startTime, endTime: cue.endTime, role: cue.role});
-
-			return arrows;
-		}
-
-
 		public function parseEventPoints(points:Object, targetInstance:Object):Boolean
 		{
 			if (!points || !targetInstance)
 				return false;
 			this.targetInstance=targetInstance;
 			var time:Number;
-			cuelist = new Array();
+			eventList = new Array();
 			for (var timestamp:String in points)
 			{
 				time=timeToSeconds(timestamp);
@@ -172,10 +63,10 @@ package commands
 					}
 					var event:EventTrigger=new EventTrigger(actval);
 					var cueobj:Object = {time: time, event: event};
-					cuelist.push(cueobj);
+					eventList.push(cueobj);
 				}
 			}
-			trace(ObjectUtil.toString(cuelist));
+			trace(ObjectUtil.toString(eventList));
 			return true;
 		}
 

@@ -8,17 +8,20 @@ package view
 	import flash.display.Shape;
 	import flash.display.Sprite;
 	import flash.events.MouseEvent;
+	import flash.geom.Point;
+	import flash.geom.Rectangle;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
+	
+	import media.NetConnectionClient;
+	import media.PrivacyManager;
 	
 	import model.SharedData;
 	
 	import mx.resources.IResourceManager;
 	import mx.resources.ResourceManager;
-	
-	import media.PrivacyManager;
-	import media.NetConnectionClient;
+	import mx.utils.ObjectUtil;
 
 	public class PrivacyPanel extends Sprite
 	{
@@ -32,7 +35,7 @@ package view
 		private var containerBgImg:UnlockImage=new UnlockImage();
 
 		private var layer:Sprite=new Sprite();
-		private var layerImg:MicImage=new MicImage();
+		//private var layerImg:MicImage=new MicImage();
 		private var message:TextField=new TextField();
 
 		private var acceptButton:PrivacyButton=new PrivacyButton();
@@ -153,7 +156,7 @@ package view
 			containerBgImg.y=0;
 
 			layer.graphics.clear();
-			layer.graphics.beginFill(0, 0);
+			layer.graphics.beginFill(0x000000, 0.0);
 			layer.graphics.drawRect(0, 0, container.width - (2 * padding), container.height - (2 * padding));
 			layer.graphics.endFill();
 			layer.x=layer.y=padding;
@@ -182,7 +185,7 @@ package view
 			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
 
 			layer.addChild(message);
-			layer.addChild(layerImg);
+			//layer.addChild(layerImg);
 			layer.addChild(acceptButton);
 			layer.addChild(cancelButton);
 		}
@@ -204,7 +207,7 @@ package view
 			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
 
 			layer.addChild(message);
-			layer.addChild(layerImg);
+			//layer.addChild(layerImg);
 			layer.addChild(acceptButton);
 			layer.addChild(cancelButton);
 		}
@@ -224,7 +227,7 @@ package view
 			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
 
 			layer.addChild(message);
-			layer.addChild(layerImg);
+			//layer.addChild(layerImg);
 			layer.addChild(cancelButton);
 			container.addChild(layer);
 		}
@@ -247,16 +250,23 @@ package view
 			message.width=layer.width * 0.65;
 			message.y=(layer.height-message.height)/2;
 			message.wordWrap=true;
+			
+			var layerImg:MicImage = new MicImage();
 
 			var scaleY:Number=(layer.width * 0.3) / layerImg.height;
 			var scaleX:Number=(layer.width * 0.3) / layerImg.width;
 			var scaleC:Number=scaleX < scaleY ? scaleX : scaleY;
 
 			layerImg.width*=scaleC;
-			layerImg.height*=scaleC;
+			layerImg.height*=scaleC;	
 
-			layerImg.x=layer.width - layerImg.width - (layer.width * 0.3 - layerImg.width) / 2;
-			layerImg.y=(layer.height - layerImg.height) / 2;
+			//Shapes can have offsets in their local coordinate system. We use get getRect() against themselves to get the offset and then we scale it accordingly.
+			//Doing this we put the shape in the (0,0) point of its parent container.
+			var layerImgOffsetX:Number = (scaleC*layerImg.getRect(layerImg).x);
+			var layerImgOffsetY:Number = (scaleC*layerImg.getRect(layerImg).y);
+			
+			layerImg.x = -layerImgOffsetX + (layer.width - layerImg.width) - (layer.width * 0.3 - layerImg.width) / 2;
+			layerImg.y = -layerImgOffsetY + (layer.height - layerImg.height) / 2;
 
 			//acceptButton.label=ResourceManager.getInstance().getString('messages','BUTTON_SHOW_PRIVACY_SETTINGS');
 			acceptButton.label="Show Privacy Settings";

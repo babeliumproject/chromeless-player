@@ -5,9 +5,9 @@ package player
 	import commands.EventPointManager;
 	
 	import events.PlayPauseEvent;
+	import events.PollingEvent;
 	import events.PrivacyEvent;
 	import events.RecordingEvent;
-	import events.StreamEvent;
 	import events.StreamingEvent;
 	import events.SubtitleButtonEvent;
 	import events.SubtitlingEvent;
@@ -298,7 +298,7 @@ package player
 		private function onEnterFrame(e:TimerEvent):void
 		{
 			if (_nsc && _nsc.netStream)
-				this.dispatchEvent(new StreamEvent(StreamEvent.ENTER_FRAME, _nsc.netStream.time));
+				this.dispatchEvent(new PollingEvent(PollingEvent.ENTER_FRAME, _nsc.netStream.time));
 		}
 
 		/**
@@ -506,21 +506,25 @@ package player
 		 */
 		private function prepareDevices():void
 		{
+			var requestMicAndCam:Boolean = _state == RECORD_BOTH_STATE ? true : false;
 			var privacyManager:PrivacyManager=SharedData.getInstance().privacyManager;
+			
+			privacyManager.useMicAndCamera = requestMicAndCam;
+			privacyManager.initDevices();
+			
+			var micReady:Boolean = privacyManager.microphoneReady();
+			var micAndCamReady:Boolean = micReady && privacyManager.cameraReady();
+			
+			trace("Camera ready: " + privacyManager.cameraReady());
+			trace("Microphone ready: " + privacyManager.microphoneReady());
+			
 			//The devices are permitted and initialized. Time to configure them
-			if ((getState() == RECORD_MIC_STATE && privacyManager.microphoneReady()) || 
-				(getState() == RECORD_BOTH_STATE && privacyManager.cameraReady() && privacyManager.microphoneReady()) ||
-				(getState() == UPLOAD_MODE_STATE && privacyManager.cameraReady() && privacyManager.microphoneReady()))
+			if (_state == RECORD_MIC_STATE && micReady || _state == RECORD_BOTH_STATE && micAndCamReady || _state == UPLOAD_MODE_STATE && micAndCamReady) 
 			{
 				configureDevices();
 			}
 			else
 			{
-				if (getState() == RECORD_BOTH_STATE || getState() == UPLOAD_MODE_STATE)
-					privacyManager.useMicAndCamera=true;
-				if (getState() == RECORD_MIC_STATE)
-					privacyManager.useMicAndCamera=false;
-				
 				_onTop.removeChildren();
 				_onTop.addChild(privacySprite);
 				
@@ -894,15 +898,26 @@ package player
 		}
 		
 		public function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
-			//Parse the eventpoints and prepare the events
-			trace(recdata.character);
-			eventPointManager = EventPointManager.getInstance();
-			if(!eventPointManager.parseEventPoints(recdata.eventpoints, this))
-				trace("No eventpoints found");
 			
-			addEventListener(StreamEvent.ENTER_FRAME, eventPointManager.monitorCuePoints);
+			eventPointManager = SharedData.getInstance().eventPointManager;
 			
-			var exerciseId:String = exerciseId;
+			//Clean the previous sessions
+			unattachUserDevices();
+			removeEventListener(PollingEvent.ENTER_FRAME, eventPointManager.pollEventPoints);
+			
+			if(recdata){
+				if(eventPointManager.parseEventPoints(recdata.eventpoints, this)){
+					//Add a listener to poll for event points
+					addEventListener(PollingEvent.ENTER_FRAME, eventPointManager.pollEventPoints);
+				} else {
+					trace("No event points found in given recdata");
+				}
+			}
+			
+			if(exerciseId){
+				//Load the exercise to play alongside the recording, if any
+				//loadVideo(exerciseId);
+			}
 			
 			//Set the video player state to recording
 			var newState:int = useWebcam ? VideoRecorder.RECORD_BOTH_STATE : VideoRecorder.RECORD_MIC_STATE;
