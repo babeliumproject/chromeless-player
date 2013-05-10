@@ -24,7 +24,7 @@ package player
 	import flash.utils.Dictionary;
 	import flash.utils.Timer;
 
-	import media.NetConnectionClient;
+	import media.MediaManager;
 	import media.NetStreamClient;
 
 	import model.SharedData;
@@ -58,9 +58,6 @@ package player
 
 		private var _currentVolume:SoundTransform;
 		private var _muted:Boolean=false;
-
-		private var _reconnectionTimer:Timer;
-		private var _reconnectionDelay:uint=5000; //5 seconds
 
 		/*
 		public static const PLAYBACK_READY_STATE:int=0;
@@ -312,8 +309,7 @@ package player
 		{
 			if (SharedData.getInstance().streamingManager.netConnected == true)
 			{
-				if (_reconnectionTimer != null)
-					stopReconnectionTimer();
+		
 				//Get the netConnection reference
 				_nc=SharedData.getInstance().streamingManager.netConnection;
 
@@ -324,35 +320,9 @@ package player
 
 				this.dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.CONNECTED));
 			}
-			else
-			{
-				if (_reconnectionTimer == null || !_reconnectionTimer.running)
-					startReconnectionTimer(); //connectToStreamingServer();
-			}
 		}
 
-		public function startReconnectionTimer():void
-		{
-			connectToStreamingServer();
-			_reconnectionTimer=new Timer(_reconnectionDelay, 0);
-			_reconnectionTimer.start();
-			_reconnectionTimer.addEventListener(TimerEvent.TIMER, onReconnectionTimerTick);
-
-		}
-
-		public function stopReconnectionTimer():void
-		{
-
-			_reconnectionTimer.stop();
-			_reconnectionTimer.removeEventListener(TimerEvent.TIMER, onReconnectionTimerTick);
-		}
-
-		public function onReconnectionTimerTick(event:TimerEvent):void
-		{
-
-			connectToStreamingServer();
-		}
-
+	
 		public function connectToStreamingServer():void
 		{
 			if (!SharedData.getInstance().streamingManager.netConnection.connected)
@@ -364,12 +334,6 @@ package player
 			{
 				onStreamNetConnect();
 			}
-		}
-
-		public function disconnectFromStreamingService():void
-		{
-			if (SharedData.getInstance().streamingManager.netConnection.connected)
-				SharedData.getInstance().streamingManager.close();
 		}
 
 		public function loadVideoByUrl(url:String):void

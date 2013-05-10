@@ -2,15 +2,15 @@ package model
 {
 	import commands.EventPointManager;
 	
-	import media.NetConnectionClient;
-	import media.PrivacyManager;
+	import media.MediaManager;
+	import media.UserDeviceManager;
 
 	public class SharedData
 	{
 		public static var instance:SharedData;
 		
-		public var privacyManager:PrivacyManager;
-		public var streamingManager:NetConnectionClient;
+		public var privacyManager:UserDeviceManager;
+		public var streamingManager:MediaManager;
 		public var eventPointManager:EventPointManager;
 		
 		
@@ -32,8 +32,8 @@ package model
 		 */		
 		public function SharedData()
 		{
-			privacyManager=new PrivacyManager();
-			streamingManager=new NetConnectionClient();
+			privacyManager=new UserDeviceManager();
+			streamingManager=new MediaManager();
 			eventPointManager=new EventPointManager();
 		}
 		

@@ -25,9 +25,9 @@ package player
 	import flash.text.TextFormat;
 	import flash.utils.*;
 	
-	import media.NetConnectionClient;
 	import media.NetStreamClient;
-	import media.PrivacyManager;
+	import media.MediaManager;
+	import media.UserDeviceManager;
 	
 	import model.SharedData;
 	
@@ -57,6 +57,7 @@ package player
 		private const RECORD_FLAG:int=2; // XXXX XX1X
 		private const UPLOAD_FLAG:int=4; // XXXX X1XX
 
+		private const STREAM_TIMER_DELAY:int=20; // tick every X milliseconds
 		
 		// Other constants
 		private const RESPONSE_FOLDER:String=SharedData.getInstance().streamingManager.responseStreamsFolder;
@@ -81,7 +82,7 @@ package player
 
 		private var _micCamEnabled:Boolean=false;
 
-		private var privacyRights:PrivacyManager;
+		private var privacyRights:UserDeviceManager;
 
 		private var _countdown:Timer;
 		private var _countdownTxt:TextField;
@@ -169,7 +170,7 @@ package player
 			
 			noConnectionSprite=new ErrorOverlay();
 			privacySprite = new PrivacyPanel();
-			privacyRights=new PrivacyManager();
+			privacyRights=new UserDeviceManager();
 			privacyRights.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, onPrivacyStateChange);
 			
 			_onTop=new Sprite();
@@ -273,21 +274,28 @@ package player
 			//privacySprite.updateChildren(this.width, this.height);
 		}
 
-		/**
-		 * Overriden play video:
-		 * - Adds a listener to video widget
-		 */
 		override public function loadVideo():void
 		{
 			super.loadVideo();
 			if(getState() == PLAY_BOTH_STATE)
 				playSecondStream();
 
-			if (!_cuePointTimer)
-			{
-				_cuePointTimer=new Timer(20, 0); //Try to tick every 20ms
-				_cuePointTimer.addEventListener(TimerEvent.TIMER, onEnterFrame);
-				_cuePointTimer.start();
+			//Start a timer to give info about the current stream's position
+			streamPositionTimer(true);
+		}
+		
+		private function streamPositionTimer(enable:Boolean):void{
+			if(enable){
+				if(_cuePointTimer){
+					_cuePointTimer=new Timer(STREAM_TIMER_DELAY, 0); //Try to tick every 20ms
+					_cuePointTimer.addEventListener(TimerEvent.TIMER, onEnterFrame);
+					_cuePointTimer.start();
+				}
+			} else {
+				if(_cuePointTimer){
+					_cuePointTimer.removeEventListener(TimerEvent.TIMER, onEnterFrame);
+					_cuePointTimer.reset();
+				}
 			}
 		}
 
@@ -507,7 +515,7 @@ package player
 		private function prepareDevices():void
 		{
 			var requestMicAndCam:Boolean = _state == RECORD_BOTH_STATE ? true : false;
-			var privacyManager:PrivacyManager=SharedData.getInstance().privacyManager;
+			var privacyManager:UserDeviceManager=SharedData.getInstance().privacyManager;
 			
 			privacyManager.useMicAndCamera = requestMicAndCam;
 			privacyManager.initDevices();
@@ -535,7 +543,7 @@ package player
 
 		private function configureDevices():void
 		{	
-			var privacyManager:PrivacyManager=SharedData.getInstance().privacyManager;
+			var privacyManager:UserDeviceManager=SharedData.getInstance().privacyManager;
 			if (getState() == RECORD_BOTH_STATE || getState() == UPLOAD_MODE_STATE)
 			{
 				_camera=privacyManager.camera;
@@ -578,7 +586,7 @@ package player
 
 		private function privacyBoxClosed(event:Event):void
 		{
-			var privacyManager:PrivacyManager=SharedData.getInstance().privacyManager;
+			var privacyManager:UserDeviceManager=SharedData.getInstance().privacyManager;
 			//Remove the privacy settings & the rest of layers from the top layer
 			_onTop.removeChildren();
 

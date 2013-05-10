@@ -22,15 +22,8 @@ package media
 
 	//http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetStream.html
 
-	public class NetStreamClient extends EventDispatcher implements INetStreamCallbacks
+	public class NetStreamClient extends EventDispatcher implements INetStreamClientCallbacks
 	{
-		//Consider using a logging api such as as3commons
-		public static const DEBUG:int=0x0020;
-		public static const ERROR:int=0x0004;
-		public static const FATAL:int=0x0002;
-		public static const INFO:int=0x0010;
-		public static const WARN:int=0x0008;
-
 		public static const STREAM_UNREADY:int=-1;
 		public static const STREAM_READY:int=0;
 		public static const STREAM_STARTED:int=1;
@@ -410,15 +403,5 @@ package media
 				}
 			}
 		}
-		
-		/*
-		private function displayTrace(message:String, level:uint=0x0001):void
-		{
-		var msg:String=message;
-		if (_name)
-		msg="[" + _name + "] " + message;
-		trace(msg);
-		}
-		*/
 	}
 }

@@ -14,8 +14,8 @@ package view
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
 	
-	import media.NetConnectionClient;
-	import media.PrivacyManager;
+	import media.MediaManager;
+	import media.UserDeviceManager;
 	
 	import model.SharedData;
 	
@@ -41,7 +41,7 @@ package view
 		private var acceptButton:PrivacyButton=new PrivacyButton();
 		private var cancelButton:PrivacyButton=new PrivacyButton();
 
-		private var privacyManager:PrivacyManager;
+		private var privacyManager:UserDeviceManager;
 
 		public function PrivacyPanel()
 		{

@@ -15,7 +15,7 @@ package
 	import flash.system.Security;
 	import flash.system.System;
 	
-	import media.NetConnectionClient;
+	import media.MediaManager;
 	
 	import model.SharedData;
 	

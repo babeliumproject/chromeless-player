@@ -11,7 +11,7 @@ package api
 	import flash.external.ExternalInterface;
 	import flash.utils.Dictionary;
 	
-	import media.NetConnectionClient;
+	import media.MediaManager;
 	
 	import model.SharedData;
 	

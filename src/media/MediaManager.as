@@ -20,7 +20,7 @@ package media
 	import org.osmf.net.NetClient;
 
 
-	public class NetConnectionClient extends EventDispatcher implements INetConnectionCallbacks
+	public class MediaManager extends EventDispatcher implements IMediaManagerCallbacks
 	{
 		//RTMP protocol constants
 		public static const RTMP:String = "rtmp";
@@ -55,9 +55,9 @@ package media
 		private var proxy:String='none';
 		private var encoding:uint=ObjectEncoding.DEFAULT;
 		
-		private static const logger:ILogger=getLogger(NetConnectionClient);
+		private static const logger:ILogger=getLogger(MediaManager);
 		
-		public function NetConnectionClient()
+		public function MediaManager()
 		{
 			netConnection=new NetConnection();
 		}

@@ -6,7 +6,7 @@ package media
 	 * @author inko
 	 * 
 	 */	
-	public interface INetConnectionCallbacks
+	public interface IMediaManagerCallbacks
 	{
 		function onBWCheck(info:Object=null):void;
 		

@@ -12,7 +12,7 @@ package media
 	import flash.system.Security;
 	import flash.system.SecurityPanel;
 
-	public class PrivacyManager extends EventDispatcher
+	public class UserDeviceManager extends EventDispatcher
 	{
 		private var _microphoneChanged:Boolean=false;
 		private var _microphoneSoundTestPassed:Boolean=false;
@@ -33,7 +33,7 @@ package media
 		public var defaultCameraHeight:int=240;
 		
 		
-		public function PrivacyManager()
+		public function UserDeviceManager()
 		{
 		}
 		

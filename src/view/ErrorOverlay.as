@@ -19,7 +19,7 @@ package view
 	import mx.resources.ResourceBundle;
 	import mx.resources.ResourceManager;
 	
-	import media.NetConnectionClient;
+	import media.MediaManager;
 	
 	public class ErrorOverlay extends Sprite
 	{
