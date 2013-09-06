@@ -12,6 +12,8 @@ package
 	import flash.events.Event;
 	import flash.events.KeyboardEvent;
 	import flash.geom.Matrix;
+	import flash.net.URLLoader;
+	import flash.net.URLRequest;
 	import flash.system.Security;
 	import flash.system.System;
 	
@@ -20,7 +22,6 @@ package
 	import model.SharedData;
 	
 	import mx.resources.ResourceManager;
-
 	
 	import org.as3commons.logging.api.LOGGER_FACTORY;
 	import org.as3commons.logging.setup.LevelTargetSetup;
@@ -29,6 +30,8 @@ package
 	import org.as3commons.logging.setup.target.TraceTarget;
 	
 	import player.VideoRecorder;
+	
+	import utils.Helpers;
 	
 	[SWF(width="640", height="480")]
 	public class babeliumPlayer extends Sprite
@@ -46,7 +49,6 @@ package
 		
 		public function babeliumPlayer()
 		{
-			
 			this.root.loaderInfo.addEventListener(Event.COMPLETE, complete);
 		}
 		
@@ -56,7 +58,10 @@ package
 			appWidth=this.root.loaderInfo.width;
 			appHeight=this.root.loaderInfo.height;
 			
-			videoId=this.root.loaderInfo.parameters.videoId;
+			videoId=this.root.loaderInfo.parameters.video_id;
+			explicit_locale=this.root.loaderInfo.parameters.language_file;
+			
+			loadLocalizationBundle(explicit_locale);
 			
 			VP = new VideoRecorder();
 			VP.addEventListener(VideoPlayerEvent.CONNECTED, onConnect);
@@ -67,12 +72,8 @@ package
 			//parseUrl("rtmpe://babelium/exeffi001.flv");
 			//parseUrl("rtmps://babbelum:19234/sdfeif.flv");
 			//parseUrl("rtp://babeliumproject.com/sdfoisjef/sfei.fvl");
-			
-			explicit_locale=this.root.loaderInfo.parameters.locale;
-			explicit_locale=parseLocale(explicit_locale);
-			if(explicit_locale){
-				ResourceManager.getInstance().localeChain=[explicit_locale];
-			}
+
+		
 			if (videoId != null)
 				VP.videoSource=SharedData.getInstance().streamingManager.exerciseStreamsFolder + "/" + videoId;
 			stage.color=0x00ff00;
@@ -92,35 +93,22 @@ package
 			}
 		}
 		
-		private function parseLocale(locale:String):String{
-			var parsed_locale:String=null;
-			var language:String=null;
-			var country:String=null;
-			var available_languages:Array;
-			if(locale){
-				available_languages = ResourceManager.getInstance().getLocales();
-				var parts:Array = locale.split("_");
-				if (parts.length > 0){
-					language = parts[0];
-					if (parts.length > 1)
-						country = (parts[1] as String).toUpperCase();
-					for each (var l:String in available_languages){
-						var lparts:Array = l.split("_");
-						if(country){
-							if(lparts[0] == language && lparts[1] == country){
-								parsed_locale = l;
-								break;
-							}
-						} else{
-							if(lparts[0] == language){
-								parsed_locale = l;
-								break;
-							}
-						}
-					}
-				}	
+		private function loadLocalizationBundle(url:String):void{
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, parseLocalizationBundle);
+			loader.load(new URLRequest(url));
+		}
+		
+		private function parseLocalizationBundle(e:Event):void{
+			XML.ignoreWhitespace = true;
+			var bundle:XML = new XML(e.target.data);
+			//XML attributes are referenced using @
+			var locale:String = bundle.@locale; 
+			var messages:Object = new Object();
+			for each(var msg:XML in bundle.messages.msg){
+				messages[msg.@name] = msg.text();
 			}
-			return parsed_locale;
+			SharedData.getInstance().localizationBundle = messages;
 		}
 		
 		/**

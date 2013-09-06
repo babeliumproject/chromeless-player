@@ -61,7 +61,7 @@ package player
 		
 		// Other constants
 		private const RESPONSE_FOLDER:String=SharedData.getInstance().streamingManager.responseStreamsFolder;
-		private const DEFAULT_VOLUME:Number=40;
+
 		private const COUNTDOWN_TIMER_SECS:int=5;
 		
 		private var _state:int;
@@ -71,9 +71,8 @@ package player
 		private var _secondStreamSource:String;
 
 		private var _mic:Microphone;
-		private var _volumeTransform:SoundTransform=new SoundTransform();
-
 		private var _camera:Camera;
+		
 		private var _camVideo:Video;
 		private var _defaultCamWidth:Number=SharedData.getInstance().privacyManager.defaultCameraWidth;
 		private var _defaultCamHeight:Number=SharedData.getInstance().privacyManager.defaultCameraHeight;
@@ -218,13 +217,13 @@ package player
 			_recordingMuted=flag;
 
 			if (getState() & RECORD_FLAG)
-				(flag) ? _mic.gain=0 : _mic.gain=DEFAULT_VOLUME;
+				(flag) ? _mic.gain=0 : _mic.gain=DEFAULT_VOLUME*100;
 			else if (getState() == PLAY_BOTH_STATE)
 			{
 				if (flag && _inNs && _inNs.netStream){
 					_inNs.netStream.soundTransform=new SoundTransform(0);
 				}else if (_inNs && _inNs.netStream){
-					_inNs.netStream.soundTransform=new SoundTransform(DEFAULT_VOLUME / 100);
+					_inNs.netStream.soundTransform=new SoundTransform(DEFAULT_VOLUME);
 				}
 			}
 		}

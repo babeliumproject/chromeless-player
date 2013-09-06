@@ -47,7 +47,7 @@ package api
 			addCB("playVideo",VP.playVideo);
 			//addCB("removeArrows",VP.removeArrows);
 			//addCB("resumeVideo",VP.resumeVideo);
-			//addCB("seekTo",VP.seekTo);
+			addCB("seekTo",VP.seekTo);
 			//addCB("setSubtitle",setSubtitle);
 			//addCB("startTalking",VP.startTalking);
 			//addCB("stopVideo",VP.stopVideo);

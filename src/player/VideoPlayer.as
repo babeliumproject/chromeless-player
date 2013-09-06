@@ -7,7 +7,7 @@ package player
 	import events.StreamingEvent;
 	import events.VideoPlayerEvent;
 	import events.VolumeEvent;
-
+	
 	import flash.display.Sprite;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.Event;
@@ -23,21 +23,20 @@ package player
 	import flash.net.URLRequest;
 	import flash.utils.Dictionary;
 	import flash.utils.Timer;
-
+	
 	import media.MediaManager;
 	import media.NetStreamClient;
-
+	
 	import model.SharedData;
-
+	
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
 
 	public class VideoPlayer extends Sprite
 	{
 
-		/**
-		 * Variables
-		 */
+		protected const DEFAULT_VOLUME:Number = 0.7;
+		
 		protected var _video:Video;
 		protected var _nsc:NetStreamClient;
 		protected var _nc:NetConnection;
@@ -56,19 +55,9 @@ package player
 		protected var _spriteWidth:Number=640;
 		protected var _spriteHeight:Number=360;
 
-		private var _currentVolume:SoundTransform;
+		private var _playbackSoundTransform:SoundTransform;
+		private var _lastVolume:Number;
 		private var _muted:Boolean=false;
-
-		/*
-		public static const PLAYBACK_READY_STATE:int=0;
-		public static const PLAYBACK_STARTED_STATE:int=1;
-		public static const PLAYBACK_STOPPED_STATE:int=2;
-		public static const PLAYBACK_FINISHED_STATE:int=3;
-		public static const PLAYBACK_PAUSED_STATE:int=4;
-		public static const PLAYBACK_UNPAUSED_STATE:int=5;
-		public static const PLAYBACK_BUFFERING_STATE:int=6;
-*/
-	//public var playbackState:int;
 
 		private var playPauseStatus:Boolean=true;
 
@@ -76,6 +65,10 @@ package player
 
 		public function VideoPlayer()
 		{
+			//TODO retrieve the volume from a previously stored flash/http cookie
+			_playbackSoundTransform = new SoundTransform(DEFAULT_VOLUME);
+			_lastVolume = DEFAULT_VOLUME;
+			
 			drawGraphics();
 
 			//Event Listeners
@@ -184,11 +177,11 @@ package player
 			//TODO
 		}
 
-		public function seekTo(time:Number):void
+		public function seekTo(seconds:Number):void
 		{
-			if (!isNaN(time) && time >= 0 && time < _duration)
+			if (!isNaN(seconds) && seconds >= 0 && seconds < _duration)
 			{
-				_nsc.netStream.seek(time);
+				_nsc.netStream.seek(seconds);
 			}
 		}
 
@@ -199,22 +192,22 @@ package player
 
 		public function get streamTime():Number
 		{
-			return _nsc.netStream ? _nsc.netStream.time : 0;
+			return streamReady() ? _nsc.netStream.time : 0;
 		}
 
 		public function getLoadedFragment():Number
 		{
-			return _nsc.netStream ? (_nsc.netStream.bytesLoaded / _nsc.netStream.bytesTotal) : 0;
+			return streamReady() ? (_nsc.netStream.bytesLoaded / _nsc.netStream.bytesTotal) : 0;
 		}
 
 		public function getBytesTotal():Number
 		{
-			return _nsc.netStream ? _nsc.netStream.bytesTotal : 0;
+			return streamReady() ? _nsc.netStream.bytesTotal : 0;
 		}
 
 		public function getBytesLoaded():Number
 		{
-			return _nsc.netStream ? _nsc.netStream.bytesLoaded : 0;
+			return streamReady() ? _nsc.netStream.bytesLoaded : 0;
 		}
 
 		public function get mute():Boolean
@@ -227,11 +220,17 @@ package player
 			_muted=value;
 			if (value)
 			{
-				_nsc.netStream.soundTransform=new SoundTransform(0);
+				//Store the volume that we had before muting to restore to that volume when unmuting
+				_lastVolume =_playbackSoundTransform.volume;
+				_playbackSoundTransform.volume=0;
 			}
 			else
 			{
-				_nsc.netStream.soundTransform=_currentVolume;
+				_playbackSoundTransform.volume=_lastVolume;
+			}
+			//Make sure we have a working NetStream object before setting its sound transform
+			if(streamReady()) {
+				_nsc.netStream.soundTransform=_playbackSoundTransform;
 			}
 		}
 
@@ -239,7 +238,7 @@ package player
 		{
 			try
 			{
-				return _nsc.netStream ? _nsc.netStream.soundTransform.volume * 100 : 0;
+				return streamReady() ? _nsc.netStream.soundTransform.volume * 100 : 0;
 			}
 			catch (e:Error)
 			{
@@ -250,10 +249,12 @@ package player
 
 		public function setVolume(value:Number):void
 		{
-			if (!isNaN(value) && value >= 0 && value <= 100 && _nsc.netStream)
+			if (!isNaN(value) && value >= 0 && value <= 100)
 			{
-				_currentVolume.volume=value / 100;
-				_nsc.netStream.soundTransform=_currentVolume;
+				_playbackSoundTransform.volume=value / 100;
+				if(streamReady()){
+					_nsc.netStream.soundTransform=_playbackSoundTransform;
+				}
 			}
 		}
 
@@ -275,8 +276,8 @@ package player
 		}
 */
 	/**
-				 * Set total width/height of videoplayer
-				 */
+					 * Set total width/height of videoplayer
+					 */
 		protected function set totalWidth(w:Number):void
 		{
 			super.width=w;
@@ -309,7 +310,7 @@ package player
 		{
 			if (SharedData.getInstance().streamingManager.netConnected == true)
 			{
-		
+
 				//Get the netConnection reference
 				_nc=SharedData.getInstance().streamingManager.netConnection;
 
@@ -322,7 +323,7 @@ package player
 			}
 		}
 
-	
+
 		public function connectToStreamingServer():void
 		{
 			if (!SharedData.getInstance().streamingManager.netConnection.connected)
@@ -369,8 +370,7 @@ package player
 				_nsc=new NetStreamClient(_nc, "playbackStream");
 				_video.attachNetStream(_nsc.netStream);
 				_video.visible=true;
-				_currentVolume=new SoundTransform();
-				_nsc.netStream.soundTransform=_currentVolume;
+				_nsc.netStream.soundTransform=_playbackSoundTransform;
 				_nsc.addEventListener(NetStreamClientEvent.METADATA_RETRIEVED, onMetaData);
 				_nsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
 
@@ -389,7 +389,7 @@ package player
 
 		public function playVideo():void
 		{
-			if (!_nsc.netStream)
+			if (!_nsc || !_nsc.netStream)
 				return;
 			if (_nsc.streamState == NetStreamClient.STREAM_PAUSED)
 			{
@@ -404,13 +404,13 @@ package player
 
 		public function pauseVideo():void
 		{
-			if (_nsc.netStream && (_nsc.streamState == NetStreamClient.STREAM_STARTED || _nsc.streamState == NetStreamClient.STREAM_BUFFERING))
+			if (_nsc && _nsc.netStream && (_nsc.streamState == NetStreamClient.STREAM_STARTED || _nsc.streamState == NetStreamClient.STREAM_BUFFERING))
 				_nsc.netStream.togglePause();
 		}
 
 		public function resumeVideo():void
 		{
-			if (_nsc.netStream && _nsc.streamState == NetStreamClient.STREAM_PAUSED)
+			if (_nsc && _nsc.netStream && _nsc.streamState == NetStreamClient.STREAM_PAUSED)
 				_nsc.netStream.togglePause();
 		}
 
@@ -554,6 +554,10 @@ package player
 		{
 			_video.attachNetStream(null);
 			_video.visible=false;
+		}
+		
+		protected function streamReady():Boolean {
+			return _nsc && _nsc.netStream;
 		}
 	}
 }

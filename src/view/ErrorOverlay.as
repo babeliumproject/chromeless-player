@@ -15,11 +15,12 @@ package view
 	import flash.text.TextFieldType;
 	import flash.text.TextFormat;
 	
+	import media.MediaManager;
+	
+	import model.SharedData;
 	
 	import mx.resources.ResourceBundle;
 	import mx.resources.ResourceManager;
-	
-	import media.MediaManager;
 	
 	public class ErrorOverlay extends Sprite
 	{
@@ -73,7 +74,7 @@ package view
 			_textFormat.size = 14;
 			
 			message = new TextField();
-			message.text = ResourceManager.getInstance().getString('messages',"NO_CONNECTION") ? ResourceManager.getInstance().getString('messages',"NO_CONNECTION") : "Communication lost. Trying to reconnect...";
+			message.text = SharedData.getInstance().localizationBundle["NO_CONNECTION"] ? SharedData.getInstance().localizationBundle["NO_CONNECTION"] : "Communication lost. Trying to reconnect...";
 			message.selectable = false;
 			message.autoSize = TextFieldAutoSize.CENTER;
 			message.x = nWidth/2 - message.textWidth/2;

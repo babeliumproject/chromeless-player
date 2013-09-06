@@ -20,8 +20,6 @@ package media
 	import org.as3commons.logging.api.getLogger;
 
 
-	//http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetStream.html
-
 	public class NetStreamClient extends EventDispatcher implements INetStreamClientCallbacks
 	{
 		public static const STREAM_UNREADY:int=-1;

@@ -12,7 +12,7 @@ package model
 		public var privacyManager:UserDeviceManager;
 		public var streamingManager:MediaManager;
 		public var eventPointManager:EventPointManager;
-		
+		public var localizationBundle:Object;
 		
 		/**
 		 * Retrieves the current instance of SharedData or creates a new one 
@@ -35,6 +35,7 @@ package model
 			privacyManager=new UserDeviceManager();
 			streamingManager=new MediaManager();
 			eventPointManager=new EventPointManager();
+			localizationBundle=new Object();
 		}
 		
 		

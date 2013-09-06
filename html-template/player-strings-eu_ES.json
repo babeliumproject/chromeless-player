@@ -1,0 +1,27 @@
+{
+	"locale": "eu",
+	"messages": [
+		{"name": "BUTTON_CANCEL", "text": "Utzi"},
+		{"name": "BUTTON_OK", "text": "Ados"},
+		{"name": "BUTTON_RECORD", "text": "Grabatu"},
+		{"name": "BUTTON_RETRY", "text": "Saiatu Berriz"},
+		{"name": "BUTTON_SHOW_PRIVACY_SETTINGS", "text": "Pribatutasun hobespenak ikusi"},
+		{"name": "HIDE_SUBTITLES", "text": "Azpitituluak izkutatu"},
+		{"name": "LABEL_MIC_INPUT_LEVEL", "text": "Mikrofono sarrera maila"},
+		{"name": "LABEL_MIC_WAITING_FOR_INPUT", "text": "Mikrofono aktibitateari itxaroten"},
+		{"name": "LABEL_ROLE_CURRENTLY_TALKING", "text": "Hizketan"},
+		{"name": "NO_CONNECTION", "text": "Streaming konexioa galdu da. Birkonektatzen saiatzen..."},
+		{"name": "SHOW_SUBTITLES", "text": "Azpitituluak agertarazi"},
+		{"name": "SUBITLE_START_TIME_TOOLTIP", "text": "Azpititulu lerroa hasieratu"},
+		{"name": "SUBTITLE_STOP_TIME_TOOLTIP", "text": "Azpititulu lerror geldiarazi"},
+		{"name": "TEXT_ADMINISTRATIVELY_DISABLED", "text": "Zure webkam eta mikrofonoa administratiboki desgaituta daude. Mesedez zure sistemako kudeatzailearekin harremanetan jarri."},
+		{"name": "TEXT_CAMERA_NOT_FOUND", "text": "Zure kamera gailua ezin izan da detektatu. Mesedez ziurtatu zure gailua ondo konektatuta dagoela eta ondoren sakatu 'Saiatu berriz' edo 'Utzi' grabaketa bertan behera uzteko."},
+		{"name": "TEXT_MIC_NOT_FOUND", "text": "Zure mikrofono gailua ezin izan da detektatu. Mesedez ziurtatu zure gailua ondo konektatuta dagoela eta ondoren sakatu 'Saiatu berriz' edo 'Utzi' grabaketa bertan behera uzteko."},
+		{"name": "TEXT_MIC_TEST_EXPLAIN", "text": "Froga honek zure mikrofonoa espero bezala funtzionatzen duela eta ariketa bat grabatzeko beharrezkoa den bolumen-maila minimoa detektatzen dela konprobatzen du."},
+		{"name": "TEXT_PRIVACY_RIGHTS_EXPLAIN", "text": "Mesedez sakatu 'Baimendu' ondoko leihoa agertzean. Zenbait gauza grabatu nahi badituzu sakatu "Gogoratu" eta honela urrats hau errepikatzeko beharrik ez duzu izango."},
+		{"name": "TITLE_CONFIRMATION", "text": "Berrespena"},
+		{"name": "TITLE_ERROR", "text": "Errorea"},
+		{"name": "TITLE_INFORMATION", "text": "Informazioa"},
+		{"name": "TITLE_PRIVACY_SETTINGS", "text": "Pribatutasunaren konfigurazioa"}
+	]
+}

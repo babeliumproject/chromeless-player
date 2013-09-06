@@ -40,7 +40,7 @@
             var swfVersionStr = "${version_major}.${version_minor}.${version_revision}";
             // To use express install, set to playerProductInstall.swf, otherwise the empty string. 
             var xiSwfUrlStr = "${expressInstallSwf}";
-            var flashvars = {"videoId":"U1MbBtkIGZQ.flv"};
+            var flashvars = {"video_id":"U1MbBtkIGZQ.flv", "language_file":"http://development/chromeless_player/player-strings-eu_ES.xml"};
             var params = {};
             params.quality = "high";
             params.bgcolor = "${bgcolor}";
@@ -137,6 +137,15 @@
 	        else if(babeliumPlayer){
 	        	babeliumPlayer.setVolume(volume);
 	        }
+	      }
+	      
+	      function seekVideoTime() {
+	    	  var time = parseInt(document.getElementById("seekTo").value);
+	    	  if(isNaN(time) || time < 0){
+	    		  alert("Please enter a positive time")
+	    	  } else if(babeliumPlayer){
+	    		  babeliumPlayer.seekTo(time);
+	    	  }
 	      }
 	      
 	      function playVideo() {
@@ -329,7 +338,8 @@
         	<p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span id="videoDuration">--:--</span></p>
         	<p>Bytes Total: <span id="bytesTotal">--</span> | Start Bytes: <span id="startBytes">--</span> | Bytes Loaded: <span id="bytesLoaded">--</span></p>
         	<p>Mic. activity level: <span id="micActivityLevel">--</span></p>
-        	<p>Controls: <a href="javascript:void(0);" onclick="playVideo();">Play</a> | <a href="javascript:void(0);" onclick="pauseVideo();">Pause</a> | <a href="javascript:void(0);" onclick="muteVideo();">Mute</a> | <a href="javascript:void(0);" onclick="unMuteVideo();">Unmute</a></p>
+        	<p>Controls: <a href="javascript:void(0);" onclick="playVideo();">Play</a> | <a href="javascript:void(0);" onclick="pauseVideo();">Pause</a> | <a href="javascript:void(0);" onclick="muteVideo();">Mute</a> | <a href="javascript:void(0);" onclick="unMuteVideo();">Unmute</a>
+        		| <a href="javascript:void(0)" onclick="seekVideoTime()">Seek to</a>&nbsp;<input id="seekTo" type="text" size="3" /></p>
         	<p>Recording controls: <a href="javascript:void(0);" onclick="recordVideo();">Record</a> | <a href="javascript:void(0);" onclick="abortRecording();">Abort recording</a></p>
         	<p>Recording devices: 
         		<input id="recmethod_0" type="radio" value="0" name="recMethod" checked="checked"/>Microphone
