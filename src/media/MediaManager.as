@@ -61,19 +61,6 @@ package media
 		{
 			netConnection=new NetConnection();
 		}
-		
-		public function parseUrl(url:String):void{
-			var rtmpUrl:Boolean=false;
-			//TODO
-			if(rtmpUrl)
-				connect(url);
-			else
-				connect(null);
-		}
-		
-		private function retrieveVideoById():void{
-			//TODO
-		}
 
 		/**
 		 * Attempts to connect to the streaming server using the settings of DataModel and the provided proxy and AMF encodings
@@ -197,13 +184,13 @@ package media
 
 					case "NetConnection.Connect.Failed":
 						trace("Connection to server failed");
-						if(!encapsulateRTMP){
-							encapsulateRTMP = true;
-						} else {
+						//if(!encapsulateRTMP){
+						//	encapsulateRTMP = true;
+						//} else {
 							netConnected=false;
 							dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
-						}
-						connect(proxy,encoding);
+						//}
+						//connect(proxy,encoding);
 						break;
 
 					case "NetConnection.Connect.Closed":

@@ -10,6 +10,7 @@ package
 	import flash.display.SpreadMethod;
 	import flash.display.Sprite;
 	import flash.events.Event;
+	import flash.events.IOErrorEvent;
 	import flash.events.KeyboardEvent;
 	import flash.geom.Matrix;
 	import flash.net.URLLoader;
@@ -39,10 +40,11 @@ package
 		LOGGER_FACTORY.setup = new LevelTargetSetup( new TraceTarget, LogSetupLevel.DEBUG );
 		//LOGGER_FACTORY.setup = new LevelTargetSetup(new FirebugTarget(), LogSetupLevel.DEBUG );
 		
-		private var videoId:String=null;
+		private var video_id:String=null;
+		private var video_url:String=null;
 		private var explicit_locale:String=null;
 		
-		private var VP:VideoRecorder;
+		private var mediaplayer:VideoRecorder;
 		
 		private var appWidth:uint;
 		private var appHeight:uint;
@@ -53,50 +55,39 @@ package
 		}
 		
 		private function complete(event:Event):void{
+			
+			stage.color=0x00ff00;
+			
 			Security.allowDomain("*");
 			
 			appWidth=this.root.loaderInfo.width;
 			appHeight=this.root.loaderInfo.height;
 			
-			videoId=this.root.loaderInfo.parameters.video_id;
+			video_url=this.root.loaderInfo.parameters.video_url;
+			video_id=this.root.loaderInfo.parameters.video_id;
 			explicit_locale=this.root.loaderInfo.parameters.language_file;
 			
 			loadLocalizationBundle(explicit_locale);
 			
-			VP = new VideoRecorder();
-			VP.addEventListener(VideoPlayerEvent.CONNECTED, onConnect);
-			addChild(VP);
+			mediaplayer = new VideoRecorder();
+			//mediaplayer.addEventListener(VideoPlayerEvent.CREATION_COMPLETE, onVideoPlayerLoaded);
 			
-			//parseUrl("rtmp://babelium/exercises/567b5464v");
-			//parseUrl("rtmpt://babeliumproject.com/sdflkjsdf/sdflkjsdf/sdfkdfk444");
-			//parseUrl("rtmpe://babelium/exeffi001.flv");
-			//parseUrl("rtmps://babbelum:19234/sdfeif.flv");
-			//parseUrl("rtp://babeliumproject.com/sdfoisjef/sfei.fvl");
-
-		
-			if (videoId != null)
-				VP.videoSource=SharedData.getInstance().streamingManager.exerciseStreamsFolder + "/" + videoId;
-			stage.color=0x00ff00;
+			addChild(mediaplayer);
+			
 			// Setups javascripts external controls
-			JavascriptAPI.getInstance().setup(VP);
-			//addChild(VP);
-			VP.width=appWidth;
-			VP.height=appHeight;
-			//stage.addEventListener(KeyboardEvent.KEY_DOWN, kdown);
-		}
-		
-		private function kdown(event:KeyboardEvent):void{
-			trace(String.fromCharCode(event.charCode));
-			if(String.fromCharCode(event.charCode) == 'a'){
-				trace("a presed");
-				VP.loadVideo();
-			}
+			JavascriptAPI.getInstance().setup(mediaplayer);
+			onVideoPlayerLoaded(null);
 		}
 		
 		private function loadLocalizationBundle(url:String):void{
 			var loader:URLLoader = new URLLoader();
 			loader.addEventListener(Event.COMPLETE, parseLocalizationBundle);
+			loader.addEventListener(IOErrorEvent.IO_ERROR, urlNotAvailable);
 			loader.load(new URLRequest(url));
+		}
+		
+		private function urlNotAvailable(e:IOErrorEvent):void{
+			trace("Couldn't load the specified resource from the url. "+e.text);
 		}
 		
 		private function parseLocalizationBundle(e:Event):void{
@@ -111,43 +102,30 @@ package
 			SharedData.getInstance().localizationBundle = messages;
 		}
 		
-		/**
-		 * Parse the given parameter to check whether it is an acceptable URL for either progressive download
-		 * or streaming, retrieving the domain name along the process. 
-		 * 
-		 * @param url 
-		 */		
-		public function parseUrl(url:String):void{
-			if (url.length >=4096) return;
-			
-			//var prRegExp:RegExp=new RegExp("(^http[s]?\:\\/\\/+)([^\\/]+$)");
-			//var stRegExp:RegExp=new RegExp("^rtmp[t|e|s]?\:\\/\\/([^\\/]+)");
-			var stRegExp:RegExp=new RegExp("(^rtmp[t|e|s]?\:\\/\\/.+)\\/(.+)");
-			//var resultPr:Object=prRegExp.exec(url);
-			var resultSt:Object=stRegExp.exec(url);
-			//trace(""+resultPr.toString());
-			if(resultSt)
-			trace("Parse: "+resultSt[0]+"\t"+resultSt[1]+"\t"+resultSt[2]);
-			//if (!resultPr && !resultSt){
-			//
-			//}
-		}
+	
 		
-		private function onConnect(e:Event):void
+		private function onVideoPlayerLoaded(e:Event):void
 		{
-			//Extern.getInstance().onConnectionReady();
+			trace("VideoRecorded loaded");
+			mediaplayer.width=appWidth;
+			mediaplayer.height=appHeight;
+			
+			if (video_id != null){
+				mediaplayer.loadVideoById(video_id);
+			}	
+			
 			JavascriptAPI.getInstance().onBabeliumPlayerReady();
 		}
 		
 		private function set onUpdateVPHeight(height:int):void
 		{
-			trace("VP Height: "+VP.height);
+			trace("VP Height: "+mediaplayer.height);
 			//Extern.getInstance().resizeHeight(height);
 		}
 		
 		private function set onUpdateVPWidth(width:int):void
 		{
-			trace("VP Width: "+VP.width);
+			trace("VP Width: "+mediaplayer.width);
 			//Extern.getInstance().resizeWidth(width);
 		}
 		

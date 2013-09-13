@@ -35,49 +35,47 @@ package player
 	public class VideoPlayer extends Sprite
 	{
 
-		protected const DEFAULT_VOLUME:Number = 0.7;
-		
+		protected const DEFAULT_VOLUME:Number=0.7;
+
 		protected var _video:Video;
 		protected var _nsc:NetStreamClient;
-		protected var _nc:NetConnection;
 
-		private var _videoSource:String=null;
-		protected var _streamSource:String=null;
+		protected var _videoUrl:String=null;
 
-		private var _autoPlay:Boolean=true;
-		private var _smooth:Boolean=true;
-		private var _currentTime:Number=0;
-		private var _autoScale:Boolean=false;
+		protected var _autoPlay:Boolean=false;
+		protected var _smooth:Boolean=true;
+		protected var _currentTime:Number=0;
+		protected var _autoScale:Boolean=false;
 		protected var _duration:Number=0;
-		protected var _started:Boolean=false;
+		protected var _videoReady:Boolean=false;
+		protected var _videoPlaying:Boolean=false;
 		protected var _defaultMargin:Number=0;
 
-		protected var _spriteWidth:Number=640;
-		protected var _spriteHeight:Number=360;
+		protected var _defaultWidth:Number=640;
+		protected var _defaultHeight:Number=360;
 
-		private var _playbackSoundTransform:SoundTransform;
-		private var _lastVolume:Number;
-		private var _muted:Boolean=false;
+		protected var _playbackSoundTransform:SoundTransform;
+		protected var _lastVolume:Number;
+		protected var _muted:Boolean=false;
 
-		private var playPauseStatus:Boolean=true;
+		protected var playPauseStatus:Boolean=true;
 
-		private static const logger:ILogger=getLogger(VideoPlayer);
+		protected static const logger:ILogger=getLogger(VideoPlayer);
 
 		public function VideoPlayer()
 		{
 			//TODO retrieve the volume from a previously stored flash/http cookie
-			_playbackSoundTransform = new SoundTransform(DEFAULT_VOLUME);
-			_lastVolume = DEFAULT_VOLUME;
+			_playbackSoundTransform=new SoundTransform(DEFAULT_VOLUME);
+			_lastVolume=DEFAULT_VOLUME;
+
+			
+			//Event Listeners
+			//addEventListener(VideoPlayerEvent.VIDEO_SOURCE_CHANGED, onSourceChange);
+			addEventListener(VideoPlayerEvent.VIDEO_FINISHED_PLAYING, onVideoFinishedPlaying);
 			
 			drawGraphics();
 
-			//Event Listeners
-			addEventListener(VideoPlayerEvent.VIDEO_SOURCE_CHANGED, onSourceChange);
-			addEventListener(VideoPlayerEvent.VIDEO_FINISHED_PLAYING, onVideoFinishedPlaying);
-
-
-			onComplete();
-
+			dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.CREATION_COMPLETE));
 		}
 
 		private function drawGraphics():void
@@ -85,56 +83,22 @@ package player
 
 			graphics.clear();
 			graphics.beginFill(0x0000FF, 1);
-			graphics.drawRect(0, 0, _spriteWidth, _spriteHeight);
+			graphics.drawRect(0, 0, _defaultWidth, _defaultHeight);
 			graphics.endFill();
 
 			_video=new Video();
 			_video.smoothing=_smooth;
 			_video.x=_video.y=0;
 			addChild(_video);
-		}
-
-
-		/**
-		 * Video streaming source
-		 *
-		 */
-		public function set videoSource(location:String):void
-		{
-			_videoSource=location;
-			//if(!StreamingManager.getInstance().netConnected)
-			//	return;
-
-			if (location != "")
-				dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.VIDEO_SOURCE_CHANGED));
-			else
-				resetAppearance();
-		}
-
-		public function get videoSource():String
-		{
-			return _videoSource;
-		}
-
-		/**
-		 * Flash server
-		 */
-		public function set streamSource(location:String):void
-		{
-			_streamSource=location;
-		}
-
-		public function get streamSource():String
-		{
-			return _streamSource;
+			trace("End of drawgraphics player");
 		}
 
 		/**
 		 * Autoplay
 		 */
-		public function set autoPlay(tf:Boolean):void
+		public function set autoPlay(value:Boolean):void
 		{
-			_autoPlay=tf;
+			_autoPlay=value;
 		}
 
 		public function get autoPlay():Boolean
@@ -143,15 +107,12 @@ package player
 		}
 
 
-		/**
-		 * Smooting
-		 */
-		public function set videoSmooting(tf:Boolean):void
+		public function set videoSmoothing(smooth:Boolean):void
 		{
-			_autoPlay=_smooth;
+			_smooth=smooth;
 		}
 
-		public function get videoSmooting():Boolean
+		public function get videoSmoothing():Boolean
 		{
 			return _smooth;
 		}
@@ -179,7 +140,7 @@ package player
 
 		public function seekTo(seconds:Number):void
 		{
-			if (!isNaN(seconds) && seconds >= 0 && seconds < _duration)
+			if (!isNaN(seconds) && seconds >= 0 && seconds < _duration && streamReady(_nsc))
 			{
 				_nsc.netStream.seek(seconds);
 			}
@@ -192,22 +153,22 @@ package player
 
 		public function get streamTime():Number
 		{
-			return streamReady() ? _nsc.netStream.time : 0;
+			return streamReady(_nsc) ? _nsc.netStream.time : 0;
 		}
 
 		public function getLoadedFragment():Number
 		{
-			return streamReady() ? (_nsc.netStream.bytesLoaded / _nsc.netStream.bytesTotal) : 0;
+			return streamReady(_nsc) ? (_nsc.netStream.bytesLoaded / _nsc.netStream.bytesTotal) : 0;
 		}
 
 		public function getBytesTotal():Number
 		{
-			return streamReady() ? _nsc.netStream.bytesTotal : 0;
+			return streamReady(_nsc) ? _nsc.netStream.bytesTotal : 0;
 		}
 
 		public function getBytesLoaded():Number
 		{
-			return streamReady() ? _nsc.netStream.bytesLoaded : 0;
+			return streamReady(_nsc) ? _nsc.netStream.bytesLoaded : 0;
 		}
 
 		public function get mute():Boolean
@@ -221,7 +182,7 @@ package player
 			if (value)
 			{
 				//Store the volume that we had before muting to restore to that volume when unmuting
-				_lastVolume =_playbackSoundTransform.volume;
+				_lastVolume=_playbackSoundTransform.volume;
 				_playbackSoundTransform.volume=0;
 			}
 			else
@@ -229,7 +190,8 @@ package player
 				_playbackSoundTransform.volume=_lastVolume;
 			}
 			//Make sure we have a working NetStream object before setting its sound transform
-			if(streamReady()) {
+			if (streamReady(_nsc))
+			{
 				_nsc.netStream.soundTransform=_playbackSoundTransform;
 			}
 		}
@@ -238,7 +200,7 @@ package player
 		{
 			try
 			{
-				return streamReady() ? _nsc.netStream.soundTransform.volume * 100 : 0;
+				return streamReady(_nsc) ? _nsc.netStream.soundTransform.volume * 100 : 0;
 			}
 			catch (e:Error)
 			{
@@ -252,89 +214,16 @@ package player
 			if (!isNaN(value) && value >= 0 && value <= 100)
 			{
 				_playbackSoundTransform.volume=value / 100;
-				if(streamReady()){
+				if (streamReady(_nsc))
+				{
 					_nsc.netStream.soundTransform=_playbackSoundTransform;
 				}
 			}
 		}
 
-		/**
-		 * Set width/height of video widget
-		 */
-		/*
-		override public function set width(w:Number):void
-		{
-			totalWidth=w;
-			_videoWidth=w - 2 * _defaultMargin;
-
-		}
-
-		override public function set height(h:Number):void
-		{
-			totalHeight=h;
-			_videoHeight=h - 2 * _defaultMargin;
-		}
-*/
-	/**
-					 * Set total width/height of videoplayer
-					 */
-		protected function set totalWidth(w:Number):void
-		{
-			super.width=w;
-		}
-
-		protected function set totalHeight(h:Number):void
-		{
-			super.height=h;
-		}
-
-		/**
-		 * On creation complete
-		 */
 		private function onComplete():void
 		{
-			//Establish a binding to listen the status of netConnection
-			//BindingUtils.bindSetter(onStreamNetConnect, DataModel.getInstance(), "netConnected");
-			//StreamingManager.getInstance().addEventListener(StreamingEvent.CONNECTED_CHANGE,onStreamNetConnect);
-			trace("videoPlayer onComplete");
-			//onStreamNetConnect();
-
-			// Dispatch CREATION_COMPLETE event
-			dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.CREATION_COMPLETE));
-		}
-
-		/**
-		 * On stream connect
-		 */
-		protected function onStreamNetConnect(event:StreamingEvent=null):void
-		{
-			if (SharedData.getInstance().streamingManager.netConnected == true)
-			{
-
-				//Get the netConnection reference
-				_nc=SharedData.getInstance().streamingManager.netConnection;
-
-				loadVideo();
-				playPauseStatus=false;
-				if (!_autoPlay)
-					pauseVideo();
-
-				this.dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.CONNECTED));
-			}
-		}
-
-
-		public function connectToStreamingServer():void
-		{
-			if (!SharedData.getInstance().streamingManager.netConnection.connected)
-			{
-				trace("Trying to connect");
-				SharedData.getInstance().streamingManager.connect();
-			}
-			else
-			{
-				onStreamNetConnect();
-			}
+			
 		}
 
 		public function loadVideoByUrl(url:String):void
@@ -351,45 +240,55 @@ package player
 
 		}
 
-		/**
-		 * Stream controls
-		 */
-		public function loadVideo():void
+		public function loadVideoById(videoId:String):void
+		{
+			if (videoId != '')
+			{
+				resetAppearance();
+				_videoUrl=videoId;
+				if(streamReady(_nsc)){
+					_nsc.netStream.close();
+					_nsc.netStream.dispose();
+				}
+				_nsc=null;
+				_nsc=new NetStreamClient(videoId, "playbackStream");
+				_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+			}
+			else
+			{
+				trace("Empty video ID provided");
+			}
+		}
+
+		protected function onNetStreamReady(event:NetStreamClientEvent):void
 		{
 			try
 			{
-				if (!_nc || !_nc.connected || !SharedData.getInstance().streamingManager.netConnected)
-				{
-					playPauseStatus=true;
-					return;
-				}
-
-				if (_nsc && _nsc.netStream)
-					_nsc.netStream.dispose();
-
-				_nsc=new NetStreamClient(_nc, "playbackStream");
+				logger.debug("NetStreamClient {0} is ready", [event.streamId]);
 				_video.attachNetStream(_nsc.netStream);
 				_video.visible=true;
 				_nsc.netStream.soundTransform=_playbackSoundTransform;
 				_nsc.addEventListener(NetStreamClientEvent.METADATA_RETRIEVED, onMetaData);
 				_nsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
-
-				if (_videoSource != '')
+				if (_videoUrl != '')
 				{
-					_nsc.play(_videoSource);
-
-					_started=true;
+					_nsc.play("exercises/"+_videoUrl);
+					_videoReady=true;
+					//if(!_autoPlay){
+					//	_nsc.netStream.togglePause();
+					//}
 				}
 			}
 			catch (e:Error)
 			{
+				_videoReady=false;
 				logger.error("Error while loading video. [{0}] {1}", [e.errorID, e.message]);
 			}
 		}
 
 		public function playVideo():void
 		{
-			if (!_nsc || !_nsc.netStream)
+			if (!streamReady(_nsc))
 				return;
 			if (_nsc.streamState == NetStreamClient.STREAM_PAUSED)
 			{
@@ -397,35 +296,30 @@ package player
 			}
 			else
 			{
+				_autoPlay=true;
 				if (!_nsc.netStream.time)
-					loadVideo();
+					loadVideoById(_videoUrl);
 			}
 		}
 
 		public function pauseVideo():void
 		{
-			if (_nsc && _nsc.netStream && (_nsc.streamState == NetStreamClient.STREAM_STARTED || _nsc.streamState == NetStreamClient.STREAM_BUFFERING))
+			if (streamReady(_nsc) && (_nsc.streamState == NetStreamClient.STREAM_STARTED || _nsc.streamState == NetStreamClient.STREAM_BUFFERING))
 				_nsc.netStream.togglePause();
 		}
 
 		public function resumeVideo():void
 		{
-			if (_nsc && _nsc.netStream && _nsc.streamState == NetStreamClient.STREAM_PAUSED)
+			if (streamReady(_nsc) && _nsc.streamState == NetStreamClient.STREAM_PAUSED)
 				_nsc.netStream.togglePause();
 		}
 
 		public function stopVideo():void
 		{
-			if (!SharedData.getInstance().streamingManager.netConnected)
-				return;
-
-			if (_nsc.netStream)
+			if (streamReady(_nsc))
 			{
-				trace("stop video")
 				_nsc.play(false);
 				_video.clear();
-					//_ns.pause();
-					//_ns.seek(0);
 			}
 
 			playPauseStatus=false;
@@ -435,12 +329,9 @@ package player
 		{
 			stopVideo();
 			if (_nsc.netStream)
-				_nsc.netStream.close();
+				_nsc.netStream.close(); //Cleans the cache of the video
 		}
 
-		/**
-		 * On video information retrieved
-		 */
 		public function onMetaData(event:NetStreamClientEvent):void
 		{
 			_duration=_nsc.duration;
@@ -457,45 +348,24 @@ package player
 			if (event.state == NetStreamClient.STREAM_FINISHED)
 			{
 				stopVideo();
+				_videoPlaying=false;
 			}
 			if (event.state == NetStreamClient.STREAM_STARTED)
 			{
-				//TODO
+				if(!_videoPlaying && !_autoPlay) pauseVideo();
+				_videoPlaying=true;
 			}
 			dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.STATE_CHANGED, event.state));
 		}
 
-		/**
-		 * On video source changed
-		 */
 		public function onSourceChange(e:VideoPlayerEvent):void
 		{
 			trace("onSourceChange")
-
-			// If it's connected go ahead and try to play the video otherwise, attempt to connect to server
-			if (_nc && _nc.connected && SharedData.getInstance().streamingManager.netConnected)
-			{
-				loadVideo();
-				playPauseStatus=false;
-
-				if (!autoPlay)
-					pauseVideo();
-			}
-			else
-			{
-				SharedData.getInstance().streamingManager.addEventListener(StreamingEvent.CONNECTED_CHANGE, onStreamNetConnect);
-				onStreamNetConnect();
-			}
 		}
 
-
-
-		/**
-		 * On video finished playing
-		 */
 		protected function onVideoFinishedPlaying(e:VideoPlayerEvent):void
 		{
-			trace("[INFO] Exercise stream: Finished playing video " + _videoSource);
+			logger.info("Finished playing video :" + _videoUrl);
 			stopVideo();
 		}
 
@@ -509,16 +379,14 @@ package player
 		{
 			if (!scaleToFit)
 			{
-				//trace("Scaling info");
-
-				//If the scalation is different in height and width take the smaller one
-				var scaleY:Number=_spriteHeight / _video.height;
-				var scaleX:Number=_spriteWidth / _video.width;
+				//If the scalation amount is different for the X and Y axes take the smaller one
+				var scaleY:Number=_defaultHeight / _video.height;
+				var scaleX:Number=_defaultWidth / _video.width;
 				var scaleC:Number=scaleX < scaleY ? scaleX : scaleY;
 
-				//Center the video in the stage
-				_video.y=Math.floor(_spriteHeight / 2 - (_video.height * scaleC) / 2);
-				_video.x=Math.floor(_spriteWidth / 2 - (_video.width * scaleC) / 2);
+				//Center the video in the container
+				_video.y=Math.floor(_defaultHeight / 2 - (_video.height * scaleC) / 2);
+				_video.x=Math.floor(_defaultWidth / 2 - (_video.width * scaleC) / 2);
 
 				//Leave space for the margins
 				_video.y+=_defaultMargin;
@@ -528,18 +396,12 @@ package player
 				_video.width=Math.ceil(_video.width * scaleC);
 				_video.height=Math.ceil(_video.height * scaleC);
 
-					//trace("Scaling info");
-
-					// 1 black pixel, being smarter
-					//_video.y+=1;
-					//_video.height-=2;
-					//_video.x+=1;
-					//_video.width-=2;
+				logger.debug("Video dimensions: w:{0}, h:{1}, x:{2}, y:{3}", [_video.width, _video.height, _video.x, _video.y]);
 			}
 			else
 			{
-				_video.width=_spriteWidth;
-				_video.height=_spriteHeight;
+				_video.width=_defaultWidth;
+				_video.height=_defaultHeight;
 				_video.y=_defaultMargin;
 				_video.height-=_defaultMargin * 2;
 				_video.x=_defaultMargin;
@@ -555,9 +417,10 @@ package player
 			_video.attachNetStream(null);
 			_video.visible=false;
 		}
-		
-		protected function streamReady():Boolean {
-			return _nsc && _nsc.netStream;
+
+		protected function streamReady(nsc:NetStreamClient):Boolean
+		{
+			return nsc && nsc.netStream;
 		}
 	}
 }

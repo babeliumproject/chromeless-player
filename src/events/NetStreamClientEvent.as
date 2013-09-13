@@ -5,6 +5,8 @@ package events
 	public class NetStreamClientEvent extends Event
 	{
 		
+		public static const NETSTREAM_READY:String="netStreamReady";
+		
 		public static const PLAYBACK_STARTED:String="playbackStarted";
 		public static const PLAYBACK_FINISHED:String="playbackFinished";
 		public static const METADATA_RETRIEVED:String="metadataRetrieved";
@@ -13,11 +15,14 @@ package events
 		public static const STREAM_NOT_FOUND:String="streamNotFound";
 		
 		public static const STATE_CHANGED:String="stateChanged";
+		
+		public var streamId:String;
 		public var state:int;
 		
-		public function NetStreamClientEvent(type:String, state:int=-1, bubbles:Boolean=false, cancelable:Boolean=false)
+		public function NetStreamClientEvent(type:String, streamId:String, state:int=-1, bubbles:Boolean=false, cancelable:Boolean=false)
 		{
 			super(type, bubbles, cancelable);
+			this.streamId=streamId;
 			this.state=state;
 		}
 	}

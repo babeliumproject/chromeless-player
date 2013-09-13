@@ -223,7 +223,8 @@ package api
 		
 		private function secondSource(video:String):void
 		{
-			VP.secondSource = SharedData.getInstance().streamingManager.responseStreamsFolder + "/" + video;
+			//VP.secondSource = SharedData.getInstance().streamingManager.responseStreamsFolder + "/" + video;
+			VP.secondSource = 'url' + "/" + video;
 		}
 		
 		private function seek(flag:Boolean):void
@@ -282,11 +283,13 @@ package api
 		
 		private function exerciseSource(video:String):void
 		{
-			VP.videoSource = SharedData.getInstance().streamingManager.exerciseStreamsFolder + "/" + video;
+			//VP.videoSource = SharedData.getInstance().streamingManager.exerciseStreamsFolder + "/" + video;
+			VP.loadVideoById(video);
 		}
 		
 		private function responseSource(video:String):void{
-			VP.videoSource = SharedData.getInstance().streamingManager.responseStreamsFolder + "/" + video;
+			//VP.videoSource = SharedData.getInstance().streamingManager.responseStreamsFolder + "/" + video;
+			VP.loadVideoById(video);
 		}
 		
 		private function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
@@ -294,7 +297,7 @@ package api
 		}
 		
 		private function abortRecording():void{
-			
+			VP.abortRecording();
 		}
 		
 		//private function addEventListener(event:String, listener:String):void{ //added generic argument type and count to avoid a Windows Flash player bug
