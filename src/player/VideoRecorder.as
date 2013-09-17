@@ -21,6 +21,9 @@ package player
 	
 	import model.*;
 	
+	import org.as3commons.logging.api.ILogger;
+	import org.as3commons.logging.api.getLogger;
+	
 	import view.*;
 
 	public class VideoRecorder extends VideoPlayer
@@ -82,7 +85,12 @@ package player
 		private var privacySprite:PrivacyPanel;
 		private var _micImage:MicImage;
 		
+		private var _recordingReady:Boolean=false;
+		private var _sideBySideReady:Boolean=false;
+		
 		private var _recording:Boolean=false;
+		
+		private static const logger:ILogger=getLogger(VideoRecorder);
 
 		/**
 		 * CONSTRUCTOR
@@ -159,7 +167,6 @@ package player
 			
 			_onTop=new Sprite();
 			addChild(_onTop);
-			trace("End of drawgrapichs recorder");
 		}
 		
 		/** Overriden repaint */
@@ -230,7 +237,7 @@ package player
 		 */
 		private function recoverVideoPanel():void
 		{
-			trace("[INFO] Video player Babelium: Recover video panel");
+			logger.debug("Video panel was reset");
 			// NOTE: problems with _videoWrapper.width
 			if (_lastVideoHeight > _defaultHeight)
 				_defaultHeight=_lastVideoHeight;
@@ -359,7 +366,7 @@ package player
 		 **/
 		public function set secondSource(source:String):void
 		{
-			trace("[INFO] Video player: Second video added to stage");
+			logger.debug("Second video added to stage");
 			if (getState() != PLAY_SIDEBYSIDE_STATE)
 				return;
 
@@ -392,7 +399,7 @@ package player
 		
 		private function streamPositionTimer(enable:Boolean):void{
 			if(enable){
-				if(_cuePointTimer){
+				if(!_cuePointTimer){
 					_cuePointTimer=new Timer(STREAM_TIMER_DELAY, 0); //Try to tick every 20ms
 					_cuePointTimer.addEventListener(TimerEvent.TIMER, onEnterFrame);
 					_cuePointTimer.start();
@@ -573,8 +580,8 @@ package player
 			var micReady:Boolean = privacyManager.microphoneReady();
 			var micAndCamReady:Boolean = micReady && privacyManager.cameraReady();
 			
-			trace("Camera ready: " + micAndCamReady);
-			trace("Microphone ready: " + micReady);
+			logger.info("Camera ready: {0}", [micAndCamReady]);
+			logger.info("Microphone ready: {0}", [micReady]);
 			
 			//The devices are permitted and initialized. Time to configure them
 			if (_state == RECORD_MIC_STATE && micReady || _state == RECORD_MICANDCAM_STATE && micAndCamReady || _state == UPLOAD_MODE_STATE && micAndCamReady) 
@@ -652,17 +659,22 @@ package player
 			_countdown.start();
 		}
 		
+		private function resetCountdown():void{
+			_countdownTxt.visible=false;
+			
+			// Reset countdown timer
+			_countdownTxt.text=COUNTDOWN_TIMER_SECS.toString();
+			if(_countdown){
+				_countdown.stop();
+				_countdown.reset();
+			}
+		}
+		
 		private function onCountdownTick(tick:TimerEvent):void
 		{
 			if (_countdown.currentCount == _countdown.repeatCount)
 			{
-				_countdownTxt.visible=false;
-				
-				// Reset countdown timer
-				_countdownTxt.text=COUNTDOWN_TIMER_SECS.toString();
-				_countdown.stop();
-				_countdown.reset();
-				
+				resetCountdown();
 				startRecording();
 			}
 			else if (getState() != PLAY_STATE)
@@ -686,12 +698,13 @@ package player
 				_camVideo.visible=false;
 				_micImage.visible=false;
 				//disableControls();
-				trace("Panel splitting done");
+				logger.debug("Panel splitting done");
 			}
 
 			if (getState() & RECORD_FLAG)
 			{
 //				_outNs=new NetStreamClient(_nc,"outNs");
+				_recordingReady=false;
 				_recNsc=new NetStreamClient('recordingurl', "recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
 				//disableControls();
@@ -699,6 +712,7 @@ package player
 			
 			if(getState() & UPLOAD_FLAG){
 				// Attach Camera
+				_recordingReady=false;
 				_camVideo.attachCamera(_camera);
 				_camVideo.smoothing=true;
 				
@@ -719,17 +733,19 @@ package player
 		override protected function onNetStreamReady(event:NetStreamClientEvent):void{
 			switch(event.streamId){
 				case "recordingStream":
-					if(_videoReady)
-						startCountdown();
+					_recordingReady=true;
 					break;
 				case "sideBysideStream":
+					_sideBySideReady=true;
 					break;
-				case "playbackStream":
+				case "playbackStream":			
 					super.onNetStreamReady(event);
 					break;
 				default:
 					break;
 			}
+			if(_videoReady && _recordingReady)
+				startCountdown();
 		}
 
 		/**
@@ -763,49 +779,40 @@ package player
 			if (getState() == RECORD_MICANDCAM_STATE)
 				_recNsc.netStream.attachCamera(_camera);
 
-			_nsc.netStream.togglePause();
+			//_nsc.netStream.togglePause();
+			playVideo();
 			_recNsc.netStream.publish(responseFilename, "record");
 			
 			_recording=true;
 
-			trace("[INFO] Response stream: Started recording " + _fileName);
-
-			logger.debug("Right video dimensions: w:{0}, h:{1}, x:{2}, y:{3} isVisible:{4}", [_camVideo.width, _camVideo.height, _camVideo.x, _camVideo.y, _camVideo.visible]);
+			logger.info("Started recording a stream {0}", [_fileName]);
 		}
 
-
-		
-
-		/**
-		 * Overriden on recording finished:
-		 * Gives the filename to the parent component
-		 **/
-		override protected function onVideoFinishedPlaying(e:VideoPlayerEvent):void
-		{
-			super.onVideoFinishedPlaying(e);
-
-			if (getState() & RECORD_FLAG || getState() == UPLOAD_MODE_STATE)
+		override public function onStreamStateChange(event:NetStreamClientEvent):void{
+			super.onStreamStateChange(event);
+			if (event.state == NetStreamClient.STREAM_FINISHED)
 			{
-				//addDummyVideo();
-				unattachUserDevices();
-
-				trace("[INFO] Response stream: Finished recording " + _fileName);
-				dispatchEvent(new RecordingEvent(RecordingEvent.END, _fileName));
-				//enableControls(); 
-				_recording=false;
+				if(_state & RECORD_FLAG){
+					unattachUserDevices();
+					logger.info("Finished recording stream {0}", [_fileName]);
+					_recording=false;
+					setState(VideoRecorder.PLAY_SIDEBYSIDE_STATE);
+					dispatchEvent(new RecordingEvent(RecordingEvent.END, _fileName));
+				} else {
+					dispatchEvent(new RecordingEvent(RecordingEvent.REPLAY_END));
+				}
 			}
-			else
-				dispatchEvent(new RecordingEvent(RecordingEvent.REPLAY_END));
 		}
 		
 		public function unattachUserDevices():void{
-			if (_recNsc && _recNsc.netStream)
+			_camVideo.clear();
+			_camVideo.attachCamera(null);
+			if (streamReady(_recNsc))
 			{
 				_recNsc.netStream.attachCamera(null);
 				_recNsc.netStream.attachAudio(null);
-				_camVideo.clear();
-				_camVideo.attachCamera(null);
 			}
+
 			//if((_onTop.numChildren > 0) && (_onTop.getChildAt(0) is PrivacyRights) )
 			//	removeAllChildren(_onTop); //Remove the privacy box in case someone cancels the recording before starting
 		}
@@ -861,13 +868,16 @@ package player
 					//Add a listener to poll for event points
 					addEventListener(PollingEvent.ENTER_FRAME, eventPointManager.pollEventPoints);
 				} else {
-					trace("No event points found in given recdata");
+					logger.debug("No event points found in given recdata");
 				}
 			}
 			
+			//Enable the polling timer
+			streamPositionTimer(true);
+			
 			//Set autoplay to false to avoid the exercise from playing once loading is done
 			_autoPlay=false;
-			_videoPlaying=false;
+			//_videoPlaying=false;
 			
 			if(exerciseId){
 				//Load the exercise to play alongside the recording, if any
@@ -883,8 +893,12 @@ package player
 		}
 		
 		public function abortRecording():void{
+			resetCountdown();
 			unattachUserDevices();
 			removeEventListener(PollingEvent.ENTER_FRAME, eventPointManager.pollEventPoints);
+			
+			//Remove the polling timer
+			streamPositionTimer(false);
 			
 			setState(PLAY_STATE);
 		}

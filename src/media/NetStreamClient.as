@@ -33,6 +33,8 @@ package media
 		public static const STREAM_PAUSED:int=4;
 		public static const STREAM_UNPAUSED:int=5;
 		public static const STREAM_BUFFERING:int=6;
+		public static const STREAM_SEEKING_START:int=7;
+		public static const STREAM_SEEKING_END:int=8;
 
 		private var _ns:NetStream;
 		private var _nc:NetConnection;
@@ -88,7 +90,7 @@ package media
 			{
 				_ns=new NetStream(connection);
 				_ns.client=this;
-				logger.debug("Initiating NetStream...");
+				logger.debug("[{0}] Initiating NetStream...", [_name]);
 				_ns.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onAsyncError);
 				_ns.addEventListener(DRMErrorEvent.DRM_ERROR, onDrmError);
 				_ns.addEventListener(DRMStatusEvent.DRM_STATUS, onDrmStatus);
@@ -105,7 +107,7 @@ package media
 			{
 				//netconnection is not connected
 				_connected=false;
-				logger.error("Instantiation Error [{0}] {1}", [e.name, e.message]);
+				logger.error("[{0}] Instantiation Error [{1}] {2}", [_name, e.name, e.message]);
 			}
 		}
 
@@ -130,7 +132,7 @@ package media
 
 		private function onConnectionStatusChange(e:StreamingEvent):void
 		{
-			logger.debug("Connection status changed");
+			logger.debug("[{0}] Connection status changed", [_name]);
 			if (_mediaManager.netConnected)
 			{
 				initiateNetStream(_mediaManager.netConnection);
@@ -146,12 +148,12 @@ package media
 		{
 			try
 			{
-				logger.info("Play {0}", [Helpers.printObject(params)]);
+				logger.info("[{0}] Play {1}", [_name, Helpers.printObject(params)]);
 				_ns.play(params);
 			}
 			catch (e:Error)
 			{
-				logger.error("Play Error [{0}] {1}", [e.name, e.message]);
+				logger.error("[{0}] Play Error [{1}] {2}", [_name, e.name, e.message]);
 			}
 		}
 
@@ -222,28 +224,28 @@ package media
 		public function onAsyncError(event:AsyncErrorEvent):void
 		{
 
-			logger.error("AsyncError {0} {1}", [event.error.name, event.error.message]);
+			logger.error("[{0}] AsyncError {1} {2}", [_name, event.error.name, event.error.message]);
 		}
 
 		public function onDrmError(event:DRMErrorEvent):void
 		{
-			logger.error("DRM Error");
+			logger.error("[{0}] DRM Error", [_name]);
 		}
 
 		public function onDrmStatus(event:DRMStatusEvent):void
 		{
-			logger.error("DRM Status");
+			logger.error("[{0}] DRM Status", [_name]);
 		}
 
 		public function onIoError(event:IOErrorEvent):void
 		{
-			logger.error("AsyncError {0} {1}", [event.target.toString(), event.text]);
+			logger.error("[{0}] AsyncError {1} {2}", [_name, event.target.toString(), event.text]);
 		}
 
 		public function onMediaTypeData(event:NetDataEvent):void
 		{
-			logger.info("MediaTypeData callback");
-			logger.debug("MediaTypeData {0}", [Helpers.printObject(event.toString())]);
+			logger.info("[{0}] MediaTypeData callback", [_name]);
+			logger.debug("[{0}] MediaTypeData {1}", [_name, Helpers.printObject(event.toString())]);
 		}
 
 		public function onNetStatus(event:NetStatusEvent):void
@@ -254,7 +256,7 @@ package media
 			var messageDescription:String=info.description ? info.description : '';
 			var messageDetails:String=info.details ? info.details : '';
 			var messageLevel:String=info.level;
-			logger.debug("NetStatus [{0}] {1} {2}", [messageLevel, messageCode, messageDescription]);
+			logger.debug("[{0}] NetStatus [{1}] {2} {3}", [_name, messageLevel, messageCode, messageDescription]);
 			switch (messageCode)
 			{
 				case "NetStream.Buffer.Empty":
@@ -321,13 +323,19 @@ package media
 				case "NetStream.Record.Stop":
 					break;
 				case "NetStream.Seek.Notify":
+					_streamStatus=STREAM_SEEKING_START;
 					break;
-				case "NetStream.Connect.Closed":
-					_connected=false;
+				case "NetStream.SeekStart.Notify":
+					_streamStatus=STREAM_SEEKING_START;
 					break;
-				case "NetStream.Connect.Success":
-					_connected=true;
-					break;
+				case "NetStream.Seek.Complete":
+					_streamStatus=STREAM_SEEKING_END;
+				//case "NetStream.Connect.Closed":
+				//	_connected=false;
+				//	break;
+				//case "NetStream.Connect.Success":
+				//	_connected=true;
+				//	break;
 				default:
 					break;
 			}
@@ -337,8 +345,8 @@ package media
 
 		public function onStatus(event:StatusEvent):void
 		{
-			logger.info("Status callback");
-			logger.debug("Status {0}", [Helpers.printObject(event)]);
+			logger.info("[{0}] Status callback", [_name]);
+			logger.debug("[{0}] Status {1}", [_name, Helpers.printObject(event)]);
 		}
 
 		/*
@@ -346,20 +354,20 @@ package media
 		 */
 		public function onCuePoint(cuePoint:Object):void
 		{
-			logger.info("CuePoint callback");
-			logger.debug("CuePoint {0}", [Helpers.printObject(cuePoint)]);
+			logger.info("[{0}] CuePoint callback", [_name]);
+			logger.debug("[{0}] CuePoint {1}", [_name, Helpers.printObject(cuePoint)]);
 		}
 
 		public function onImageData(imageData:Object):void
 		{
 			var rawData:ByteArray=imageData.data as ByteArray;
-			logger.info("ImageData callback");
+			logger.info("[{0}] ImageData callback", [_name]);
 		}
 
 		public function onMetaData(metaData:Object):void
 		{
-			logger.info("MetaData callback");
-			logger.debug("MetaData {0}", [Helpers.printObject(metaData)]);
+			logger.info("[{0}] MetaData callback", [_name]);
+			logger.debug("[{0}] MetaData {1}", [_name, Helpers.printObject(metaData)]);
 
 			_metaData=metaData;
 			_duration=metaData.duration ? metaData.duration : _duration;
@@ -388,28 +396,28 @@ package media
 		public function onPlayStatus(playStatus:Object):void
 		{
 			//level, code
-			logger.info("PlayStatus callback");
-			logger.debug("PlayStatus {0}", [Helpers.printObject(playStatus)]);
+			logger.info("[{0}] PlayStatus callback", [_name]);
+			logger.debug("[{0}] PlayStatus {1}", [_name, Helpers.printObject(playStatus)]);
 		}
 
 		public function onSeekPoint(seekPoint:Object):void
 		{
-			logger.info("SeekPoint callback");
-			logger.debug("SeekPoint {0}", [Helpers.printObject(seekPoint)]);
+			logger.info("[{0}] SeekPoint callback", [_name]);
+			logger.debug("[{0}] SeekPoint {1}", [_name, Helpers.printObject(seekPoint)]);
 		}
 
 		public function onTextData(textData:Object):void
 		{
-			logger.info("TextData callback");
-			logger.debug("TextData {0}", [Helpers.printObject(textData)]);
+			logger.info("[{0}] TextData callback", [_name]);
+			logger.debug("[{0}] TextData {1}", [_name, Helpers.printObject(textData)]);
 		}
 
 		public function onXMPData(xmpData:Object):void
 		{
 			//data, a string The string is generated from a top-level UUID box. 
 			//(The 128-bit UUID of the top level box is BE7ACFCB-97A9-42E8-9C71-999491E3AFAC.) This top-level UUID box contains exactly one XML document represented as a null-terminated UTF-8 string.
-			logger.info("XMPData callback");
-			logger.debug("XMPData {0}", [Helpers.printObject(xmpData)]);
+			logger.info("[{0}] XMPData callback", [_name]);
+			logger.debug("[{0}] XMPData {1}", [_name, Helpers.printObject(xmpData)]);
 		}
 	}
 }

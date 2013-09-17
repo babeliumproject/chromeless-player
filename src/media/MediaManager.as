@@ -93,7 +93,7 @@ package media
 					streamingProtocol = encapsulateRTMP ?  RTMPT : RTMP;
 					streamingPort = encapsulateRTMP ?  RTMPT_PORT : RTMP_PORT;
 					streamingResourcesPath = streamingProtocol+"://"+server+":"+streamingPort+"/"+streamingApp;
-					trace("Connecting to " + streamingResourcesPath);
+					logger.info("Connecting to {0}", [streamingResourcesPath]);
 					// Create connection with the server.
 					netConnection.connect(streamingResourcesPath);
 				}
@@ -103,13 +103,13 @@ package media
 					switch (e.errorID)
 					{
 						case 2004:
-							trace("Invalid server location: " + streamingResourcesPath);
+							logger.error("Invalid server location: {0}", [streamingResourcesPath]);
 							netConnectOngoingAttempt=false;
 							netConnected=false;
 							dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 							break;
 						default:
-							trace("Undetermined problem while connecting with: " + streamingResourcesPath);
+							logger.error("Undetermined problem while connecting with: {0}", [streamingResourcesPath]);
 							netConnectOngoingAttempt=false;
 							netConnected=false;
 							dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
@@ -118,21 +118,21 @@ package media
 				}
 				catch (e:IOError)
 				{
-					trace("IO error while connecting to: " + streamingResourcesPath);
+					logger.error("IO error while connecting to: {0}", [streamingResourcesPath]);
 					netConnectOngoingAttempt=false;
 					netConnected=false;
 					dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 				}
 				catch (e:SecurityError)
 				{
-					trace("Security error while connecting to: " + streamingResourcesPath);
+					logger.error("Security error while connecting to: {0}", [streamingResourcesPath]);
 					netConnectOngoingAttempt=false;
 					netConnected=false;
 					dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 				}
 				catch (e:Error)
 				{
-					trace("Unidentified error while connecting to: " + streamingResourcesPath);
+					logger.error("Unidentified error while connecting to: {0}", [streamingResourcesPath]);
 					netConnectOngoingAttempt=false;
 					netConnected=false;
 					dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
@@ -176,14 +176,14 @@ package media
 						netConnected=true;
 						// find out if it's a secure (HTTPS/TLS) connection
 						if (event.target.connectedProxyType == "HTTPS" || event.target.usingTLS)
-							trace("Connected to secure server");
+							logger.info("Connected to secure server");
 						else
-							trace("Connected to server");
+							logger.info("Connected to server");
 						dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 						break;
 
 					case "NetConnection.Connect.Failed":
-						trace("Connection to server failed");
+						logger.info("Connection to server failed");
 						//if(!encapsulateRTMP){
 						//	encapsulateRTMP = true;
 						//} else {
@@ -194,25 +194,25 @@ package media
 						break;
 
 					case "NetConnection.Connect.Closed":
-						trace("Connection to server closed");
+						logger.info("Connection to server closed");
 						netConnected=false;
 						dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 						break;
 
 					case "NetConnection.Connect.InvalidApp":
-						trace("Application not found on server");
+						logger.info("Application not found on server");
 						netConnected=false;
 						dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 						break;
 
 					case "NetConnection.Connect.AppShutDown":
-						trace("Application has been shutdown");
+						logger.info("Application has been shutdown");
 						netConnected=false;
 						dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 						break;
 
 					case "NetConnection.Connect.Rejected":
-						trace("No permissions to connect to the application");
+						logger.info("No permissions to connect to the application");
 						netConnected=false;
 						dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 						break;
@@ -224,7 +224,7 @@ package media
 			}
 			catch (e:Error)
 			{
-				trace("NetStatus threw an error: " + e.message);
+				logger.error("NetStatus threw an error: {0}", [e.message]);
 				netConnected=false;
 				dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 			}
@@ -237,7 +237,7 @@ package media
 		protected function onNetSecurityError(event:SecurityErrorEvent):void
 		{
 			netConnectOngoingAttempt=false;
-			trace("Security error - " + event.text);
+			logger.error("Security error - {0}", [event.text]);
 		}
 
 		/**
@@ -247,7 +247,7 @@ package media
 		protected function onNetIOError(event:IOErrorEvent):void
 		{
 			netConnectOngoingAttempt=false;
-			trace("Input/output error - " + event.text);
+			logger.error("Input/output error - {0}", [event.text]);
 		}
 
 		/**
@@ -257,7 +257,7 @@ package media
 		protected function onNetASyncError(event:AsyncErrorEvent):void
 		{
 			netConnectOngoingAttempt=false;
-			trace("Asynchronous code error - " + event.error);
+			logger.error("Asynchronous code error - {0}", [event.error]);
 		}
 		
 		
@@ -287,7 +287,7 @@ package media
 		{
 			if(info){
 				bandwidthInfo = info;
-				trace("[bwDone] deltaDown: "+info.deltaDown+" deltaTime: "+info.deltaTime+" kbitDown: "+info.kbitDown+" latency: "+info.latency);
+				logger.debug("Bandwidth Measurement done. deltaDown: {0} deltaTime: {1} kbitDown: {2} latency: {3}", [info.deltaDown,info.deltaTime,info.kbitDown,info.latency]);
 			}
 		}
 

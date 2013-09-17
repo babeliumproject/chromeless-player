@@ -66,7 +66,7 @@ package commands
 					eventList.push(cueobj);
 				}
 			}
-			trace(ObjectUtil.toString(eventList));
+			//trace(ObjectUtil.toString(eventList));
 			return true;
 		}
 

@@ -42,13 +42,14 @@ package player
 
 		protected var _videoUrl:String=null;
 
-		protected var _autoPlay:Boolean=false;
+		protected var _autoPlay:Boolean=true;
 		protected var _smooth:Boolean=true;
 		protected var _currentTime:Number=0;
 		protected var _autoScale:Boolean=false;
 		protected var _duration:Number=0;
 		protected var _videoReady:Boolean=false;
 		protected var _videoPlaying:Boolean=false;
+		protected var _videoSeeking:Boolean=false;
 		protected var _defaultMargin:Number=0;
 
 		protected var _defaultWidth:Number=640;
@@ -58,9 +59,8 @@ package player
 		protected var _lastVolume:Number;
 		protected var _muted:Boolean=false;
 
-		protected var playPauseStatus:Boolean=true;
 
-		protected static const logger:ILogger=getLogger(VideoPlayer);
+		private static const logger:ILogger=getLogger(VideoPlayer);
 
 		public function VideoPlayer()
 		{
@@ -71,7 +71,7 @@ package player
 			
 			//Event Listeners
 			//addEventListener(VideoPlayerEvent.VIDEO_SOURCE_CHANGED, onSourceChange);
-			addEventListener(VideoPlayerEvent.VIDEO_FINISHED_PLAYING, onVideoFinishedPlaying);
+			//addEventListener(VideoPlayerEvent.VIDEO_FINISHED_PLAYING, onVideoFinishedPlaying);
 			
 			drawGraphics();
 
@@ -90,7 +90,6 @@ package player
 			_video.smoothing=_smooth;
 			_video.x=_video.y=0;
 			addChild(_video);
-			trace("End of drawgraphics player");
 		}
 
 		/**
@@ -242,6 +241,7 @@ package player
 
 		public function loadVideoById(videoId:String):void
 		{
+			_videoReady=false;
 			if (videoId != '')
 			{
 				resetAppearance();
@@ -256,14 +256,12 @@ package player
 			}
 			else
 			{
-				trace("Empty video ID provided");
+				logger.info("Empty video ID provided");
 			}
 		}
 
 		protected function onNetStreamReady(event:NetStreamClientEvent):void
 		{
-			try
-			{
 				logger.debug("NetStreamClient {0} is ready", [event.streamId]);
 				_video.attachNetStream(_nsc.netStream);
 				_video.visible=true;
@@ -272,15 +270,16 @@ package player
 				_nsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
 				if (_videoUrl != '')
 				{
-					_nsc.play("exercises/"+_videoUrl);
 					_videoReady=true;
-					//if(!_autoPlay){
-					//	_nsc.netStream.togglePause();
-					//}
+					if(_autoPlay) startVideo();
 				}
-			}
-			catch (e:Error)
-			{
+		}
+		
+		private function startVideo():void{
+			if(!_videoReady) return;
+			try{
+				_nsc.play("exercises/"+_videoUrl);
+			}catch(e:Error){
 				_videoReady=false;
 				logger.error("Error while loading video. [{0}] {1}", [e.errorID, e.message]);
 			}
@@ -290,26 +289,36 @@ package player
 		{
 			if (!streamReady(_nsc))
 				return;
+			if (_nsc.streamState == NetStreamClient.STREAM_SEEKING_START)
+				return;
 			if (_nsc.streamState == NetStreamClient.STREAM_PAUSED)
 			{
 				resumeVideo();
 			}
 			else
 			{
-				_autoPlay=true;
-				if (!_nsc.netStream.time)
+				if (!_nsc.netStream.time){
+				//	loadVideoById(_videoUrl);
+				if(!_videoReady)
 					loadVideoById(_videoUrl);
+				else
+					startVideo();
+				}
 			}
 		}
 
 		public function pauseVideo():void
 		{
+			if (_nsc.streamState == NetStreamClient.STREAM_SEEKING_START)
+				return;
 			if (streamReady(_nsc) && (_nsc.streamState == NetStreamClient.STREAM_STARTED || _nsc.streamState == NetStreamClient.STREAM_BUFFERING))
 				_nsc.netStream.togglePause();
 		}
 
 		public function resumeVideo():void
 		{
+			if (_nsc.streamState == NetStreamClient.STREAM_SEEKING_START)
+				return;
 			if (streamReady(_nsc) && _nsc.streamState == NetStreamClient.STREAM_PAUSED)
 				_nsc.netStream.togglePause();
 		}
@@ -320,9 +329,8 @@ package player
 			{
 				_nsc.play(false);
 				_video.clear();
+				_videoReady=false;
 			}
-
-			playPauseStatus=false;
 		}
 
 		public function endVideo():void
@@ -352,22 +360,30 @@ package player
 			}
 			if (event.state == NetStreamClient.STREAM_STARTED)
 			{
-				if(!_videoPlaying && !_autoPlay) pauseVideo();
+				//logger.debug("Stream State Change. _videoPlaying: {0}, _autoPlay: {1}", [_videoPlaying, _autoPlay]);
+				//if(!_videoPlaying && !_autoPlay) pauseVideo();
 				_videoPlaying=true;
+			}
+			if (event.state == NetStreamClient.STREAM_SEEKING_START){
+				_videoSeeking=true;
+			}
+			if (event.state == NetStreamClient.STREAM_SEEKING_END){
+				_videoSeeking=false;
 			}
 			dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.STATE_CHANGED, event.state));
 		}
 
 		public function onSourceChange(e:VideoPlayerEvent):void
 		{
-			trace("onSourceChange")
+			//trace("onSourceChange")
 		}
 
+		/*
 		protected function onVideoFinishedPlaying(e:VideoPlayerEvent):void
 		{
 			logger.info("Finished playing video :" + _videoUrl);
 			stopVideo();
-		}
+		}*/
 
 		/**
 		 * Scale the Video object to adjust it to the size of the video player.

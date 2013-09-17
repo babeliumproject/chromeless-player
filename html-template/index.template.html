@@ -71,7 +71,9 @@
 	    		"3": "Stream finished",
 	    		"4": "Stream paused",
 	    		"5": "Stream unpaused",
-	    		"6": "Stream buffering"
+	    		"6": "Stream buffering",
+	    		"7": "Stream seeking start",
+	    		"8": "Stream seeking end"
 	      };
 	      
 	      // Update a particular HTML element with a new value
@@ -339,7 +341,8 @@
         </td>
         <td>
          <div id="videoInfo">
-        	<p>Player state: <span id="playerState">--</span></p>
+         	<p>Player mode: <span id="playerMode">PLAYBACK</span></p>
+        	<p>Stream state: <span id="playerState">--</span></p>
         	<p>Device state: <span id="deviceState">Unknown</span></p>
         	<p style="font-weight: bold;">Stream 1 Info</p>
         	<p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span id="videoDuration">--:--</span></p>
