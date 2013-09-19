@@ -21,6 +21,8 @@ package player
 	
 	import model.*;
 	
+	import mx.utils.ObjectUtil;
+	
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
 	
@@ -89,6 +91,9 @@ package player
 		private var _sideBySideReady:Boolean=false;
 		
 		private var _recording:Boolean=false;
+		private var _lastAutoplay:Boolean;
+		
+		private var _eventData:Object;
 		
 		private static const logger:ILogger=getLogger(VideoRecorder);
 
@@ -337,10 +342,11 @@ package player
 
 		public function setState(newState:int):void
 		{
-			//stopVideo();
+			stopVideo();
 
 			_state=newState;
 			switchPerspective();
+			dispatchEvent(new VideoRecorderEvent(VideoRecorderEvent.RECORDER_STATE_CHANGED,_state));
 		}
 
 		public function muteRecording(flag:Boolean):void
@@ -361,9 +367,11 @@ package player
 			}
 		}
 
+	
 		/**
 		 * Adds new source to play_both video state
 		 **/
+		/*
 		public function set secondSource(source:String):void
 		{
 			logger.debug("Second video added to stage");
@@ -383,7 +391,7 @@ package player
 
 			// splits video panel into 2 views
 			splitVideoPanel();
-		}
+		}*/
 
 		
 		/*
@@ -425,20 +433,51 @@ package player
 		
 		override public function playVideo():void
 		{
-			super.playVideo();
-			
-			if(getState() == PLAY_SIDEBYSIDE_STATE){
-				if (_sbsNsc.streamState == NetStreamClient.STREAM_PAUSED)
-				{
-					resumeVideo();
-				}
-				else
-				{
-					var _eventData:Object = null;
-					if (!_sbsNsc.netStream.time)
+			//A stream is being recorded
+			if(getState() & RECORD_FLAG && _recording)
+				return;	
+			if(_state == PLAY_SIDEBYSIDE_STATE){
+				playSidebysideVideo();
+			} else {
+				super.playVideo();
+			}
+		}
+		
+		private function playSidebysideVideo():void{
+			if(!streamReady(_nsc) || !streamReady(_sbsNsc))
+				return;
+			if (_nsc.streamState == NetStreamClient.STREAM_SEEKING_START || _sbsNsc.streamState == NetStreamClient.STREAM_SEEKING_START)
+				return;
+			if (_nsc.streamState == NetStreamClient.STREAM_PAUSED || _sbsNsc.streamState == NetStreamClient.STREAM_PAUSED)
+			{
+				resumeVideo();
+			}
+			else
+			{
+				logger.debug("Play side by side {0}", [_sideBySideReady]);
+				if (!_sbsNsc.netStream.time){
+					if(!_sideBySideReady){
+						_forcePlay=true;
 						loadSideBySideVideosById(_videoUrl, _secondStreamSource, _eventData);
+					}else{
+						startVideo();
+					}
 				}
 			}
+		}
+		
+		override protected function startVideo():void{
+			if(_state == PLAY_SIDEBYSIDE_STATE){
+				if(!_sideBySideReady) return;
+				try{
+					logger.info("Start playing right video {0}", [_secondStreamSource]);
+					_sbsNsc.play("responses/"+_secondStreamSource);
+				}catch(e:Error){
+					_sideBySideReady=false;
+					logger.error("Error while loading video. [{0}] {1}", [e.errorID, e.message]);
+				}
+			}
+			super.startVideo();
 		}
 
 		/**
@@ -482,14 +521,18 @@ package player
 		{
 			super.stopVideo();
 
-			if (getState() & RECORD_FLAG && _recording)
+			if (getState() & RECORD_FLAG /*&& _recording*/){
 				_recNsc.netStream.close();
+				_recNsc.netStream.dispose();
+			}
 
 			if (getState() == PLAY_SIDEBYSIDE_STATE)
 			{
-				if (_sbsNsc && _sbsNsc.netStream)
+				if (streamReady(_sbsNsc))
 				{
-					_sbsNsc.netStream.play(false);
+					_sbsNsc.play(false);
+					_camVideo.clear();
+					_sideBySideReady=false;
 				}
 			}
 
@@ -500,7 +543,7 @@ package player
 		{
 			super.endVideo();
 
-			if (getState() == PLAY_SIDEBYSIDE_STATE && _sbsNsc && _sbsNsc.netStream)
+			if (getState() == PLAY_SIDEBYSIDE_STATE && streamReady(_sbsNsc))
 			{
 				_sbsNsc.netStream.dispose();
 				_sbsNsc=null;
@@ -735,8 +778,8 @@ package player
 				case "recordingStream":
 					_recordingReady=true;
 					break;
-				case "sideBysideStream":
-					_sideBySideReady=true;
+				case "sidebysideStream":
+					_sideBySideReady=true;	
 					break;
 				case "playbackStream":			
 					super.onNetStreamReady(event);
@@ -744,8 +787,27 @@ package player
 				default:
 					break;
 			}
-			if(_videoReady && _recordingReady)
+			if(_videoReady && _recordingReady && (_state & RECORD_FLAG)){
 				startCountdown();
+			}
+			if(_videoReady && _sideBySideReady){
+				logger.debug("NetStreamClient {0} is ready", [event.streamId]);
+				_camVideo.attachNetStream(_sbsNsc.netStream);
+				_camVideo.visible=true;
+				_sbsNsc.netStream.soundTransform=_playbackSoundTransform;
+				_sbsNsc.addEventListener(NetStreamClientEvent.METADATA_RETRIEVED, onMetaData);
+				_sbsNsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
+				if (_secondStreamSource != '')
+				{
+					//_secondStreamSource=true;
+					logger.debug("Secondstreamsource: {0}", [_secondStreamSource]);
+					if(_autoPlay || _forcePlay) {
+						logger.debug("ABout to call startVideo");
+						startVideo();
+						_forcePlay=false;
+					}
+				}
+			}
 		}
 
 		/**
@@ -780,7 +842,7 @@ package player
 				_recNsc.netStream.attachCamera(_camera);
 
 			//_nsc.netStream.togglePause();
-			playVideo();
+			startVideo();
 			_recNsc.netStream.publish(responseFilename, "record");
 			
 			_recording=true;
@@ -796,9 +858,14 @@ package player
 					unattachUserDevices();
 					logger.info("Finished recording stream {0}", [_fileName]);
 					_recording=false;
+					streamPositionTimer(false);
+					_autoPlay=_lastAutoplay;
 					setState(VideoRecorder.PLAY_SIDEBYSIDE_STATE);
+					loadSideBySideVideosById(_videoUrl, _fileName, null);
 					dispatchEvent(new RecordingEvent(RecordingEvent.END, _fileName));
 				} else {
+					//Parent onStreamStateChange does not call the recorder's stopVideo function
+					stopVideo();
 					dispatchEvent(new RecordingEvent(RecordingEvent.REPLAY_END));
 				}
 			}
@@ -820,6 +887,7 @@ package player
 		/**
 		 * PLAY_BOTH related commands
 		 **/
+		/*
 		private function playSecondStream():void
 		{
 			if (_sbsNsc && _sbsNsc.netStream){
@@ -853,7 +921,7 @@ package player
 				//_ppBtn.State=PlayButton.PAUSE_STATE;
 				//playPauseStatus=false;
 			//}
-		}
+		}*/
 		
 		public function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
 			
@@ -865,6 +933,7 @@ package player
 			
 			if(recdata){
 				if(eventPointManager.parseEventPoints(recdata.eventpoints, this)){
+					_eventData = recdata;
 					//Add a listener to poll for event points
 					addEventListener(PollingEvent.ENTER_FRAME, eventPointManager.pollEventPoints);
 				} else {
@@ -876,6 +945,7 @@ package player
 			streamPositionTimer(true);
 			
 			//Set autoplay to false to avoid the exercise from playing once loading is done
+			_lastAutoplay=_autoPlay;
 			_autoPlay=false;
 			//_videoPlaying=false;
 			
@@ -905,11 +975,30 @@ package player
 		
 		
 		public function loadSideBySideVideosById(leftStreamId:String, rightStreamId:String, eventData:Object = null):void{
+			logger.debug("Load side by side was called: {0}, {1}", [leftStreamId, rightStreamId]);
+			super.loadVideoById(leftStreamId);
 			
+			_sideBySideReady=false;
+			if (rightStreamId != '')
+			{
+				_secondStreamSource=rightStreamId;
+				if(streamReady(_sbsNsc)){
+					_sbsNsc.netStream.close();
+					_sbsNsc.netStream.dispose();
+					_sbsNsc.removeEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+				}
+				_sbsNsc=null;
+				_sbsNsc=new NetStreamClient(rightStreamId, "sidebysideStream");
+				_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+			}
+			else
+			{
+				logger.error("Empty video ID provided");
+			}
 		}
 		
 		public function loadSideBySideVideosByUrl(leftStreamUrl:String, rightStreamUrl:String, eventData:Object = null):void{
-			
+			//TODO
 		}
 		
 		

@@ -17,6 +17,7 @@ package media
 	
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
+	import org.as3commons.logging.setup.LogSetupLevel;
 	import org.osmf.net.NetClient;
 
 

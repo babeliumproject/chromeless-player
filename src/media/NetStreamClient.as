@@ -2,7 +2,7 @@ package media
 {
 	import events.NetStreamClientEvent;
 	import events.StreamingEvent;
-	import events.VideoPlayerBabeliaEvent;
+	import events.VideoRecorderEvent;
 
 	import flash.events.AsyncErrorEvent;
 	import flash.events.DRMErrorEvent;

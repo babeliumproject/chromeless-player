@@ -43,6 +43,7 @@ package player
 		protected var _videoUrl:String=null;
 
 		protected var _autoPlay:Boolean=true;
+		protected var _forcePlay:Boolean=false;
 		protected var _smooth:Boolean=true;
 		protected var _currentTime:Number=0;
 		protected var _autoScale:Boolean=false;
@@ -271,11 +272,14 @@ package player
 				if (_videoUrl != '')
 				{
 					_videoReady=true;
-					if(_autoPlay) startVideo();
+					if(_autoPlay || _forcePlay){ 
+						startVideo();
+						_forcePlay=false;
+					}
 				}
 		}
 		
-		private function startVideo():void{
+		protected function startVideo():void{
 			if(!_videoReady) return;
 			try{
 				_nsc.play("exercises/"+_videoUrl);
@@ -298,11 +302,13 @@ package player
 			else
 			{
 				if (!_nsc.netStream.time){
-				//	loadVideoById(_videoUrl);
-				if(!_videoReady)
-					loadVideoById(_videoUrl);
-				else
-					startVideo();
+					//	loadVideoById(_videoUrl);
+					if(!_videoReady){
+						_forcePlay=true;
+						loadVideoById(_videoUrl);
+					}else{
+						startVideo();
+					}
 				}
 			}
 		}
@@ -370,7 +376,7 @@ package player
 			if (event.state == NetStreamClient.STREAM_SEEKING_END){
 				_videoSeeking=false;
 			}
-			dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.STATE_CHANGED, event.state));
+			dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.STREAM_STATE_CHANGED, event.state));
 		}
 
 		public function onSourceChange(e:VideoPlayerEvent):void

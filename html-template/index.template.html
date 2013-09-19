@@ -63,7 +63,7 @@
 	       * Chromeless player has no controls.
 	       */
 	     
-	      var playerStates = {
+	      var streamStates = {
 	    		"-1": "Stream not ready",
 	    		"0": "Stream ready",
 	    		"1": "Stream playing",
@@ -74,6 +74,14 @@
 	    		"6": "Stream buffering",
 	    		"7": "Stream seeking start",
 	    		"8": "Stream seeking end"
+	      };
+	      
+	      var recorderModes = {
+	    		"0": "PLAYBACK",
+	    		"1": "PLAY SIDE BY SIDE",
+	    		"2": "RECORD MIC",
+	    		"3": "RECORD MIC & WEBCAM",
+	    		"4": "UPLOAD MODE"
 	      };
 	      
 	      // Update a particular HTML element with a new value
@@ -88,7 +96,11 @@
 	      
 	      // This function is called when the player changes state
 	      function onPlayerStateChange(newState) {
-	        updateHTML("playerState", playerStates[newState]);
+	        updateHTML("streamState", streamStates[newState]);
+	      }
+	      
+	      function onRecorderStateChange(newState) {
+	    	  updateHTML("recorderMode", recorderModes[newState]);
 	      }
 	      
 	      function onDeviceStateChange(newState) {
@@ -264,8 +276,9 @@
 	      function onBabeliumPlayerReady(playerId) {
 	    	babeliumPlayer = document.getElementById("babeliumPlayer");
 	        
-	        babeliumPlayer.addEventListener("onStateChange", "onPlayerStateChange");
+	        babeliumPlayer.addEventListener("onStreamStateChange", "onPlayerStateChange");
 	        babeliumPlayer.addEventListener("onDeviceStateChange", "onDeviceStateChange");
+	        babeliumPlayer.addEventListener("onRecorderStateChange", "onRecorderStateChange");
 	        //babeliumPlayer.addEventListener("onError", "onPlayerError");
 	        //Load an initial video into the player
 	        //babeliumPlayer.cueVideoById("ylLzyHk54Z0");
@@ -341,8 +354,8 @@
         </td>
         <td>
          <div id="videoInfo">
-         	<p>Player mode: <span id="playerMode">PLAYBACK</span></p>
-        	<p>Stream state: <span id="playerState">--</span></p>
+         	<p>Player mode: <span id="recorderMode">PLAYBACK</span></p>
+        	<p>Stream state: <span id="streamState">--</span></p>
         	<p>Device state: <span id="deviceState">Unknown</span></p>
         	<p style="font-weight: bold;">Stream 1 Info</p>
         	<p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span id="videoDuration">--:--</span></p>

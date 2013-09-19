@@ -2,10 +2,11 @@ package api
 {
 
 	
+	import events.PollingEvent;
 	import events.PrivacyEvent;
 	import events.RecordingEvent;
-	import events.PollingEvent;
 	import events.VideoPlayerEvent;
+	import events.VideoRecorderEvent;
 	
 	import flash.events.Event;
 	import flash.external.ExternalInterface;
@@ -172,12 +173,16 @@ package api
 			ExternalInterface.call(jsListeners['onMetadataRetrieved']);
 		}
 		
-		public function onStateChange(e:VideoPlayerEvent):void{
-			ExternalInterface.call(jsListeners['onStateChange'], e.state);
+		public function onStreamStateChange(e:VideoPlayerEvent):void{
+			ExternalInterface.call(jsListeners['onStreamStateChange'], e.state);
 		}
 		
 		public function onDeviceStateChange(e:PrivacyEvent):void{
 			ExternalInterface.call(jsListeners['onDeviceStateChange'], e.state);
+		}
+		
+		public function onRecorderStateChange(e:VideoRecorderEvent):void{
+			ExternalInterface.call(jsListeners['onRecorderStateChange'], e.state);
 		}
 		
 		/*************************
@@ -221,11 +226,12 @@ package api
 			VP.setSubtitle(text,color);
 		}*/
 		
+		/*
 		private function secondSource(video:String):void
 		{
 			//VP.secondSource = SharedData.getInstance().streamingManager.responseStreamsFolder + "/" + video;
 			VP.secondSource = 'url' + "/" + video;
-		}
+		}*/
 		
 		private function seek(flag:Boolean):void
 		{
@@ -333,13 +339,15 @@ package api
 					//jsListeners['onVideoPlayerReady'] = listener;
 					//VP.addEventListener(VideoPlayerEvent.CONNECTED, onVideoPlayerReady);
 					break;
-				case 'onStateChange':
-					jsListeners['onStateChange'] = listener;
-					VP.addEventListener(VideoPlayerEvent.STATE_CHANGED, onStateChange);
-				
+				case 'onStreamStateChange':
+					jsListeners['onStreamStateChange'] = listener;
+					VP.addEventListener(VideoPlayerEvent.STREAM_STATE_CHANGED, onStreamStateChange);
 				case 'onDeviceStateChange':
 					jsListeners['onDeviceStateChange'] = listener;
 					VP.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, onDeviceStateChange);
+				case 'onRecorderStateChange':
+					jsListeners['onRecorderStateChange'] = listener;
+					VP.addEventListener(VideoRecorderEvent.RECORDER_STATE_CHANGED, onRecorderStateChange);
 					
 				default:
 					break;
@@ -380,9 +388,13 @@ package api
 						delete jsListeners['onMetadataRetrieved'];
 					VP.removeEventListener(VideoPlayerEvent.METADATA_RETRIEVED, onMetadataRetrieved);
 				case 'onStateChange':
-					if(jsListeners['onStateChange'])
-						delete jsListeners['onStateChange'];
-					VP.removeEventListener(VideoPlayerEvent.STATE_CHANGED, onStateChange);
+					if(jsListeners['onStreamStateChange'])
+						delete jsListeners['onStreamStateChange'];
+					VP.removeEventListener(VideoPlayerEvent.STREAM_STATE_CHANGED, onStreamStateChange);
+				case 'onRecordedStateChange':
+					if(jsListeners['onRecorderStateChange'])
+						delete jsListeners['onRecorderStateChange'];
+					VP.removeEventListener(VideoRecorderEvent.RECORDER_STATE_CHANGED, onRecorderStateChange);
 				default:
 					break;
 			}

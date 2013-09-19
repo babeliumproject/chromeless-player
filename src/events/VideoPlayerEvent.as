@@ -12,7 +12,7 @@ package events
 		public static const CREATION_COMPLETE:String = "VideoPlayerCreationComplete";
 		public static const CONNECTED:String = "VideoConnected";
 		
-		public static const STATE_CHANGED:String="stateChanged";
+		public static const STREAM_STATE_CHANGED:String="stateChanged";
 		public var state:int;
 		
 		public function VideoPlayerEvent(type:String, state:int=-1, bubbles:Boolean=false, cancelable:Boolean=false)
