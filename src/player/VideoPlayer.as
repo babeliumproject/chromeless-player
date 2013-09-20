@@ -42,6 +42,7 @@ package player
 
 		protected var _videoUrl:String=null;
 
+		protected var _lastAutoplay:Boolean;
 		protected var _autoPlay:Boolean=true;
 		protected var _forcePlay:Boolean=false;
 		protected var _smooth:Boolean=true;
@@ -99,11 +100,12 @@ package player
 		public function set autoPlay(value:Boolean):void
 		{
 			_autoPlay=value;
+			_lastAutoplay=_autoPlay;
 		}
 
 		public function get autoPlay():Boolean
 		{
-			return _autoPlay;
+			return _lastAutoplay;
 		}
 
 

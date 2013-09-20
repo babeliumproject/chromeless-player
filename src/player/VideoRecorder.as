@@ -91,7 +91,6 @@ package player
 		private var _sideBySideReady:Boolean=false;
 		
 		private var _recording:Boolean=false;
-		private var _lastAutoplay:Boolean;
 		
 		private var _eventData:Object;
 		
@@ -108,7 +107,6 @@ package player
 		}
 
 		private function drawGraphics():void{
-			//super.drawGraphics();
 			
 			var _textFormat:TextFormat = new TextFormat();
 			_textFormat.color = 0xffffff;
@@ -213,8 +211,6 @@ package player
 			
 			_defaultHeight=h;
 			
-			//trace("[INFO] Video player Babelium: BEFORE SPLIT VIDEO PANEL Video area dimensions: "+_videoWidth+"x"+_videoHeight+" video dimensions: "+_video.width+"x"+_video.height+" video placement: x="+_video.x+" y="+_video.y+" last video area heigth: "+_lastVideoHeight);
-			
 			var scaleY:Number=h / _video.height;
 			var scaleX:Number=w / _video.width;
 			var scaleC:Number=scaleX < scaleY ? scaleX : scaleY;
@@ -227,14 +223,11 @@ package player
 			_video.width*=scaleC;
 			_video.height*=scaleC;
 			
-			//trace("[INFO] Video player Babelium: AFTER SPLIT VIDEO PANEL Video area dimensions: "+_videoWidth+"x"+_videoHeight+" video dimensions: "+_video.width+"x"+_video.height+" video placement: x="+_video.x+" y="+_video.y+" last video area heigth: "+_lastVideoHeight);
-			
 			//Resize the cam display
 			scaleCamVideo(w,h);
 			
 			updateDisplayList(0, 0); // repaint
 			
-			//trace("The video panel has been splitted");
 		}
 		
 		/**
@@ -251,13 +244,8 @@ package player
 			
 			if(_camVideo) _camVideo.visible=false;
 			if(_micImage) _micImage.visible=false;
-			//_micActivityBar.visible=false;
-			//dispatchEvent(new ControlDisplayEvent(ControlDisplayEvent.MIC_ACTIVITY_BAR,false);
-			
-			//trace("The video panel recovered its original size");
 		}
 		
-		// Aux: scaling cam image
 		private function scaleCamVideo(w:Number, h:Number,split:Boolean=true):void
 		{
 			
@@ -273,15 +261,6 @@ package player
 				_camVideo.x=Math.floor(w / 2 - _camVideo.width / 2);
 				_camVideo.y+=_defaultMargin;
 				_camVideo.x+=(w + _defaultMargin);
-				
-				//trace("[INFO] Video player Babelium: CAM SCALE Video area dimensions: "+_videoWidth+"x"+_videoHeight+" cam dimensions: "+_camVideo.width+"x"+_camVideo.height+" cam placement: x="+_camVideo.x+" y="+_camVideo.y+" last video area heigth: "+_lastVideoHeight);
-				
-				
-				// 1 black pixel, being smarter
-				//_camVideo.y+=1;
-				//_camVideo.height-=2;
-				//_camVideo.x+=1;
-				//_camVideo.width-=2;
 			} else {
 				_camVideo.y=_defaultMargin + 2;
 				_camVideo.height-=4;
@@ -317,7 +296,6 @@ package player
 				
 				_video.width*=scaleC;
 				_video.height*=scaleC;
-				//trace("[INFO] Video player babelia: AFTER SCALE Video area dimensions: "+_videoWidth+"x"+_videoHeight+" video dimensions: "+_video.width+"x"+_video.height+" video placement: x="+_video.x+" y="+_video.y+" last video area heigth: "+_lastVideoHeight);
 			}
 		}
 		
@@ -366,44 +344,6 @@ package player
 				}
 			}
 		}
-
-	
-		/**
-		 * Adds new source to play_both video state
-		 **/
-		/*
-		public function set secondSource(source:String):void
-		{
-			logger.debug("Second video added to stage");
-			if (getState() != PLAY_SIDEBYSIDE_STATE)
-				return;
-
-			_secondStreamSource=source;
-
-			//if (_nc == null)
-			//{
-			//	if (_video != null)
-			//		_video.clear();
-			//	return;
-			//}
-			//else
-				playSecondStream();
-
-			// splits video panel into 2 views
-			splitVideoPanel();
-		}*/
-
-		
-		/*
-		override public function loadVideo():void
-		{
-			super.loadVideo();
-			if(getState() == PLAY_BOTH_STATE)
-				playSecondStream();
-
-			//Start a timer to give info about the current stream's position
-			streamPositionTimer(true);
-		}*/
 		
 		private function streamPositionTimer(enable:Boolean):void{
 			if(enable){
@@ -804,6 +744,7 @@ package player
 					if(_autoPlay || _forcePlay) {
 						logger.debug("ABout to call startVideo");
 						startVideo();
+						_autoPlay=_lastAutoplay;
 						_forcePlay=false;
 					}
 				}
@@ -859,7 +800,7 @@ package player
 					logger.info("Finished recording stream {0}", [_fileName]);
 					_recording=false;
 					streamPositionTimer(false);
-					_autoPlay=_lastAutoplay;
+					//_autoPlay=_lastAutoplay;
 					setState(VideoRecorder.PLAY_SIDEBYSIDE_STATE);
 					loadSideBySideVideosById(_videoUrl, _fileName, null);
 					dispatchEvent(new RecordingEvent(RecordingEvent.END, _fileName));
@@ -883,45 +824,6 @@ package player
 			//if((_onTop.numChildren > 0) && (_onTop.getChildAt(0) is PrivacyRights) )
 			//	removeAllChildren(_onTop); //Remove the privacy box in case someone cancels the recording before starting
 		}
-
-		/**
-		 * PLAY_BOTH related commands
-		 **/
-		/*
-		private function playSecondStream():void
-		{
-			if (_sbsNsc && _sbsNsc.netStream){
-				_sbsNsc.netStream.dispose();
-			}
-
-			
-			//if (_nc && _nc.connected)
-			//{
-				//_inNs=new NetStreamClient(_nc,"inNs");
-				_sbsNsc=new NetStreamClient('url','inNs');
-				//_inNs.netStream.soundTransform=new SoundTransform(_audioSlider.getCurrentVolume());
-				_sbsNsc.netStream.soundTransform=new SoundTransform(DEFAULT_VOLUME);
-				
-				_camVideo.clear();
-				_camVideo.attachNetStream(_sbsNsc.netStream);
-				_camVideo.visible=true;
-				_micImage.visible=true;
-
-				_sbsNsc.netStream.play(_secondStreamSource);
-
-				// Needed for video mute
-				muteRecording(false);
-				muteRecording(true);
-
-				if (_nsc != null)
-				{
-					//_ns.resume();
-					_nsc.play(_videoUrl);
-				}
-				//_ppBtn.State=PlayButton.PAUSE_STATE;
-				//playPauseStatus=false;
-			//}
-		}*/
 		
 		public function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
 			
@@ -1008,6 +910,74 @@ package player
 				if (value == 0) muteRecording(true);
 				if (value == 100) muteRecording(false);
 			}
+		}
+		
+		public function get leftStreamDuration():Number
+		{
+			return super.streamTime;
+		}
+		
+		public function get rightStreamDuration():Number
+		{
+			return _sbsNsc.duration;
+		}
+		
+		public function get letfStreamTime():Number
+		{
+			return super.streamTime;
+		}
+		
+		public function get rightStreamTime():Number
+		{
+			return streamReady(_sbsNsc) ? _sbsNsc.netStream.time : 0;
+		}
+		
+		public function leftStreamLoadedFragment():Number
+		{
+			return super.getLoadedFragment();
+		}
+		
+		public function rightStreamLoadedFragment():Number
+		{
+			return streamReady(_sbsNsc) ? (_sbsNsc.netStream.bytesLoaded / _sbsNsc.netStream.bytesTotal) : 0;
+		}
+		
+		public function leftStreamBytesTotal():Number
+		{
+			return super.getBytesTotal();
+		}
+		
+		public function rightStreamBytesTotal():Number
+		{
+			return streamReady(_sbsNsc) ? _sbsNsc.netStream.bytesTotal : 0;
+		}
+		
+		public function letfStreamBytesLoaded():Number
+		{
+			return super.getBytesLoaded();
+		}
+		
+		public function rightStreamBytesLoaded():Number
+		{
+			return streamReady(_sbsNsc) ? _sbsNsc.netStream.bytesLoaded : 0;
+		}
+		
+		public function getLeftStreamVolume():Number
+		{
+			return super.getVolume();
+		}
+			
+		public function getRightStreamVolume():Number
+		{
+			try
+			{
+				return streamReady(_sbsNsc) ? _sbsNsc.netStream.soundTransform.volume * 100 : 0;
+			}
+			catch (e:Error)
+			{
+				logger.error("Error while retrieving right stream volume. [{0}] {1}", [e.errorID, e.message]);
+			}
+			return NaN;
 		}
 	}
 }
