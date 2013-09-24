@@ -132,13 +132,25 @@
 	        // Also check that at least one function exists since when IE unloads the
 	        // page, it will destroy the SWF before clearing the interval.
 	        if(babeliumPlayer && babeliumPlayer.getDuration) {
+	        	
 	          updateHTML("videoDuration", babeliumPlayer.getDuration());
 	          updateHTML("videoCurrentTime", babeliumPlayer.getCurrentTime());
 	          updateHTML("bytesTotal", babeliumPlayer.getBytesTotal());
-	          //updateHTML("startBytes", babeliumPlayer.getStartBytes());
 	          updateHTML("bytesLoaded", babeliumPlayer.getBytesLoaded());
+	          
+	          updateHTML("rightVideoDuration", babeliumPlayer.getRightStreamDuration());
+	          updateHTML("rightVideoCurrentTime", babeliumPlayer.getRightStreamCurrentTime());
+	          updateHTML("rightVideoBytesTotal", babeliumPlayer.getRightStreamBytesTotal());
+	          updateHTML("rightVideoBytesLoaded", babeliumPlayer.getRightStreamBytesLoaded());
+	          
+	          
+	          
 	          updateHTML("micActivityLevel", babeliumPlayer.getMicActivityLevel());
 	          updateHTML("volume", babeliumPlayer.getVolume());
+	          
+	          
+	          //updateHTML("rightVideoVolume", babeliumPlayer.getRightStreamVolume());
+	          //updateHTML("startBytes", babeliumPlayer.getStartBytes());
 	        }
 	      }
 	      
@@ -162,11 +174,17 @@
 	    	  }
 	      }
 	      
+	      function loadStreamByUrl(){
+	    	  var url = document.getElementById("loadStreamByUrl").value;
+	    	  if(babeliumPlayer)
+	    	  	babeliumPlayer.loadStreamByUrl(url);
+	      };
+	      
 	      function playVideo() {
 	        if (babeliumPlayer) {
 	        	babeliumPlayer.playVideo();
 	        }
-	      }
+	      };
 	      
 	      function recordVideo(){
 	    	  if (babeliumPlayer) {
@@ -360,7 +378,10 @@
         	<p style="font-weight: bold;">Stream 1 Info</p>
         	<p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span id="videoDuration">--:--</span></p>
         	<p>Bytes Total: <span id="bytesTotal">--</span> | Start Bytes: <span id="startBytes">--</span> | Bytes Loaded: <span id="bytesLoaded">--</span></p>
+        	<p><input id="volumeSetting" type="text" size="3" />&nbsp;<a href="javascript:void(0)" onclick="setVideoVolume();">&lt;- Set Volume</a> | Volume: <span id="volume">--</span></p>
         	<p style="font-weight: bold;">Stream 2 Info</p>
+        	<p>Current Time: <span id="rightVideoCurrentTime">--:--</span> | Duration: <span id="rightVideoDuration">--:--</span></p>
+        	<p>Bytes Total: <span id="rightVideoBytesTotal">--</span> | Start Bytes: <span id="rightVideoStartBytes">--</span> | Bytes Loaded: <span id="rightVideoBytesLoaded">--</span></p>
         	<hr />
         	<p>Mic. activity level: <span id="micActivityLevel">--</span></p>
         	<p>Controls: <a href="javascript:void(0);" onclick="playVideo();">Play</a> | <a href="javascript:void(0);" onclick="pauseVideo();">Pause</a> | <a href="javascript:void(0);" onclick="muteVideo();">Mute</a> | <a href="javascript:void(0);" onclick="unMuteVideo();">Unmute</a>
@@ -370,7 +391,7 @@
         		<input id="recmethod_0" type="radio" value="0" name="recMethod" checked="checked"/>Microphone
         		<input id="recmethod_1" type="radio" value="1" name="recMethod"/>Mic. and camera
         	</p>
-        	<p><input id="volumeSetting" type="text" size="3" />&nbsp;<a href="javascript:void(0)" onclick="setVideoVolume();">&lt;- Set Volume</a> | Volume: <span id="volume">--</span></p>
+       		<p><input id="loadStreamByUrl" type="text" />&nbsp;<a href="javascript:void(0)" onclick="loadStreamByUrl();">Load stream by url</a></p>
       		
       	</div>
         </td>

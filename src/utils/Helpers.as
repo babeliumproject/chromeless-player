@@ -1,5 +1,6 @@
 package utils
 {
+	import mx.utils.ObjectUtil;
 
 	public class Helpers
 	{
@@ -46,20 +47,19 @@ package utils
 		 * 
 		 * @param url 
 		 */		
-		public static function parseUrl(url:String):void{
-			if (url.length >=4096) return;
+		public static function parseRTMPUrl(url:String):Array{
+			if (url.length >=4096) 
+				return null;
 			
+			//var stRegExp:RegExp=new RegExp("(^rtmp[t|e|s]?\:\\/\\/.+)\\/(.+)"); //Greedy baseurl
+			var stRegExp:RegExp=new RegExp("(^rtmp[t|e|s]?\:\\/\\/.+?\\/.+?)\\/(.+)"); //Non-greedy baseurl
+			
+			var resultSt:Array=stRegExp.exec(url);
+			return resultSt;
+		}
+		
+		public static function parseUrl(url:String):void{
 			//var prRegExp:RegExp=new RegExp("(^http[s]?\:\\/\\/+)([^\\/]+$)");
-			//var stRegExp:RegExp=new RegExp("^rtmp[t|e|s]?\:\\/\\/([^\\/]+)");
-			var stRegExp:RegExp=new RegExp("(^rtmp[t|e|s]?\:\\/\\/.+)\\/(.+)");
-			//var resultPr:Object=prRegExp.exec(url);
-			var resultSt:Object=stRegExp.exec(url);
-			//trace(""+resultPr.toString());
-			if(resultSt)
-				trace("Parse: "+resultSt[0]+"\t"+resultSt[1]+"\t"+resultSt[2]);
-			//if (!resultPr && !resultSt){
-			//
-			//}
 		}
 	}
 }

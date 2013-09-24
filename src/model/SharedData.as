@@ -2,7 +2,7 @@ package model
 {
 	import commands.EventPointManager;
 	
-	import media.MediaManager;
+	import media.RTMPMediaManager;
 	import media.UserDeviceManager;
 
 	public class SharedData

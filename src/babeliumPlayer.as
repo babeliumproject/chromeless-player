@@ -18,7 +18,7 @@ package
 	import flash.system.Security;
 	import flash.system.System;
 	
-	import media.MediaManager;
+	import media.RTMPMediaManager;
 	
 	import model.SharedData;
 	

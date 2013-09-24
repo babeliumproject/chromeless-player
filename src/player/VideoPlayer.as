@@ -1,5 +1,7 @@
 package player
 {
+	import api.DummyWebService;
+
 	import events.NetStreamClientEvent;
 	import events.PlayPauseEvent;
 	import events.ScrubberBarEvent;
@@ -7,7 +9,7 @@ package player
 	import events.StreamingEvent;
 	import events.VideoPlayerEvent;
 	import events.VolumeEvent;
-	
+
 	import flash.display.Sprite;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.Event;
@@ -23,12 +25,12 @@ package player
 	import flash.net.URLRequest;
 	import flash.utils.Dictionary;
 	import flash.utils.Timer;
-	
-	import media.MediaManager;
+
 	import media.NetStreamClient;
-	
+	import media.RTMPMediaManager;
+
 	import model.SharedData;
-	
+
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
 
@@ -70,11 +72,11 @@ package player
 			_playbackSoundTransform=new SoundTransform(DEFAULT_VOLUME);
 			_lastVolume=DEFAULT_VOLUME;
 
-			
+
 			//Event Listeners
 			//addEventListener(VideoPlayerEvent.VIDEO_SOURCE_CHANGED, onSourceChange);
 			//addEventListener(VideoPlayerEvent.VIDEO_FINISHED_PLAYING, onVideoFinishedPlaying);
-			
+
 			drawGraphics();
 
 			dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.CREATION_COMPLETE));
@@ -225,21 +227,30 @@ package player
 
 		private function onComplete():void
 		{
-			
+
 		}
 
 		public function loadVideoByUrl(url:String):void
 		{
-			//Decentralize the streaming manager
-			//pieces = parseVideoUrl(url)
-			//if (^rtmp || rtmpt)
-			//	streaming
-			//connect to streaming server and return _nc reference, this is asynchronous
-			//check how to do it
-			//else
-			//progressive
-			//return a null _nc reference, or maybe say whether it's progressive or not
-
+			_videoReady=false;
+			if (url != '')
+			{
+				resetAppearance();
+				_videoUrl=url;
+				if (streamReady(_nsc))
+				{
+					//_nsc.netStream.close();
+					_nsc.netStream.dispose();
+				}
+				_nsc=null;
+				_nsc=new NetStreamClient(_videoUrl, "playbackStream");
+				_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+				_nsc.setup();
+			}
+			else
+			{
+				logger.info("Empty video url provided");
+			}
 		}
 
 		public function loadVideoById(videoId:String):void
@@ -248,14 +259,16 @@ package player
 			if (videoId != '')
 			{
 				resetAppearance();
-				_videoUrl=videoId;
-				if(streamReady(_nsc)){
-					_nsc.netStream.close();
+				_videoUrl=DummyWebService.retrieveVideoById(videoId);
+				if (streamReady(_nsc))
+				{
+					//_nsc.netStream.close();
 					_nsc.netStream.dispose();
 				}
 				_nsc=null;
-				_nsc=new NetStreamClient(videoId, "playbackStream");
+				_nsc=new NetStreamClient(_videoUrl, "playbackStream");
 				_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+				_nsc.setup();
 			}
 			else
 			{
@@ -265,27 +278,34 @@ package player
 
 		protected function onNetStreamReady(event:NetStreamClientEvent):void
 		{
-				logger.debug("NetStreamClient {0} is ready", [event.streamId]);
-				_video.attachNetStream(_nsc.netStream);
-				_video.visible=true;
-				_nsc.netStream.soundTransform=_playbackSoundTransform;
-				_nsc.addEventListener(NetStreamClientEvent.METADATA_RETRIEVED, onMetaData);
-				_nsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
-				if (_videoUrl != '')
+			logger.debug("NetStreamClient {0} is ready", [event.streamId]);
+			_video.attachNetStream(_nsc.netStream);
+			_video.visible=true;
+			_nsc.netStream.soundTransform=_playbackSoundTransform;
+			_nsc.addEventListener(NetStreamClientEvent.METADATA_RETRIEVED, onMetaData);
+			_nsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
+			if (_videoUrl != '')
+			{
+				_videoReady=true;
+				if (_autoPlay || _forcePlay)
 				{
-					_videoReady=true;
-					if(_autoPlay || _forcePlay){ 
-						startVideo();
-						_forcePlay=false;
-					}
+					startVideo();
+					_forcePlay=false;
 				}
+			}
 		}
-		
-		protected function startVideo():void{
-			if(!_videoReady) return;
-			try{
-				_nsc.play("exercises/"+_videoUrl);
-			}catch(e:Error){
+
+		protected function startVideo():void
+		{
+			if (!_videoReady)
+				return;
+			try
+			{
+				//_nsc.play("exercises/"+_videoUrl);
+				_nsc.play();
+			}
+			catch (e:Error)
+			{
 				_videoReady=false;
 				logger.error("Error while loading video. [{0}] {1}", [e.errorID, e.message]);
 			}
@@ -293,8 +313,10 @@ package player
 
 		public function playVideo():void
 		{
-			if (!streamReady(_nsc))
+			if (!streamReady(_nsc)){
+				logger.debug("Stream is not ready");
 				return;
+			}
 			if (_nsc.streamState == NetStreamClient.STREAM_SEEKING_START)
 				return;
 			if (_nsc.streamState == NetStreamClient.STREAM_PAUSED)
@@ -303,12 +325,15 @@ package player
 			}
 			else
 			{
-				if (!_nsc.netStream.time){
-					//	loadVideoById(_videoUrl);
-					if(!_videoReady){
+				if (!_nsc.netStream.time)
+				{
+					if (!_videoReady)
+					{
 						_forcePlay=true;
-						loadVideoById(_videoUrl);
-					}else{
+						loadVideoByUrl(_videoUrl);
+					}
+					else
+					{
 						startVideo();
 					}
 				}
@@ -335,7 +360,8 @@ package player
 		{
 			if (streamReady(_nsc))
 			{
-				_nsc.play(false);
+				//_nsc.play(false);
+				_nsc.stop();
 				_video.clear();
 				_videoReady=false;
 			}
@@ -372,12 +398,7 @@ package player
 				//if(!_videoPlaying && !_autoPlay) pauseVideo();
 				_videoPlaying=true;
 			}
-			if (event.state == NetStreamClient.STREAM_SEEKING_START){
-				_videoSeeking=true;
-			}
-			if (event.state == NetStreamClient.STREAM_SEEKING_END){
-				_videoSeeking=false;
-			}
+			
 			dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.STREAM_STATE_CHANGED, event.state));
 		}
 

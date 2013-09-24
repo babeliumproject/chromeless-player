@@ -3,7 +3,7 @@ package media
 	import events.NetStreamClientEvent;
 	import events.StreamingEvent;
 	import events.VideoRecorderEvent;
-
+	
 	import flash.events.AsyncErrorEvent;
 	import flash.events.DRMErrorEvent;
 	import flash.events.DRMStatusEvent;
@@ -16,10 +16,12 @@ package media
 	import flash.net.NetStream;
 	import flash.net.NetStreamInfo;
 	import flash.utils.ByteArray;
-
+	
+	import mx.utils.ObjectUtil;
+	
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
-
+	
 	import utils.Helpers;
 
 
@@ -61,6 +63,11 @@ package media
 		private var _canSeekToEnd:Boolean;
 
 		private var _metaData:Object;
+		
+		private var _parsedUrl:Object;
+		
+		private var _baseUrl:String;
+		private var _streamUrl:String;
 
 		private static const logger:ILogger=getLogger(NetStreamClient);
 
@@ -72,19 +79,28 @@ package media
 			super();
 
 			_streamStatus=STREAM_UNREADY;
+			_duration=0; //Until we receiving metadata set the duration to 0
 			_name=name;
 
-			if (streamingProtocol(url) == 'rtmp')
+			if (isStreamingUrl(url))
 			{
-				initiateMediaManager();
+				//Have to split the baseurl from the stream fragment
+				_parsedUrl = Helpers.parseRTMPUrl(url)
+				if(_parsedUrl){
+					_baseUrl = _parsedUrl[1];
+					_streamUrl = _parsedUrl[2];
+				}
+			} else {
+				_streamUrl = url;
 			}
-			else
-			{
-				initiateNetStream();
-			}
+			//initiateMediaManager(_baseUrl);
+		}
+		
+		public function setup():void{
+			initiateMediaManager(_baseUrl);
 		}
 
-		private function initiateNetStream(connection:NetConnection=null):void
+		private function initiateNetStream(connection:NetConnection):void
 		{
 			try
 			{
@@ -98,7 +114,7 @@ package media
 				_ns.addEventListener(NetDataEvent.MEDIA_TYPE_DATA, onMediaTypeData);
 				_ns.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
 				_ns.addEventListener(StatusEvent.STATUS, onStatus);
-
+				
 				_nc=connection;
 				_connected=true;
 				dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.NETSTREAM_READY, _name));
@@ -115,19 +131,19 @@ package media
 		 *
 		 */
 
-		private function streamingProtocol(url:String):String
+		private function isStreamingUrl(url:String):Boolean
 		{
-			return 'rtmp';
+			return (url.search(/^rtmp/) !=-1) ? true : false;
 		}
 
-		private function initiateMediaManager():void
+		private function initiateMediaManager(server:String):void
 		{
-			if (!_mediaManager)
-			{
+			if(server)
+				_mediaManager=new RTMPMediaManager();
+			else
 				_mediaManager=new MediaManager();
-				_mediaManager.addEventListener(StreamingEvent.CONNECTED_CHANGE, onConnectionStatusChange);
-				_mediaManager.connect();
-			}
+			_mediaManager.addEventListener(StreamingEvent.CONNECTED_CHANGE, onConnectionStatusChange);
+			_mediaManager.connect(server);
 		}
 
 		private function onConnectionStatusChange(e:StreamingEvent):void
@@ -144,17 +160,23 @@ package media
 			return _connected;
 		}
 
-		public function play(params:Object):void
+		public function play(/*params:Object*/):void
 		{
 			try
 			{
-				logger.info("[{0}] Play {1}", [_name, Helpers.printObject(params)]);
-				_ns.play(params);
+				//logger.info("[{0}] Play {1}", [_name, Helpers.printObject(params)]);
+				//_ns.play(params);
+				logger.info("[{0}] Play {1}", [_name, _streamUrl]);
+				_ns.play(_streamUrl);
 			}
 			catch (e:Error)
 			{
 				logger.error("[{0}] Play Error [{1}] {2}", [_name, e.name, e.message]);
 			}
+		}
+		
+		public function stop():void{
+			_ns.play(false);
 		}
 
 		/**
@@ -277,6 +299,8 @@ package media
 						_streamStatus=STREAM_STARTED;
 					if (_streamStatus == STREAM_UNPAUSED)
 						_streamStatus=STREAM_STARTED;
+					if (_streamStatus == STREAM_SEEKING_END)
+						_streamStatus = STREAM_STARTED;
 
 					break;
 				case "NetStream.Buffer.Flush":
@@ -330,12 +354,7 @@ package media
 					break;
 				case "NetStream.Seek.Complete":
 					_streamStatus=STREAM_SEEKING_END;
-				//case "NetStream.Connect.Closed":
-				//	_connected=false;
-				//	break;
-				//case "NetStream.Connect.Success":
-				//	_connected=true;
-				//	break;
+					break;
 				default:
 					break;
 			}

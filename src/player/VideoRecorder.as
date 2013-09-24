@@ -102,6 +102,10 @@ package player
 		public function VideoRecorder()
 		{
 			super();
+			
+			//Retrieve the instance of the event point manager for later use
+			eventPointManager = SharedData.getInstance().eventPointManager;
+			
 			_state=VideoRecorder.PLAY_STATE;
 			drawGraphics();
 		}
@@ -411,7 +415,8 @@ package player
 				if(!_sideBySideReady) return;
 				try{
 					logger.info("Start playing right video {0}", [_secondStreamSource]);
-					_sbsNsc.play("responses/"+_secondStreamSource);
+					//_sbsNsc.play("responses/"+_secondStreamSource);
+					_sbsNsc.play();
 				}catch(e:Error){
 					_sideBySideReady=false;
 					logger.error("Error while loading video. [{0}] {1}", [e.errorID, e.message]);
@@ -470,7 +475,8 @@ package player
 			{
 				if (streamReady(_sbsNsc))
 				{
-					_sbsNsc.play(false);
+					//_sbsNsc.play(false);
+					_sbsNsc.stop();
 					_camVideo.clear();
 					_sideBySideReady=false;
 				}
@@ -686,10 +692,10 @@ package player
 
 			if (getState() & RECORD_FLAG)
 			{
-//				_outNs=new NetStreamClient(_nc,"outNs");
 				_recordingReady=false;
 				_recNsc=new NetStreamClient('recordingurl', "recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+				_recNsc.setup();
 				//disableControls();
 			}
 			
@@ -702,9 +708,9 @@ package player
 				//	splitVideoPanel();
 				_camVideo.visible=false;
 				_micImage.visible=false;
-				//_outNs=new NetStreamClient(_nc,"outNs");
 				_recNsc=new NetStreamClient('recordingurl', "recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+				_recNsc.setup();
 			}
 
 			//_micActivityBar.visible=true;
@@ -819,6 +825,7 @@ package player
 			{
 				_recNsc.netStream.attachCamera(null);
 				_recNsc.netStream.attachAudio(null);
+				_recNsc.netStream.dispose();
 			}
 
 			//if((_onTop.numChildren > 0) && (_onTop.getChildAt(0) is PrivacyRights) )
@@ -826,9 +833,7 @@ package player
 		}
 		
 		public function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
-			
-			eventPointManager = SharedData.getInstance().eventPointManager;
-			
+						
 			//Clean the previous sessions
 			unattachUserDevices();
 			removeEventListener(PollingEvent.ENTER_FRAME, eventPointManager.pollEventPoints);
@@ -867,6 +872,7 @@ package player
 		public function abortRecording():void{
 			resetCountdown();
 			unattachUserDevices();
+			
 			removeEventListener(PollingEvent.ENTER_FRAME, eventPointManager.pollEventPoints);
 			
 			//Remove the polling timer
@@ -892,6 +898,7 @@ package player
 				_sbsNsc=null;
 				_sbsNsc=new NetStreamClient(rightStreamId, "sidebysideStream");
 				_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+				_sbsNsc.setup();
 			}
 			else
 			{
@@ -902,7 +909,6 @@ package player
 		public function loadSideBySideVideosByUrl(leftStreamUrl:String, rightStreamUrl:String, eventData:Object = null):void{
 			//TODO
 		}
-		
 		
 		
 		public function setVolumeRecording(value:Number):void{
@@ -919,7 +925,7 @@ package player
 		
 		public function get rightStreamDuration():Number
 		{
-			return _sbsNsc.duration;
+			return streamReady(_sbsNsc) ? _sbsNsc.duration : 0;
 		}
 		
 		public function get letfStreamTime():Number

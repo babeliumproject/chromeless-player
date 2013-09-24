@@ -14,7 +14,7 @@ package view
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
 	
-	import media.MediaManager;
+	import media.RTMPMediaManager;
 	import media.UserDeviceManager;
 	
 	import model.SharedData;

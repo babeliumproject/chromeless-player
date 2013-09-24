@@ -15,7 +15,7 @@ package view
 	import flash.text.TextFieldType;
 	import flash.text.TextFormat;
 	
-	import media.MediaManager;
+	import media.RTMPMediaManager;
 	
 	import model.SharedData;
 	

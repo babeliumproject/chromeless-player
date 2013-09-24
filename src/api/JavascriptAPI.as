@@ -12,7 +12,7 @@ package api
 	import flash.external.ExternalInterface;
 	import flash.utils.Dictionary;
 	
-	import media.MediaManager;
+	import media.RTMPMediaManager;
 	
 	import model.SharedData;
 	
@@ -38,52 +38,37 @@ package api
 		{
 			this.VP = VP;
 			
-			// Functions
-			//addCB("disableControls",VP.disableControls);
-			//addCB("enableControls",VP.enableControls);
-			//addCB("endVideo",VP.endVideo);
-			//addCB("muteRecording",VP.muteRecording);
-			
-			addCB("pauseVideo",VP.pauseVideo);
+
 			addCB("playVideo",VP.playVideo);
-			//addCB("removeArrows",VP.removeArrows);
-			//addCB("resumeVideo",VP.resumeVideo);
+			addCB("pauseVideo",VP.pauseVideo);
 			addCB("seekTo",VP.seekTo);
-			//addCB("setSubtitle",setSubtitle);
-			//addCB("startTalking",VP.startTalking);
-			//addCB("stopVideo",VP.stopVideo);
-			//addCB("toggleControls",VP.toggleControls);
-			//addCB("unattachUserDevices",VP.unattachUserDevices);
 			
 			addCB("recordVideo", recordVideo);
 			addCB("abortRecording", abortRecording);
+				
+			addCB("getVolume", getVolume);
+			addCB("setVolume", setVolume);
+			addCB("muteVideo", muteVideo);
+			addCB("unMuteVideo", unMuteVideo);
 			
+			
+			addCB("getDuration", duration);
+			addCB("getCurrentTime", streamTime);
 			addCB("getLoadedFragment", VP.getLoadedFragment);
 			addCB("getBytesTotal", VP.getBytesTotal);
 			addCB("getBytesLoaded", VP.getBytesLoaded);
+		
+			addCB("getState", getState);
+
+			addCB("getMicActivityLevel", micActivityLevel);
 			
-			// Properties
-			addCB("getVolume", getVolume);
-			addCB("setVolume", setVolume);
-			addCB("muteVideo",muteVideo);
-			addCB("unMuteVideo",unMuteVideo);
 			
-			//addCB("arrows",arrows);
-			//addCB("autoPlay",autoPlay);
-			//addCB("autoScale",autoScale);
-			//addCB("controlsEnabled",controlsEnabled);
-			addCB("getDuration",duration);
-			//addCB("secondSource",secondSource);
-			//addCB("seek",seek);
-			addCB("getState",getState);
-			//addCB("setState",setState);
-			addCB("getCurrentTime",streamTime);
-			addCB("getMicActivityLevel",micActivityLevel);
-			//addCB("subtitles",subtitles);
-			//addCB("subtitlingControls",subtitlingControls);
-			//addCB("subtitlePanelVisible",subtitlePanelVisible);
-			//addCB("exerciseSource",exerciseSource);
-			//addCB("responseSource",responseSource);
+			addCB("getRightStreamDuration", rightStreamDuration);
+			addCB("getRightStreamCurrentTime", rightStreamTime);
+			addCB("getRightStreamBytesTotal", VP.rightStreamBytesTotal);
+			addCB("getRightStreamBytesLoaded", VP.rightStreamBytesLoaded);
+			
+			addCB("loadStreamByUrl", loadVideoByUrl);
 			
 			//Events
 			addCB("addEventListener",addEventListener);
@@ -185,15 +170,6 @@ package api
 			ExternalInterface.call(jsListeners['onRecorderStateChange'], e.state);
 		}
 		
-		/*************************
-		 * Tunneling VP Properties
-		 ************************/
-		
-		/*
-		private function arrows(flag:Boolean):void
-		{
-			VP.arrows = flag;
-		}*/
 		
 		private function autoPlay(flag:Boolean):void
 		{
@@ -205,33 +181,10 @@ package api
 			VP.scaleToFit = flag;
 		}
 		
-		/*
-		private function controlsEnabled(flag:Boolean):void
-		{
-			VP.controlsEnabled = flag;
-		}*/
-		
 		private function duration():Number
 		{
 			return VP.duration;
 		}
-		
-		/*
-		private function subtitlePanelVisible():Boolean{
-			return VP.subtitlePanelVisible;
-		}*/
-		
-		/*
-		private function setSubtitle(text:String, color:uint):void{
-			VP.setSubtitle(text,color);
-		}*/
-		
-		/*
-		private function secondSource(video:String):void
-		{
-			//VP.secondSource = SharedData.getInstance().streamingManager.responseStreamsFolder + "/" + video;
-			VP.secondSource = 'url' + "/" + video;
-		}*/
 		
 		private function seek(flag:Boolean):void
 		{
@@ -268,24 +221,21 @@ package api
 			return VP.streamTime;
 		}
 		
+		private function rightStreamTime():Number{
+			return VP.rightStreamTime;
+		}
+		
+		private function rightStreamDuration():Number{
+			
+			return VP.rightStreamDuration;
+		}
+		
 		private function micActivityLevel():Number{
 			if (SharedData.getInstance().privacyManager.microphone)
 				return SharedData.getInstance().privacyManager.microphone.activityLevel;
 			else
 				return -1;
 		}
-		
-		/*
-		private function subtitles(flag:Boolean):void
-		{
-			VP.subtitles = flag;
-		}*/
-		
-		/*
-		private function subtitlingControls(flag:Boolean):void
-		{
-			VP.subtitlingControls = flag;
-		}*/	
 		
 		private function exerciseSource(video:String):void
 		{
@@ -300,6 +250,10 @@ package api
 		
 		private function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
 			VP.recordVideo(useWebcam, exerciseId, recdata);
+		}
+		
+		private function loadVideoByUrl(url:String):void{
+			VP.loadVideoByUrl(url);
 		}
 		
 		private function abortRecording():void{
