@@ -1,7 +1,7 @@
 package player
 {
 	import api.DummyWebService;
-
+	
 	import events.NetStreamClientEvent;
 	import events.PlayPauseEvent;
 	import events.ScrubberBarEvent;
@@ -9,7 +9,7 @@ package player
 	import events.StreamingEvent;
 	import events.VideoPlayerEvent;
 	import events.VolumeEvent;
-
+	
 	import flash.display.Sprite;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.Event;
@@ -25,12 +25,12 @@ package player
 	import flash.net.URLRequest;
 	import flash.utils.Dictionary;
 	import flash.utils.Timer;
-
+	
 	import media.NetStreamClient;
 	import media.RTMPMediaManager;
-
+	
 	import model.SharedData;
-
+	
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
 
@@ -239,7 +239,6 @@ package player
 				_videoUrl=url;
 				if (streamReady(_nsc))
 				{
-					//_nsc.netStream.close();
 					_nsc.netStream.dispose();
 				}
 				_nsc=null;
@@ -262,7 +261,6 @@ package player
 				_videoUrl=DummyWebService.retrieveVideoById(videoId);
 				if (streamReady(_nsc))
 				{
-					//_nsc.netStream.close();
 					_nsc.netStream.dispose();
 				}
 				_nsc=null;
@@ -317,16 +315,30 @@ package player
 				logger.debug("Stream is not ready");
 				return;
 			}
-			if (_nsc.streamState == NetStreamClient.STREAM_SEEKING_START)
+			
+			if (_nsc.streamState == NetStreamClient.STREAM_SEEKING_START){
+				logger.debug("Cannot start playing while previous seek is not complete");
 				return;
+			}				
 			if (_nsc.streamState == NetStreamClient.STREAM_PAUSED)
 			{
 				resumeVideo();
 			}
+			if (_nsc.streamState == NetStreamClient.STREAM_UNREADY){
+				logger.debug("[PlayVideo] stream not ready");
+				_forcePlay=true;
+				loadVideoByUrl(_videoUrl);
+			}
+			if (_nsc.streamState == NetStreamClient.STREAM_READY || _nsc.streamState == NetStreamClient.STREAM_FINISHED){
+				logger.debug("[PlayVideo] stream ready or finished");
+				startVideo();
+			}
+			/*
 			else
 			{
 				if (!_nsc.netStream.time)
 				{
+					logger.debug("Stream is not reporting its time, start or load the stream");
 					if (!_videoReady)
 					{
 						_forcePlay=true;
@@ -337,7 +349,8 @@ package player
 						startVideo();
 					}
 				}
-			}
+				logger.debug("Something went wrong, the stream is not ready and yet it returns a time value of: {0}", [_nsc.netStream.time]);
+			}*/
 		}
 
 		public function pauseVideo():void
@@ -363,7 +376,7 @@ package player
 				//_nsc.play(false);
 				_nsc.stop();
 				_video.clear();
-				_videoReady=false;
+				//_videoReady=false;
 			}
 		}
 
@@ -389,7 +402,9 @@ package player
 		{
 			if (event.state == NetStreamClient.STREAM_FINISHED)
 			{
-				stopVideo();
+				logger.debug("StreamFinished Event received");
+				//stopVideo();
+				_video.clear();
 				_videoPlaying=false;
 			}
 			if (event.state == NetStreamClient.STREAM_STARTED)

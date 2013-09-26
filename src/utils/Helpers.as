@@ -58,8 +58,11 @@ package utils
 			return resultSt;
 		}
 		
-		public static function parseUrl(url:String):void{
-			//var prRegExp:RegExp=new RegExp("(^http[s]?\:\\/\\/+)([^\\/]+$)");
+		public static function parseUrl(url:String):Boolean{
+			var rtmpUrlFormat:RegExp=new RegExp("(^rtmp[t|e|s]?\:\\/\\/.+?\\/.+?)\\/(.+)"); //Non-greedy
+			var httpUrlFormat:RegExp=new RegExp("(^http[s]?\:\\/\\/+)([^\\/]+$)");
+			
+			return (rtmpUrlFormat.exec(url) || httpUrlFormat.exec(url));
 		}
 	}
 }

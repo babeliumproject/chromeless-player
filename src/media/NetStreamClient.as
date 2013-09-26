@@ -176,7 +176,15 @@ package media
 		}
 		
 		public function stop():void{
-			_ns.play(false);
+			logger.debug("Stop was called");
+			if(_baseUrl)
+				_ns.close();
+			else
+				_ns.play(false);
+		}
+		
+		public function publish(mode:String='record'):void{
+			_ns.publish(_streamUrl, mode);
 		}
 
 		/**
@@ -266,8 +274,8 @@ package media
 
 		public function onMediaTypeData(event:NetDataEvent):void
 		{
-			logger.info("[{0}] MediaTypeData callback", [_name]);
-			logger.debug("[{0}] MediaTypeData {1}", [_name, Helpers.printObject(event.toString())]);
+			//logger.info("[{0}] MediaTypeData callback", [_name]);
+			//logger.debug("[{0}] MediaTypeData {1}", [_name, Helpers.printObject(event.toString())]);
 		}
 
 		public function onNetStatus(event:NetStatusEvent):void
@@ -385,7 +393,7 @@ package media
 
 		public function onMetaData(metaData:Object):void
 		{
-			logger.info("[{0}] MetaData callback", [_name]);
+			//logger.info("[{0}] MetaData callback", [_name]);
 			logger.debug("[{0}] MetaData {1}", [_name, Helpers.printObject(metaData)]);
 
 			_metaData=metaData;
@@ -414,29 +422,32 @@ package media
 
 		public function onPlayStatus(playStatus:Object):void
 		{
-			//level, code
-			logger.info("[{0}] PlayStatus callback", [_name]);
-			logger.debug("[{0}] PlayStatus {1}", [_name, Helpers.printObject(playStatus)]);
+			logger.debug("[{0}] PlayStatus [{1}] {2}", [_name, playStatus.level, playStatus.code]);
+			//if(playStatus.code == "NetStream.Play.Complete"){
+			//	_streamStatus=STREAM_FINISHED;
+			//	dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.STATE_CHANGED, _name, _streamStatus));
+			//}
+			//logger.debug("[{0}] PlayStatus {1}", [_name, Helpers.printObject(playStatus)]);
 		}
 
 		public function onSeekPoint(seekPoint:Object):void
 		{
-			logger.info("[{0}] SeekPoint callback", [_name]);
-			logger.debug("[{0}] SeekPoint {1}", [_name, Helpers.printObject(seekPoint)]);
+			//logger.info("[{0}] SeekPoint callback", [_name]);
+			//logger.debug("[{0}] SeekPoint {1}", [_name, Helpers.printObject(seekPoint)]);
 		}
 
 		public function onTextData(textData:Object):void
 		{
-			logger.info("[{0}] TextData callback", [_name]);
-			logger.debug("[{0}] TextData {1}", [_name, Helpers.printObject(textData)]);
+			//logger.info("[{0}] TextData callback", [_name]);
+			//logger.debug("[{0}] TextData {1}", [_name, Helpers.printObject(textData)]);
 		}
 
 		public function onXMPData(xmpData:Object):void
 		{
 			//data, a string The string is generated from a top-level UUID box. 
 			//(The 128-bit UUID of the top level box is BE7ACFCB-97A9-42E8-9C71-999491E3AFAC.) This top-level UUID box contains exactly one XML document represented as a null-terminated UTF-8 string.
-			logger.info("[{0}] XMPData callback", [_name]);
-			logger.debug("[{0}] XMPData {1}", [_name, Helpers.printObject(xmpData)]);
+			//logger.info("[{0}] XMPData callback", [_name]);
+			//logger.debug("[{0}] XMPData {1}", [_name, Helpers.printObject(xmpData)]);
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package player 
 {
+	import api.DummyWebService;
+	
 	import assets.MicImage;
 	
 	import commands.*;
@@ -72,7 +74,8 @@ package player
 		private var _countdown:Timer;
 		private var _countdownTxt:TextField;
 
-		private var _fileName:String;
+		//private var _fileName:String;
+		private var _recordingUrl:String;
 		private var _recordingMuted:Boolean=false;
 
 		private var _cuePointTimer:Timer;
@@ -467,7 +470,7 @@ package player
 			super.stopVideo();
 
 			if (getState() & RECORD_FLAG /*&& _recording*/){
-				_recNsc.netStream.close();
+				//_recNsc.netStream.close();
 				_recNsc.netStream.dispose();
 			}
 
@@ -693,7 +696,8 @@ package player
 			if (getState() & RECORD_FLAG)
 			{
 				_recordingReady=false;
-				_recNsc=new NetStreamClient('recordingurl', "recordingStream");
+				_recordingUrl = DummyWebService.retrieveRecordingUrl();
+				_recNsc=new NetStreamClient(_recordingUrl, "recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
 				_recNsc.setup();
 				//disableControls();
@@ -774,27 +778,29 @@ package player
 			if (!(getState() & RECORD_FLAG))
 				return; // security check
 
-			var d:Date=new Date();
-			_fileName="resp-" + d.getTime().toString();
-			var responseFilename:String= "responses/" + _fileName;
+			//var d:Date=new Date();
+			//_fileName="resp-" + d.getTime().toString();
+			//var responseFilename:String= "responses/" + _fileName;
 
-
+			//_nsc.netStream.togglePause();
+			startVideo();
+			
 			if (getState() & RECORD_FLAG)
 			{
 				_recNsc.netStream.attachAudio(_mic);
 				muteRecording(true); // mic starts muted
 			}
-
+			
 			if (getState() == RECORD_MICANDCAM_STATE)
 				_recNsc.netStream.attachCamera(_camera);
-
-			//_nsc.netStream.togglePause();
-			startVideo();
-			_recNsc.netStream.publish(responseFilename, "record");
+			
+			
+			//_recNsc.netStream.publish(responseFilename, "record");
+			_recNsc.publish();
 			
 			_recording=true;
 
-			logger.info("Started recording a stream {0}", [_fileName]);
+			logger.info("Started recording a stream {0}", [_recordingUrl]);
 		}
 
 		override public function onStreamStateChange(event:NetStreamClientEvent):void{
@@ -803,16 +809,16 @@ package player
 			{
 				if(_state & RECORD_FLAG){
 					unattachUserDevices();
-					logger.info("Finished recording stream {0}", [_fileName]);
+					logger.info("Finished recording stream {0}", [_recordingUrl]);
 					_recording=false;
 					streamPositionTimer(false);
 					//_autoPlay=_lastAutoplay;
 					setState(VideoRecorder.PLAY_SIDEBYSIDE_STATE);
-					loadSideBySideVideosById(_videoUrl, _fileName, null);
-					dispatchEvent(new RecordingEvent(RecordingEvent.END, _fileName));
+					loadSideBySideVideosById(_videoUrl, _recordingUrl, null);
+					dispatchEvent(new RecordingEvent(RecordingEvent.END, _recordingUrl));
 				} else {
 					//Parent onStreamStateChange does not call the recorder's stopVideo function
-					stopVideo();
+					//stopVideo();
 					dispatchEvent(new RecordingEvent(RecordingEvent.REPLAY_END));
 				}
 			}
@@ -861,7 +867,7 @@ package player
 				
 				//parse the given exercise id
 				//if _videoId = exerciseId
-				loadVideoById(_videoUrl);
+				loadVideoById(exerciseId);
 			}
 			
 			//Set the video player's state to recording

@@ -14,6 +14,19 @@
         <title>${title}</title>
         <meta name="google" value="notranslate" />         
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        
+        <!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+		
+
+        
         <!-- Include CSS to eliminate any default margins/padding and set the height of the html element and 
              the body element to 100%, because Firefox, or any Gecko based browser, interprets percentage as 
              the percentage of the height of its parent container, which has to be set explicitly.  Fix for
@@ -21,9 +34,11 @@
              if JavaScript disabled.
         -->
         <style type="text/css" media="screen"> 
-            html, body  { height:100%; }
+           /*
+           html, body  { height:100%; }
             body { margin:0; padding:0; overflow:auto; text-align:center; 
-                   background-color: ${bgcolor}; }   
+                   background-color: ${bgcolor}; }  
+                   */ 
             object:focus { outline:none; }
             #babeliumPlayer { display:none; }
         </style>
@@ -328,6 +343,7 @@
              JavaScript and Flash plug-in support is available. The div is initially hidden so that it doesn't show
              when JavaScript is disabled.
         -->
+        <div class="container">
         <table><tr>
         <td>
         <div id="babeliumPlayer">
@@ -383,19 +399,42 @@
         	<p>Current Time: <span id="rightVideoCurrentTime">--:--</span> | Duration: <span id="rightVideoDuration">--:--</span></p>
         	<p>Bytes Total: <span id="rightVideoBytesTotal">--</span> | Start Bytes: <span id="rightVideoStartBytes">--</span> | Bytes Loaded: <span id="rightVideoBytesLoaded">--</span></p>
         	<hr />
-        	<p>Mic. activity level: <span id="micActivityLevel">--</span></p>
-        	<p>Controls: <a href="javascript:void(0);" onclick="playVideo();">Play</a> | <a href="javascript:void(0);" onclick="pauseVideo();">Pause</a> | <a href="javascript:void(0);" onclick="muteVideo();">Mute</a> | <a href="javascript:void(0);" onclick="unMuteVideo();">Unmute</a>
-        		| <a href="javascript:void(0)" onclick="seekVideoTime()">Seek to</a>&nbsp;<input id="seekTo" type="text" size="3" /></p>
-        	<p>Recording controls: <a href="javascript:void(0);" onclick="recordVideo();">Record</a> | <a href="javascript:void(0);" onclick="abortRecording();">Abort recording</a></p>
-        	<p>Recording devices: 
-        		<input id="recmethod_0" type="radio" value="0" name="recMethod" checked="checked"/>Microphone
-        		<input id="recmethod_1" type="radio" value="1" name="recMethod"/>Mic. and camera
-        	</p>
-       		<p><input id="loadStreamByUrl" type="text" />&nbsp;<a href="javascript:void(0)" onclick="loadStreamByUrl();">Load stream by url</a></p>
+        	
       		
       	</div>
         </td>
         </tr>
+        <tr>
+        <td>
+        <p>Mic. activity level: <span id="micActivityLevel">--</span></p>
+        	<p>Controls: 
+        	
+        		<button type="button" class="btn btn-default" onclick="playVideo();"><span class="glyphicon glyphicon-play"></span> Play</button>
+        		<button type="button" class="btn btn-default" onclick="pauseVideo();"><span class="glyphicon glyphicon-pause"></span> Pause</button>
+        		<button type="button" class="btn btn-default" onclick="muteVideo();"><span class="glyphicon glyphicon-volume-off"></span> Mute</button>
+        		<button type="button" class="btn btn-default" onclick="unMuteVideo();"><span class="glyphicon glyphicon-volume-up"></span> Unmute</button>
+        		<div class="input-group">
+        			<input id="seekTo" type="text" size="3" class="form-control" />
+        				<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="seekVideoTime();">Seek to</button></span>
+        		</div>
+        		<!--  <a href="javascript:void(0)" onclick="seekVideoTime()">Seek to</a>&nbsp;<input id="seekTo" type="text" size="3" class="form-control" />-->
+        	</p>
+        	<p>Recording controls: 
+        		<button type="button" class="btn btn-default" onclick="recordVideo();">Record</button>
+        		<button type="button" class="btn btn-danger" onclick="abortRecording();"><span class="glyphicon glyphicon-ban-circle"></span> Abort recording</button>
+        	</p>
+        	<p>Recording devices: 
+        		<input id="recmethod_0" type="radio" value="0" name="recMethod" checked="checked"/>Microphone
+        		<input id="recmethod_1" type="radio" value="1" name="recMethod"/>Mic. and camera
+        	</p>
+        	<div class="input-group">
+       			<input id="loadStreamByUrl" type="text" class="form-control"/>
+       		 		<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="loadStreamByUrl();">Load stream by url</button></span>
+       		</div>
+        
+        </td>
+        </tr>
         </table>
+        </div>
    </body>
 </html>

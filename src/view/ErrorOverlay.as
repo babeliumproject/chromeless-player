@@ -15,12 +15,7 @@ package view
 	import flash.text.TextFieldType;
 	import flash.text.TextFormat;
 	
-	import media.RTMPMediaManager;
-	
 	import model.SharedData;
-	
-	import mx.resources.ResourceBundle;
-	import mx.resources.ResourceManager;
 	
 	public class ErrorOverlay extends Sprite
 	{
