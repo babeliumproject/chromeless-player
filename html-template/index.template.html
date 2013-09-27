@@ -21,11 +21,6 @@
 		<!-- Optional theme -->
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
 
-		<!-- Latest compiled and minified JavaScript -->
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-		
-
         
         <!-- Include CSS to eliminate any default margins/padding and set the height of the html element and 
              the body element to 100%, because Firefox, or any Gecko based browser, interprets percentage as 
@@ -48,6 +43,143 @@
         <link rel="stylesheet" type="text/css" href="history/history.css" />
         <script type="text/javascript" src="history/history.js"></script>
         <!${useBrowserHistory} END Browser History required section -->  
+        
+    </head>
+    <body>
+        <!-- SWFObject's dynamic embed method replaces this alternative HTML content with Flash content when enough 
+             JavaScript and Flash plug-in support is available. The div is initially hidden so that it doesn't show
+             when JavaScript is disabled.
+        -->
+        <div class="container">
+        <table><tr>
+        <td>
+        <div id="babeliumPlayer">
+            <p>
+                To view this page ensure that Adobe Flash Player version 
+                ${version_major}.${version_minor}.${version_revision} or greater is installed. 
+            </p>
+            <script type="text/javascript"> 
+                var pageHost = ((document.location.protocol == "https:") ? "https://" : "http://"); 
+                document.write("<a href='http://www.adobe.com/go/getflashplayer'><img src='" 
+                                + pageHost + "www.adobe.com/images/shared/download_buttons/get_flash_player.gif' alt='Get Adobe Flash player' /></a>" ); 
+            </script> 
+        </div>
+        <noscript>
+            <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="${width}" height="${height}" id="${application}">
+                <param name="movie" value="${swf}.swf" />
+                <param name="quality" value="high" />
+                <param name="bgcolor" value="${bgcolor}" />
+                <param name="allowScriptAccess" value="always" />
+                <param name="allowFullScreen" value="true" />
+                <!--[if !IE]>-->
+                <object type="application/x-shockwave-flash" data="${swf}.swf" width="${width}" height="${height}">
+                    <param name="quality" value="high" />
+                    <param name="bgcolor" value="${bgcolor}" />
+                    <param name="allowScriptAccess" value="sameDomain" />
+                    <param name="allowFullScreen" value="true" />
+                <!--<![endif]-->
+                <!--[if gte IE 6]>-->
+                    <p> 
+                        Either scripts and active content are not permitted to run or Adobe Flash Player version
+                        ${version_major}.${version_minor}.${version_revision} or greater is not installed.
+                    </p>
+                <!--<![endif]-->
+                    <a href="http://www.adobe.com/go/getflashplayer">
+                        <img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash Player" />
+                    </a>
+                <!--[if !IE]>-->
+                </object>
+                <!--<![endif]-->
+            </object>
+        </noscript> 
+        </td>
+        <td>
+         <div id="videoInfo" class="panel panel-default">
+        	<div class="panel-heading">Status info</div>
+        	<div class="panel-body">
+	         	<p>Player mode: <span id="recorderMode">PLAYBACK</span></p>
+	        	<strong>Stream 1 Info</strong>
+	        	<p>Stream state: <span id="streamState">--</span></p>
+	        	<p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span id="videoDuration">--:--</span></p>
+	        	<p>Bytes Total: <span id="bytesTotal">--</span> | Start Bytes: <span id="startBytes">--</span> | Bytes Loaded: <span id="bytesLoaded">--</span></p>
+	        	<strong>Stream 2 Info</strong>
+	        	<p>Current Time: <span id="rightVideoCurrentTime">--:--</span> | Duration: <span id="rightVideoDuration">--:--</span></p>
+	        	<p>Bytes Total: <span id="rightVideoBytesTotal">--</span> | Start Bytes: <span id="rightVideoStartBytes">--</span> | Bytes Loaded: <span id="rightVideoBytesLoaded">--</span></p>
+	        	<strong>Device info</strong>
+	        	<p>Device state: <span id="deviceState">Unknown</span></p>
+	        	<p>Mic. activity level: <span id="micActivityLevel">--</span></p>
+        	</div>
+      	</div>
+        </td>
+        </tr>
+        <tr>
+        <td>
+        	<div class="panel panel-default">
+        		<div class="panel-heading">Controls</div>
+        		<div class="panel-body">
+	        		<button type="button" class="btn btn-default" onclick="playVideo();"><span class="glyphicon glyphicon-play"></span> Play</button>
+	        		<button type="button" class="btn btn-default" onclick="pauseVideo();"><span class="glyphicon glyphicon-pause"></span> Pause</button>
+	        		<button type="button" class="btn btn-default" onclick="muteVideo();"><span class="glyphicon glyphicon-volume-off"></span> Mute</button>
+	        		<button type="button" class="btn btn-default" onclick="unMuteVideo();"><span class="glyphicon glyphicon-volume-up"></span> Unmute</button>
+	        		<div class="input-group">
+	        			<input id="seekTo" type="text" class="form-control col-lg-2" />
+	        				<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="seekVideoTime();">Seek to</button></span>
+	        		</div>
+	        		<input id="volumeSetting" type="text" size="3" />&nbsp;<a href="javascript:void(0)" onclick="setVideoVolume();">&lt;- Set Volume</a> | Volume: <span id="volume">--</span>
+	        	</div>
+        	</div>
+        	
+        	<div class="panel panel-default">
+        		<div class="panel-heading">Recording</div>
+        		<div class="panel-body">
+		        	<form class="form-horizontal" role="form">
+		        		<div class="form-group">
+		        			<label for="recMethod" class="col-lg-2 control-label">Devices</label>
+		        			<div class="col-lg-10">
+		        				<label class="radio-inline"><input id="recmethod_0" type="radio" value="0" name="recMethod" checked="checked"/>Microphone</label>
+		        				<label class="radio-inline"><input id="recmethod_1" type="radio" value="1" name="recMethod"/>Mic. and camera</label>
+		        			</div>
+		        		</div>
+						<div class="form-group">
+							<label for="recExerciseId" class="col-lg-2 control-label">Exercise</label>
+							<div class="col-lg-10"><input type="text" class="form-control" id="recExerciseId" placeholder="Exercise ID or URL" value="U1MbBtkIGZQ.flv"></div>
+						</div>
+						<div class="form-group">
+							<label for="eventDataArea" class="col-lg-2 control-label">Event data</label>
+							<div class="col-lg-10">
+								<table class="table">
+									<thead>
+										<tr><th>Time</th><th>Target</th><th>Action</th><th>Parameters</th></tr>
+									</thead>
+									<tbody>
+									</tbody>
+								</table>
+								<textarea id="eventDataArea" rows="5" class="form-control"></textarea>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-lg-offset-2 col-lg-10">
+		        				<button type="button" class="btn btn-default" onclick="recordVideo();">Record</button>
+		        				<button type="button" class="btn btn-danger" onclick="abortRecording();"><span class="glyphicon glyphicon-ban-circle"></span> Abort recording</button>
+		        			</div>
+		        		</div>
+					</form>
+				</div>
+			</div>
+        	
+        	<div class="input-group">
+       			<input id="loadStreamByUrl" type="text" class="form-control"/>
+       		 		<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="loadStreamByUrl();">Load stream by url</button></span>
+       		</div>
+        
+        </td>
+        </tr>
+        </table>
+        </div>
+        
+        <!-- Latest compiled and minified JavaScript -->
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
             
         <script type="text/javascript" src="swfobject.js"></script>
         <script type="text/javascript">
@@ -77,6 +209,67 @@
 	      /*
 	       * Chromeless player has no controls.
 	       */
+	       
+	     //Get the selected role and make an object with the cuepoints
+ 		  var cuepoints_shaman = {
+ 				  'character': 'Shaman',
+ 				  'eventpoints': { 
+ 					  '00:00:02.090': {
+ 					  	'exercise': {'action': 'volumechange', 'value': '0'},
+ 					  	'response': {'action': 'volumechange', 'value': '100'},
+ 				  	  },
+ 				      '00:00:06.000': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '100'},
+ 				    	'response': {'action': 'volumechange', 'value': '0'}
+ 				      },
+ 				      '00:00:10.500': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '0'},
+ 				    	'response': {'action': 'volumechange', 'value': '100'},
+ 				      },
+ 				      '00:00:14.130': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '100'},
+ 				    	'response': {'action': 'volumechange', 'value': '0'}
+ 				      },
+ 				      '00:00:22.880': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '0'},
+ 				    	'response': {'action': 'volumechange', 'value': '100'},
+ 				      },
+ 				      '00:00:25.600': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '100'},
+ 				    	'response': {'action': 'volumechange', 'value': '0'}
+ 				      }
+					  }
+ 		  };
+ 		  
+ 		  var cuepoints_sintel = {
+ 				  'character': 'Sintel',
+ 				  'eventpoints': { 
+ 					  '00:00:07.000': {
+ 					  	'exercise': {'action': 'volumechange', 'value': '0'},
+ 					  	'response': {'action': 'volumechange', 'value': '100'},
+ 				  	  },
+ 				      '00:00:10.000': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '100'},
+ 				    	'response': {'action': 'volumechange', 'value': '0'}
+ 				      },
+ 				      '00:00:17.050': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '0'},
+ 				    	'response': {'action': 'volumechange', 'value': '100'},
+ 				      },
+ 				      '00:00:18.370': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '100'},
+ 				    	'response': {'action': 'volumechange', 'value': '0'}
+ 				      },
+ 				      '00:00:27.240': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '0'},
+ 				    	'response': {'action': 'volumechange', 'value': '100'},
+ 				      },
+ 				      '00:00:30.000': {
+ 				    	'exercise': {'action': 'volumechange', 'value': '100'},
+ 				    	'response': {'action': 'volumechange', 'value': '0'}
+ 				      }
+					  }
+ 		  };
 	     
 	      var streamStates = {
 	    		"-1": "Stream not ready",
@@ -98,6 +291,9 @@
 	    		"3": "RECORD MIC & WEBCAM",
 	    		"4": "UPLOAD MODE"
 	      };
+	      
+	      document.getElementById('eventDataArea').innerHTML = JSON.stringify(cuepoints_shaman);
+	      
 	      
 	      // Update a particular HTML element with a new value
 	      function updateHTML(elmId, value) {
@@ -205,78 +401,17 @@
 	    	  if (babeliumPlayer) {
 	    		  //The state listener should determine when the recording is finished	    		  
 	    		  
-	    		  //Get the selected role and make an object with the cuepoints
-	    		  var cuepoints_shaman = {
-	    				  'character': 'Shaman',
-	    				  'eventpoints': { 
-	    					  '00:00:02.090': {
-	    					  	'exercise': {'action': 'volumechange', 'value': '0'},
-	    					  	'response': {'action': 'volumechange', 'value': '100'},
-	    				  	  },
-	    				      '00:00:06.000': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
-	    				    	'response': {'action': 'volumechange', 'value': '0'}
-	    				      },
-	    				      '00:00:10.500': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
-	    				    	'response': {'action': 'volumechange', 'value': '100'},
-	    				      },
-	    				      '00:00:14.130': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
-	    				    	'response': {'action': 'volumechange', 'value': '0'}
-	    				      },
-	    				      '00:00:22.880': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
-	    				    	'response': {'action': 'volumechange', 'value': '100'},
-	    				      },
-	    				      '00:00:25.600': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
-	    				    	'response': {'action': 'volumechange', 'value': '0'}
-	    				      }
-						  }
-	    		  };
-	    		  
-	    		  var cuepoints_sintel = {
-	    				  'character': 'Sintel',
-	    				  'eventpoints': { 
-	    					  '00:00:07.000': {
-	    					  	'exercise': {'action': 'volumechange', 'value': '0'},
-	    					  	'response': {'action': 'volumechange', 'value': '100'},
-	    				  	  },
-	    				      '00:00:10.000': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
-	    				    	'response': {'action': 'volumechange', 'value': '0'}
-	    				      },
-	    				      '00:00:17.050': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
-	    				    	'response': {'action': 'volumechange', 'value': '100'},
-	    				      },
-	    				      '00:00:18.370': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
-	    				    	'response': {'action': 'volumechange', 'value': '0'}
-	    				      },
-	    				      '00:00:27.240': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '0'},
-	    				    	'response': {'action': 'volumechange', 'value': '100'},
-	    				      },
-	    				      '00:00:30.000': {
-	    				    	'exercise': {'action': 'volumechange', 'value': '100'},
-	    				    	'response': {'action': 'volumechange', 'value': '0'}
-	    				      }
-						  }
-	    		  };
-	    		  
-	    		  
 	    		  //Get the recording method
 	    		  var useWebcam = 0;
 	    		  var rmet = document.getElementsByName("recMethod");
+	    		  var stream1 = document.getElementById("recExerciseId").value;
 	    		  if (rmet.length > 1){
 	    			  for (var i=0; i<rmet.length; i++){
 	    				  if(rmet[i].checked)
 	    				  	useWebcam = rmet[i].value - 0;
 	    			  }
 	    		  }
-	    		  babeliumPlayer.recordVideo(useWebcam, "U1MbBtkIGZQ.flv", cuepoints_shaman);
+	    		  babeliumPlayer.recordVideo(useWebcam, stream1, cuepoints_shaman);
 	    	  }
 	      }
 	      
@@ -337,104 +472,5 @@
 	      }
 	      //google.setOnLoadCallback(_run);
     </script>
-    </head>
-    <body>
-        <!-- SWFObject's dynamic embed method replaces this alternative HTML content with Flash content when enough 
-             JavaScript and Flash plug-in support is available. The div is initially hidden so that it doesn't show
-             when JavaScript is disabled.
-        -->
-        <div class="container">
-        <table><tr>
-        <td>
-        <div id="babeliumPlayer">
-            <p>
-                To view this page ensure that Adobe Flash Player version 
-                ${version_major}.${version_minor}.${version_revision} or greater is installed. 
-            </p>
-            <script type="text/javascript"> 
-                var pageHost = ((document.location.protocol == "https:") ? "https://" : "http://"); 
-                document.write("<a href='http://www.adobe.com/go/getflashplayer'><img src='" 
-                                + pageHost + "www.adobe.com/images/shared/download_buttons/get_flash_player.gif' alt='Get Adobe Flash player' /></a>" ); 
-            </script> 
-        </div>
-        <noscript>
-            <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="${width}" height="${height}" id="${application}">
-                <param name="movie" value="${swf}.swf" />
-                <param name="quality" value="high" />
-                <param name="bgcolor" value="${bgcolor}" />
-                <param name="allowScriptAccess" value="always" />
-                <param name="allowFullScreen" value="true" />
-                <!--[if !IE]>-->
-                <object type="application/x-shockwave-flash" data="${swf}.swf" width="${width}" height="${height}">
-                    <param name="quality" value="high" />
-                    <param name="bgcolor" value="${bgcolor}" />
-                    <param name="allowScriptAccess" value="sameDomain" />
-                    <param name="allowFullScreen" value="true" />
-                <!--<![endif]-->
-                <!--[if gte IE 6]>-->
-                    <p> 
-                        Either scripts and active content are not permitted to run or Adobe Flash Player version
-                        ${version_major}.${version_minor}.${version_revision} or greater is not installed.
-                    </p>
-                <!--<![endif]-->
-                    <a href="http://www.adobe.com/go/getflashplayer">
-                        <img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash Player" />
-                    </a>
-                <!--[if !IE]>-->
-                </object>
-                <!--<![endif]-->
-            </object>
-        </noscript> 
-        </td>
-        <td>
-         <div id="videoInfo">
-         	<p>Player mode: <span id="recorderMode">PLAYBACK</span></p>
-        	<p>Stream state: <span id="streamState">--</span></p>
-        	<p>Device state: <span id="deviceState">Unknown</span></p>
-        	<p style="font-weight: bold;">Stream 1 Info</p>
-        	<p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span id="videoDuration">--:--</span></p>
-        	<p>Bytes Total: <span id="bytesTotal">--</span> | Start Bytes: <span id="startBytes">--</span> | Bytes Loaded: <span id="bytesLoaded">--</span></p>
-        	<p><input id="volumeSetting" type="text" size="3" />&nbsp;<a href="javascript:void(0)" onclick="setVideoVolume();">&lt;- Set Volume</a> | Volume: <span id="volume">--</span></p>
-        	<p style="font-weight: bold;">Stream 2 Info</p>
-        	<p>Current Time: <span id="rightVideoCurrentTime">--:--</span> | Duration: <span id="rightVideoDuration">--:--</span></p>
-        	<p>Bytes Total: <span id="rightVideoBytesTotal">--</span> | Start Bytes: <span id="rightVideoStartBytes">--</span> | Bytes Loaded: <span id="rightVideoBytesLoaded">--</span></p>
-        	<hr />
-        	
-      		
-      	</div>
-        </td>
-        </tr>
-        <tr>
-        <td>
-        <p>Mic. activity level: <span id="micActivityLevel">--</span></p>
-        	<p>Controls: 
-        	
-        		<button type="button" class="btn btn-default" onclick="playVideo();"><span class="glyphicon glyphicon-play"></span> Play</button>
-        		<button type="button" class="btn btn-default" onclick="pauseVideo();"><span class="glyphicon glyphicon-pause"></span> Pause</button>
-        		<button type="button" class="btn btn-default" onclick="muteVideo();"><span class="glyphicon glyphicon-volume-off"></span> Mute</button>
-        		<button type="button" class="btn btn-default" onclick="unMuteVideo();"><span class="glyphicon glyphicon-volume-up"></span> Unmute</button>
-        		<div class="input-group">
-        			<input id="seekTo" type="text" size="3" class="form-control" />
-        				<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="seekVideoTime();">Seek to</button></span>
-        		</div>
-        		<!--  <a href="javascript:void(0)" onclick="seekVideoTime()">Seek to</a>&nbsp;<input id="seekTo" type="text" size="3" class="form-control" />-->
-        	</p>
-        	<p>Recording controls: 
-        		<button type="button" class="btn btn-default" onclick="recordVideo();">Record</button>
-        		<button type="button" class="btn btn-danger" onclick="abortRecording();"><span class="glyphicon glyphicon-ban-circle"></span> Abort recording</button>
-        	</p>
-        	<p>Recording devices: 
-        		<input id="recmethod_0" type="radio" value="0" name="recMethod" checked="checked"/>Microphone
-        		<input id="recmethod_1" type="radio" value="1" name="recMethod"/>Mic. and camera
-        	</p>
-        	<div class="input-group">
-       			<input id="loadStreamByUrl" type="text" class="form-control"/>
-       		 		<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="loadStreamByUrl();">Load stream by url</button></span>
-       		</div>
-        
-        </td>
-        </tr>
-        </table>
-        </div>
    </body>
 </html>

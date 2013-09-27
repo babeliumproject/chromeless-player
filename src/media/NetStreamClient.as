@@ -152,6 +152,8 @@ package media
 			if (_mediaManager.netConnected)
 			{
 				initiateNetStream(_mediaManager.netConnection);
+			} else {
+				//Dispatch an event to let the player know the netConnection failed for some reason.
 			}
 		}
 

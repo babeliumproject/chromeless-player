@@ -470,8 +470,8 @@ package player
 			super.stopVideo();
 
 			if (getState() & RECORD_FLAG /*&& _recording*/){
-				//_recNsc.netStream.close();
-				_recNsc.netStream.dispose();
+				if(streamReady(_recNsc))
+					_recNsc.netStream.dispose();
 			}
 
 			if (getState() == PLAY_SIDEBYSIDE_STATE)
@@ -525,6 +525,10 @@ package player
 			switch (getState())
 			{
 				case RECORD_MICANDCAM_STATE:
+					if(!_videoUrl){
+						recoverVideoPanel();
+						scaleCamVideo(_defaultWidth,_defaultHeight,false);
+					}
 					prepareDevices();
 					break;
 
@@ -534,8 +538,7 @@ package player
 					break;
 				
 				case UPLOAD_MODE_STATE:
-					recoverVideoPanel();
-					scaleCamVideo(_defaultWidth,_defaultHeight,false);
+					
 					prepareDevices();
 					break;
 
@@ -576,7 +579,7 @@ package player
 			logger.info("Microphone ready: {0}", [micReady]);
 			
 			//The devices are permitted and initialized. Time to configure them
-			if (_state == RECORD_MIC_STATE && micReady || _state == RECORD_MICANDCAM_STATE && micAndCamReady || _state == UPLOAD_MODE_STATE && micAndCamReady) 
+			if (_state == RECORD_MIC_STATE && micReady || _state == RECORD_MICANDCAM_STATE && micAndCamReady) 
 			{
 				configureDevices();
 			}
@@ -605,7 +608,6 @@ package player
 
 			_video.visible=false;
 			_micImage.visible=false;
-			_countdownTxt.visible=true;
 
 			prepareRecording();
 			//startCountdown();
@@ -646,6 +648,7 @@ package player
 		
 		private function startCountdown():void
 		{
+			_countdownTxt.visible=true;
 			_countdown=new Timer(1000, COUNTDOWN_TIMER_SECS)
 			_countdown.addEventListener(TimerEvent.TIMER, onCountdownTick);
 			_countdown.start();
@@ -686,11 +689,14 @@ package player
 				_camVideo.attachCamera(_camera);
 				_camVideo.smoothing=true;
 
-				splitVideoPanel();
+				
 				_camVideo.visible=false;
 				_micImage.visible=false;
 				//disableControls();
-				logger.debug("Panel splitting done");
+				if(_videoUrl){
+					splitVideoPanel();
+					logger.debug("Panel splitting done");
+				}
 			}
 
 			if (getState() & RECORD_FLAG)
@@ -864,10 +870,9 @@ package player
 			
 			if(exerciseId){
 				//Load the exercise to play alongside the recording, if any
-				
-				//parse the given exercise id
-				//if _videoId = exerciseId
-				loadVideoById(exerciseId);
+				loadVideoById(_videoUrl);
+			} else {
+				_videoUrl=null;
 			}
 			
 			//Set the video player's state to recording
