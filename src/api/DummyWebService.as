@@ -10,7 +10,8 @@ package api
 	public class DummyWebService
 	{
 		private static var baseurl:String='rtmpt://babelium/vod/';
-
+		private static const MAX_RECORD_SECONDS:uint = 600;
+		private static const MIN_RECORD_SECONDS:uint = 15;
 
 		public static function retrieveVideoById(id:String):String
 		{
@@ -31,11 +32,15 @@ package api
 			}
 		}
 
-		public static function retrieveRecordingUrl():String
+		public static function requestRecordingSlot():Array
 		{
 			var d:Date=new Date();
 			var responseId:String="resp-" + d.getTime().toString();
-			return baseurl + "responses/" + responseId;
+			var recordUri:String = baseurl + "responses/" + responseId;
+			var a:Array = new Array();
+			a['url'] = recordUri;
+			a['maxduration'] = MAX_RECORD_SECONDS;
+			return a;
 		}
 	}
 }

@@ -60,9 +60,15 @@ package utils
 		
 		public static function parseUrl(url:String):Boolean{
 			var rtmpUrlFormat:RegExp=new RegExp("(^rtmp[t|e|s]?\:\\/\\/.+?\\/.+?)\\/(.+)"); //Non-greedy
-			var httpUrlFormat:RegExp=new RegExp("(^http[s]?\:\\/\\/+)([^\\/]+$)");
+			var httpUrlFormat:RegExp=new RegExp("(^http[s]?\:\\/\\/.+)\\/(.+)");
 			
-			return (rtmpUrlFormat.exec(url) || httpUrlFormat.exec(url));
+			var rresult:Array = rtmpUrlFormat.exec(url);
+			var hresult:Array = httpUrlFormat.exec(url);
+			
+			//ObjectUtil.toString(rresult);
+			//ObjectUtil.toString(hresult);
+			
+			return (rresult || hresult);
 		}
 	}
 }

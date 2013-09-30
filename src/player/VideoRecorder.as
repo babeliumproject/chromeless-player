@@ -73,6 +73,8 @@ package player
 
 		private var _countdown:Timer;
 		private var _countdownTxt:TextField;
+		
+		private var _maxRecTime:Number;
 
 		//private var _fileName:String;
 		private var _recordingUrl:String;
@@ -109,11 +111,31 @@ package player
 			//Retrieve the instance of the event point manager for later use
 			eventPointManager = SharedData.getInstance().eventPointManager;
 			
+			//Set initial state to playback
 			_state=VideoRecorder.PLAY_STATE;
-			drawGraphics();
+			
+			//Initiate the layers and objects
+			_countdownTxt=new TextField();
+			_camVideo=new Video();
+			_micImage=new MicImage();
+			_onTop=new Sprite();
+		
+			
+			noConnectionSprite=new ErrorOverlay();
+			privacySprite = new PrivacyPanel();
+			privacyRights=new UserDeviceManager();
+			privacyRights.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, onPrivacyStateChange);
+			
+			addChild(_micImage);
+			addChild(_camVideo);
+			addChild(_countdownTxt);
+			addChild(_onTop);
+			
+			drawGraphics(_defaultWidth, _defaultHeight);
 		}
 
-		private function drawGraphics():void{
+		private function drawGraphics(nWidth:uint, nHeight:uint):void{
+			
 			
 			var _textFormat:TextFormat = new TextFormat();
 			_textFormat.color = 0xffffff;
@@ -122,7 +144,7 @@ package player
 			_textFormat.bold = true;
 			_textFormat.size = 45;
 			
-			_countdownTxt=new TextField();
+			
 			//If you use setTextFormat, the format gets forgotten whenever you change the text
 			_countdownTxt.defaultTextFormat = _textFormat;
 			_countdownTxt.text=COUNTDOWN_TIMER_SECS.toString();
@@ -132,10 +154,10 @@ package player
 			_countdownTxt.y = _defaultHeight/2 - _countdownTxt.textHeight/2;
 			_countdownTxt.visible=false;
 			
-			_camVideo=new Video();
+			
 			_camVideo.visible=false;
 			
-			_micImage=new MicImage();
+			
 			//_micImage.height = 128; 128 /
 			//_micImage.width = 128;
 			
@@ -163,29 +185,27 @@ package player
 			
 			//_recStopBtn.addEventListener(RecStopButtonEvent.BUTTON_CLICK, onRecStopEvent);
 			
-			addChild(_micImage);
-			addChild(_camVideo);
 			
-			addChild(_countdownTxt);
 			
 			//addChild(_overlayButton);
 			
-			noConnectionSprite=new ErrorOverlay();
-			privacySprite = new PrivacyPanel();
-			privacyRights=new UserDeviceManager();
-			privacyRights.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, onPrivacyStateChange);
 			
-			_onTop=new Sprite();
-			addChild(_onTop);
+			
+			
 		}
 		
 		/** Overriden repaint */
 		
-		protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
 		{
+			var nwidth:Number  = !unscaledWidth  ? _lastWidth  : unscaledWidth;
+			var nheight:Number = !unscaledHeight ? _lastHeight : unscaledHeight;
+			
+			super.updateDisplayList(nwidth, nheight);
+			
 			// Countdown
-			_countdownTxt.x = _defaultWidth/2 - _countdownTxt.textWidth/2;
-			_countdownTxt.y = _defaultHeight/2 - _countdownTxt.textHeight/2;
+			_countdownTxt.x = _lastWidth/2 - _countdownTxt.textWidth/2;
+			_countdownTxt.y = _lastHeight/2 - _countdownTxt.textHeight/2;
 			//_countdownTxt.width=_spriteWidth;
 			//_countdownTxt.height=_spriteHeight;
 			
@@ -210,13 +230,14 @@ package player
 			if (!(getState() & SPLIT_FLAG))
 				return;
 			
-			var w:Number=_defaultWidth / 2 - _blackPixelsBetweenVideos;
-			var h:int=Math.ceil(w * 0.75);//_video.height / _video.width);
+			var w:Number=_lastWidth / 2 - _blackPixelsBetweenVideos;
+			//var h:int=Math.ceil(w * 0.75);//_video.height / _video.width);
+			var h:int=Math.ceil(w*(_video.height/_video.width));
 			
-			if (_defaultHeight != h) // cause we can call twice to this method
-				_lastVideoHeight=_defaultHeight; // store last value
+			if (_lastHeight != h) // cause we can call twice to this method
+				_lastVideoHeight=_lastHeight; // store last value
 			
-			_defaultHeight=h;
+			//_lastHeight=h;
 			
 			var scaleY:Number=h / _video.height;
 			var scaleX:Number=w / _video.width;
@@ -244,8 +265,8 @@ package player
 		{
 			logger.debug("Video panel was reset");
 			// NOTE: problems with _videoWrapper.width
-			if (_lastVideoHeight > _defaultHeight)
-				_defaultHeight=_lastVideoHeight;
+			if (_lastVideoHeight > _lastHeight)
+				//_lastHeight=_lastVideoHeight;
 			
 			scaleVideo();
 			
@@ -264,7 +285,8 @@ package player
 			_camVideo.height=_defaultCamHeight * scaleC;
 			
 			if(split){
-				_camVideo.y=Math.floor(h / 2 - _camVideo.height / 2);
+				//_camVideo.y=Math.floor(h / 2 - _camVideo.height / 2);
+				_camVideo.y=Math.floor(_lastHeight / 2 - _camVideo.height / 2);
 				_camVideo.x=Math.floor(w / 2 - _camVideo.width / 2);
 				_camVideo.y+=_defaultMargin;
 				_camVideo.x+=(w + _defaultMargin);
@@ -275,8 +297,8 @@ package player
 				_camVideo.width-=4;
 			}
 			
-			_micImage.y=(_defaultHeight - _micImage.height)/2;
-			_micImage.x=_defaultWidth - _micImage.width - (_camVideo.width - _micImage.width)/2;
+			_micImage.y=(_lastHeight - _micImage.height)/2;
+			_micImage.x=_lastWidth - _micImage.width - (_camVideo.width - _micImage.width)/2;
 		}
 		
 		override protected function scaleVideo():void
@@ -284,19 +306,22 @@ package player
 			super.scaleVideo();
 			if (getState() & SPLIT_FLAG)
 			{
-				var w:Number=_defaultWidth / 2 - _blackPixelsBetweenVideos;
-				var h:int=Math.ceil(w * 0.75);
+				var w:Number=_lastWidth / 2 - _blackPixelsBetweenVideos;
+				//var h:int=Math.ceil(w * 0.75);
 				
-				if (_defaultHeight != h) // cause we can call twice to this method
-					_lastVideoHeight=_defaultHeight; // store last value
+				var h:int=Math.ceil(w*(_video.height/_video.width));
 				
-				_defaultHeight=h;
+				if (_lastHeight != h) // cause we can call twice to this method
+					_lastVideoHeight=_lastHeight; // store last value
+				
+				//_lastHeight=h;
 				
 				var scaleY:Number=h / _video.height;
 				var scaleX:Number=w / _video.width;
 				var scaleC:Number=scaleX < scaleY ? scaleX : scaleY;
 				
-				_video.y=Math.floor(h / 2 - (_video.height * scaleC) / 2);
+				//_video.y=Math.floor(h / 2 - (_video.height * scaleC) / 2);
+				_video.y=Math.floor(_lastHeight / 2 - (_video.height * scaleC) / 2);
 				_video.x=Math.floor(w / 2 - (_video.width * scaleC) / 2);
 				_video.y+=_defaultMargin;
 				_video.x+=_defaultMargin;
@@ -702,7 +727,11 @@ package player
 			if (getState() & RECORD_FLAG)
 			{
 				_recordingReady=false;
-				_recordingUrl = DummyWebService.retrieveRecordingUrl();
+				
+				var recSlot:Array = DummyWebService.requestRecordingSlot();
+				
+				_recordingUrl = recSlot['url'];
+				_maxRecTime = recSlot['maxduration'];
 				_recNsc=new NetStreamClient(_recordingUrl, "recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
 				_recNsc.setup();
@@ -870,7 +899,7 @@ package player
 			
 			if(exerciseId){
 				//Load the exercise to play alongside the recording, if any
-				loadVideoById(_videoUrl);
+				loadVideoById(exerciseId);
 			} else {
 				_videoUrl=null;
 			}

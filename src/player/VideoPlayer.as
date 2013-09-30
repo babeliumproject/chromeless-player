@@ -58,6 +58,9 @@ package player
 
 		protected var _defaultWidth:Number=640;
 		protected var _defaultHeight:Number=360;
+		
+		protected var _lastWidth:Number;
+		protected var _lastHeight:Number;
 
 		protected var _playbackSoundTransform:SoundTransform;
 		protected var _lastVolume:Number;
@@ -71,29 +74,46 @@ package player
 			//TODO retrieve the volume from a previously stored flash/http cookie
 			_playbackSoundTransform=new SoundTransform(DEFAULT_VOLUME);
 			_lastVolume=DEFAULT_VOLUME;
+			
+			_lastWidth = _defaultWidth;
+			_lastHeight = _defaultHeight;
+			
+			_video=new Video();
+			_video.smoothing=_smooth;
+			
+			addChild(_video);
 
-
-			//Event Listeners
-			//addEventListener(VideoPlayerEvent.VIDEO_SOURCE_CHANGED, onSourceChange);
-			//addEventListener(VideoPlayerEvent.VIDEO_FINISHED_PLAYING, onVideoFinishedPlaying);
-
-			drawGraphics();
+			drawGraphics(_defaultWidth, _defaultHeight);
 
 			dispatchEvent(new VideoPlayerEvent(VideoPlayerEvent.CREATION_COMPLETE));
 		}
 
-		private function drawGraphics():void
+		private function drawGraphics(nWidth:uint, nHeight:uint):void
 		{
-
 			graphics.clear();
 			graphics.beginFill(0x0000FF, 1);
-			graphics.drawRect(0, 0, _defaultWidth, _defaultHeight);
+			graphics.drawRect(0, 0, nWidth, nHeight);
 			graphics.endFill();
-
-			_video=new Video();
-			_video.smoothing=_smooth;
-			_video.x=_video.y=0;
-			addChild(_video);
+			
+			//_video.x=_video.y=0;
+			scaleVideo();
+		}
+		
+		protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+		{
+			_lastWidth = unscaledWidth;
+			_lastHeight = unscaledHeight;
+			drawGraphics(unscaledWidth, unscaledHeight);
+		}
+		
+		public function set unscaledWidth(nwidth:Number):void{
+			_lastWidth = nwidth;
+			updateDisplayList(nwidth, _lastHeight);
+		}
+		
+		public function set unscaledHeight(nheight:Number):void{
+			_lastHeight = nheight;
+			updateDisplayList(_lastWidth, nheight);
 		}
 
 		/**
@@ -440,13 +460,13 @@ package player
 			if (!scaleToFit)
 			{
 				//If the scalation amount is different for the X and Y axes take the smaller one
-				var scaleY:Number=_defaultHeight / _video.height;
-				var scaleX:Number=_defaultWidth / _video.width;
+				var scaleY:Number=_lastHeight / _video.height;
+				var scaleX:Number=_lastWidth / _video.width;
 				var scaleC:Number=scaleX < scaleY ? scaleX : scaleY;
 
 				//Center the video in the container
-				_video.y=Math.floor(_defaultHeight / 2 - (_video.height * scaleC) / 2);
-				_video.x=Math.floor(_defaultWidth / 2 - (_video.width * scaleC) / 2);
+				_video.y=Math.floor(_lastHeight / 2 - (_video.height * scaleC) / 2);
+				_video.x=Math.floor(_lastWidth / 2 - (_video.width * scaleC) / 2);
 
 				//Leave space for the margins
 				_video.y+=_defaultMargin;
@@ -460,8 +480,8 @@ package player
 			}
 			else
 			{
-				_video.width=_defaultWidth;
-				_video.height=_defaultHeight;
+				_video.width=_lastWidth;
+				_video.height=_lastHeight;
 				_video.y=_defaultMargin;
 				_video.height-=_defaultMargin * 2;
 				_video.x=_defaultMargin;

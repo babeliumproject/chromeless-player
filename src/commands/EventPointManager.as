@@ -82,6 +82,11 @@ package commands
 			
 			switch (action)
 			{
+				case 'mute':
+					if(targetStream == 'exercise')
+						return this.targetInstance.mute;
+					if(targetStream == 'response')
+						return this.targetInstance.muteRecording;
 				case 'volumechange':
 					if (targetStream == 'exercise')
 						return this.targetInstance.setVolume;

@@ -42,9 +42,9 @@ package
 		
 		private var video_id:String=null;
 		private var video_url:String=null;
-		private var explicit_locale:String=null;
+		private var language_file:String=null;
 		
-		private var mediaplayer:VideoRecorder;
+		private var mediarecorder:VideoRecorder;
 		
 		private var appWidth:uint;
 		private var appHeight:uint;
@@ -65,17 +65,17 @@ package
 			
 			video_url=this.root.loaderInfo.parameters.video_url;
 			video_id=this.root.loaderInfo.parameters.video_id;
-			explicit_locale=this.root.loaderInfo.parameters.language_file;
+			language_file=this.root.loaderInfo.parameters.language_file;
 			
-			loadLocalizationBundle(explicit_locale);
+			loadLocalizationBundle(language_file);
 			
-			mediaplayer = new VideoRecorder();
+			mediarecorder = new VideoRecorder();
 			//mediaplayer.addEventListener(VideoPlayerEvent.CREATION_COMPLETE, onVideoPlayerLoaded);
 			
-			addChild(mediaplayer);
+			addChild(mediarecorder);
 			
 			// Setups javascripts external controls
-			JavascriptAPI.getInstance().setup(mediaplayer);
+			JavascriptAPI.getInstance().setup(mediarecorder);
 			onVideoPlayerLoaded(null);
 		}
 		
@@ -107,11 +107,13 @@ package
 		private function onVideoPlayerLoaded(e:Event):void
 		{
 			trace("VideoRecorded loaded");
-			mediaplayer.width=appWidth;
-			mediaplayer.height=appHeight;
+			//mediarecorder.width=appWidth;
+			//mediarecorder.height=appHeight;
+			mediarecorder.unscaledWidth=appWidth;
+			mediarecorder.unscaledHeight=appHeight;
 			
 			if (video_id != null){
-				mediaplayer.loadVideoById(video_id);
+				mediarecorder.loadVideoById(video_id);
 			}	
 			
 			JavascriptAPI.getInstance().onBabeliumPlayerReady();
@@ -119,13 +121,13 @@ package
 		
 		private function set onUpdateVPHeight(height:int):void
 		{
-			trace("VP Height: "+mediaplayer.height);
+			trace("VP Height: "+mediarecorder.height);
 			//Extern.getInstance().resizeHeight(height);
 		}
 		
 		private function set onUpdateVPWidth(width:int):void
 		{
-			trace("VP Width: "+mediaplayer.width);
+			trace("VP Width: "+mediarecorder.width);
 			//Extern.getInstance().resizeWidth(width);
 		}
 		

@@ -24,7 +24,8 @@ package view
 		private var dHeight:uint = 480;
 
 		private var box:Shape;
-		private var message:TextField;
+		private var textHolder:TextField;
+		private var message:String;
 		
 		private var backgrImg:Bitmap;
 		
@@ -32,8 +33,14 @@ package view
 		{
 			super();
 			//loadAsset(StreamingManager.getInstance().uploadDomain+"resources/images/popup_bgr_wrong.png");
-			updateChildren(dWidth,dHeight);
 			
+			message=SharedData.getInstance().localizationBundle["NO_CONNECTION"] ? SharedData.getInstance().localizationBundle["NO_CONNECTION"] : "Communication lost. Trying to reconnect...";
+			updateChildren(dWidth,dHeight);
+		}
+		
+		public function setText(text:String):void{
+			this.message=text;
+			updateChildren(dWidth, dHeight);
 		}
 		
 		public function updateChildren(nWidth:Number, nHeight:Number):void{
@@ -44,8 +51,8 @@ package view
 				this.removeChild(box);
 			if(backgrImg != null && this.contains(backgrImg))
 				this.removeChild(backgrImg);
-			if(message != null && this.contains(message))
-				this.removeChild(message);
+			if(textHolder != null && this.contains(textHolder))
+				this.removeChild(textHolder);
 			
 			this.graphics.clear();
 			this.graphics.beginFill(0x000000,1);
@@ -68,16 +75,16 @@ package view
 			_textFormat.bold = true;
 			_textFormat.size = 14;
 			
-			message = new TextField();
-			message.text = SharedData.getInstance().localizationBundle["NO_CONNECTION"] ? SharedData.getInstance().localizationBundle["NO_CONNECTION"] : "Communication lost. Trying to reconnect...";
-			message.selectable = false;
-			message.autoSize = TextFieldAutoSize.CENTER;
-			message.x = nWidth/2 - message.textWidth/2;
-			message.y = nHeight/2 - message.textHeight/2;
-			message.setTextFormat(_textFormat);
+			textHolder = new TextField();
+			textHolder.text = message;
+			textHolder.selectable = false;
+			textHolder.autoSize = TextFieldAutoSize.CENTER;
+			textHolder.x = nWidth/2 - textHolder.textWidth/2;
+			textHolder.y = nHeight/2 - textHolder.textHeight/2;
+			textHolder.setTextFormat(_textFormat);
 			
 			this.addChild(box);
-			this.addChild(message);
+			this.addChild(textHolder);
 			
 			if(backgrImg){
 				backgrImg.width=191;
@@ -88,6 +95,11 @@ package view
 			}
 		}
 		
+		/**
+		 * Requests an external asset and loads it into flash runtime 
+		 * @param url
+		 * 		The asset's url, can be either relative to flash runtime's url or absolute
+		 */		
 		private function loadAsset(url:String):void{
 			var loader:Loader = new Loader();
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, completeHandler);
@@ -97,6 +109,12 @@ package view
 			loader.load(request);
 		}
 		
+		/**
+		 * Cast the data retrieved using the loader to Bitmap object to
+		 * use as background image.
+		 * @param event
+		 * 		The Complete event of a loader function
+		 */		
 		private function completeHandler(event:Event):void{
 			var loader:Loader = Loader(event.target.loader);
 			backgrImg = Bitmap(loader.content);
