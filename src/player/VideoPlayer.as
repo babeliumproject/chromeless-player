@@ -403,8 +403,11 @@ package player
 		public function endVideo():void
 		{
 			stopVideo();
-			if (_nsc.netStream)
+			if (streamReady(_nsc)){
 				_nsc.netStream.close(); //Cleans the cache of the video
+				_nsc = null;
+				_videoReady=false;
+			}
 		}
 
 		public function onMetaData(event:NetStreamClientEvent):void

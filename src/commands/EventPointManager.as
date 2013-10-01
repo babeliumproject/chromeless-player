@@ -46,7 +46,7 @@ package commands
 			for (var timestamp:String in points)
 			{
 				time=timeToSeconds(timestamp);
-				if (time)
+				if (!isNaN(time))
 				{
 					var actval:Array = new Array();
 					if (points[timestamp].hasOwnProperty('exercise'))

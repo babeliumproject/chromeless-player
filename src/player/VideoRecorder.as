@@ -42,11 +42,9 @@ package player
 		public static const PLAY_SIDEBYSIDE_STATE:int=1;   // 0000 0001
 		public static const RECORD_MIC_STATE:int=2;  // 0000 0010
 		public static const RECORD_MICANDCAM_STATE:int=3; // 0000 0011
-		public static const UPLOAD_MODE_STATE:int=4; // 0000 0100
 
 		private const SPLIT_FLAG:int=1; // XXXX XXX1
 		private const RECORD_FLAG:int=2; // XXXX XX1X
-		private const UPLOAD_FLAG:int=4; // XXXX X1XX
 
 		private const STREAM_TIMER_DELAY:int=20; // tick every X milliseconds
 
@@ -291,10 +289,17 @@ package player
 				_camVideo.y+=_defaultMargin;
 				_camVideo.x+=(w + _defaultMargin);
 			} else {
-				_camVideo.y=_defaultMargin + 2;
-				_camVideo.height-=4;
-				_camVideo.x=_defaultMargin + 2;
-				_camVideo.width-=4;
+				
+			
+				_camVideo.y=_defaultMargin;
+				_camVideo.height-=_defaultMargin * 2;
+				_camVideo.x=_defaultMargin;
+				_camVideo.width-=_defaultMargin * 2;
+				
+				//_camVideo.y=_defaultMargin + 2;
+				//_camVideo.height-=4;
+				//_camVideo.x=_defaultMargin + 2;
+				//_camVideo.width-=4;
 			}
 			
 			_micImage.y=(_lastHeight - _micImage.height)/2;
@@ -381,9 +386,9 @@ package player
 			if(enable){
 				if(!_cuePointTimer){
 					_cuePointTimer=new Timer(STREAM_TIMER_DELAY, 0); //Try to tick every 20ms
-					_cuePointTimer.addEventListener(TimerEvent.TIMER, onEnterFrame);
-					_cuePointTimer.start();
 				}
+				_cuePointTimer.addEventListener(TimerEvent.TIMER, onEnterFrame);
+				_cuePointTimer.start();
 			} else {
 				if(_cuePointTimer){
 					_cuePointTimer.removeEventListener(TimerEvent.TIMER, onEnterFrame);
@@ -552,18 +557,13 @@ package player
 				case RECORD_MICANDCAM_STATE:
 					if(!_videoUrl){
 						recoverVideoPanel();
-						scaleCamVideo(_defaultWidth,_defaultHeight,false);
+						scaleCamVideo(_lastWidth,_lastHeight,false);
 					}
 					prepareDevices();
 					break;
 
 				case RECORD_MIC_STATE:
 					recoverVideoPanel(); // original size
-					prepareDevices();
-					break;
-				
-				case UPLOAD_MODE_STATE:
-					
 					prepareDevices();
 					break;
 
@@ -621,15 +621,15 @@ package player
 		private function configureDevices():void
 		{	
 			var privacyManager:UserDeviceManager=SharedData.getInstance().privacyManager;
-			if (getState() == RECORD_MICANDCAM_STATE || getState() == UPLOAD_MODE_STATE)
+			if (getState() == RECORD_MICANDCAM_STATE)
 			{
 				_camera=privacyManager.camera;
 				_camera.setMode(privacyManager.defaultCameraWidth, privacyManager.defaultCameraHeight, 15, false);
 			}
 			_mic=privacyManager.microphone;
 			//_mic.setUseEchoSuppression(true);
-			_mic.setLoopBack(false);
-			_mic.setSilenceLevel(0, 60000000);
+			_mic.setLoopBack(false); // Don't echo the microphone to local speakers
+			_mic.setSilenceLevel(0, _maxRecTime*1000); //_maxRecTime is given in seconds, setSilencelevel() uses milliseconds
 
 			_video.visible=false;
 			_micImage.visible=false;
@@ -662,7 +662,7 @@ package player
 				else
 					dispatchEvent(new RecordingEvent(RecordingEvent.ABORTED));
 			}
-			if (getState() == RECORD_MICANDCAM_STATE || getState() == UPLOAD_MODE_STATE)
+			if (getState() == RECORD_MICANDCAM_STATE)
 			{
 				if (_micCamEnabled && privacyManager.microphoneFound && privacyManager.cameraFound)
 					configureDevices();
@@ -738,6 +738,7 @@ package player
 				//disableControls();
 			}
 			
+			/*
 			if(getState() & UPLOAD_FLAG){
 				// Attach Camera
 				_recordingReady=false;
@@ -750,7 +751,7 @@ package player
 				_recNsc=new NetStreamClient('recordingurl', "recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
 				_recNsc.setup();
-			}
+			}*/
 
 			//_micActivityBar.visible=true;
 			//dispatchEvent(new ControlDisplayEvent(ControlDisplayEvent.MIC_ACTIVYTY_BAR,true));
@@ -772,7 +773,7 @@ package player
 				default:
 					break;
 			}
-			if(_videoReady && _recordingReady && (_state & RECORD_FLAG)){
+			if( ((!_videoUrl && !_videoReady) || (_videoUrl && _videoReady)) && _recordingReady && (_state & RECORD_FLAG)){
 				startCountdown();
 			}
 			if(_videoReady && _sideBySideReady){
@@ -800,30 +801,33 @@ package player
 		 * Start recording
 		 */
 		private function startRecording():void
-		{
-			_video.visible=true;
+		{	
+			if (!(getState() & RECORD_FLAG))
+				return; // security check
 			
-			if (getState() == RECORD_MICANDCAM_STATE || getState() == UPLOAD_MODE_STATE)
+			if (getState() == RECORD_MICANDCAM_STATE)
 			{
 				_camVideo.visible=true;
 				_micImage.visible=true;
 			}
 			
-			
-			if (!(getState() & RECORD_FLAG))
-				return; // security check
-
 			//var d:Date=new Date();
 			//_fileName="resp-" + d.getTime().toString();
 			//var responseFilename:String= "responses/" + _fileName;
-
 			//_nsc.netStream.togglePause();
-			startVideo();
+			
+			//If the recording is made following an exercise, show the exercise in the display and start playing it
+			if(_videoUrl){
+				_video.visible=true;
+				startVideo();
+			} else {
+				_micImage.visible=true;
+			}
 			
 			if (getState() & RECORD_FLAG)
 			{
 				_recNsc.netStream.attachAudio(_mic);
-				muteRecording(true); // mic starts muted
+				//muteRecording(true); // mic starts muted
 			}
 			
 			if (getState() == RECORD_MICANDCAM_STATE)
@@ -887,6 +891,8 @@ package player
 				} else {
 					logger.debug("No event points found in given recdata");
 				}
+			} else {
+				_eventData = null;
 			}
 			
 			//Enable the polling timer
@@ -902,6 +908,7 @@ package player
 				loadVideoById(exerciseId);
 			} else {
 				_videoUrl=null;
+				endVideo();
 			}
 			
 			//Set the video player's state to recording
@@ -913,10 +920,18 @@ package player
 			resetCountdown();
 			unattachUserDevices();
 			
+			//Remove the event point polling
 			removeEventListener(PollingEvent.ENTER_FRAME, eventPointManager.pollEventPoints);
 			
 			//Remove the polling timer
 			streamPositionTimer(false);
+			
+			//Return autoplay to its previous state, since we are no longer recording
+			_autoPlay=_lastAutoplay;
+			
+			//Return the playback stream to its previous volume, if any stream is available
+			_playbackSoundTransform.volume = _lastVolume;
+			if (streamReady(_nsc)) _nsc.netStream.soundTransform=_playbackSoundTransform;
 			
 			setState(PLAY_STATE);
 		}

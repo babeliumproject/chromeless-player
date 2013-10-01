@@ -100,7 +100,7 @@
 	         	<p>Player mode: <span id="recorderMode">PLAYBACK</span></p>
 	        	<strong>Stream 1 Info</strong>
 	        	<p>Stream state: <span id="streamState">--</span></p>
-	        	<p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span id="videoDuration">--:--</span></p>
+	        	<p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span id="videoDuration">--:--</span> | Volume: <span id="volume">--</span></p>
 	        	<p>Bytes Total: <span id="bytesTotal">--</span> | Start Bytes: <span id="startBytes">--</span> | Bytes Loaded: <span id="bytesLoaded">--</span></p>
 	        	<strong>Stream 2 Info</strong>
 	        	<p>Current Time: <span id="rightVideoCurrentTime">--:--</span> | Duration: <span id="rightVideoDuration">--:--</span></p>
@@ -117,15 +117,28 @@
         	<div class="panel panel-default">
         		<div class="panel-heading">Controls</div>
         		<div class="panel-body">
-	        		<button type="button" class="btn btn-default" onclick="playVideo();"><span class="glyphicon glyphicon-play"></span> Play</button>
-	        		<button type="button" class="btn btn-default" onclick="pauseVideo();"><span class="glyphicon glyphicon-pause"></span> Pause</button>
-	        		<button type="button" class="btn btn-default" onclick="muteVideo();"><span class="glyphicon glyphicon-volume-off"></span> Mute</button>
-	        		<button type="button" class="btn btn-default" onclick="unMuteVideo();"><span class="glyphicon glyphicon-volume-up"></span> Unmute</button>
-	        		<div class="input-group">
-	        			<input id="seekTo" type="text" class="form-control col-lg-2" />
-	        				<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="seekVideoTime();">Seek to</button></span>
+        			<p><!-- Just to space this row from the following row -->
+        			<div class="row">
+        				<div class="col-lg-2"><button type="button" class="btn btn-default" onclick="playVideo();"><span class="glyphicon glyphicon-play"></span> Play</button></div>
+		        		<div class="col-lg-2"><button type="button" class="btn btn-default" onclick="pauseVideo();"><span class="glyphicon glyphicon-pause"></span> Pause</button></div>
+		        		<div class="col-lg-2"><button type="button" class="btn btn-default" onclick="muteVideo();"><span class="glyphicon glyphicon-volume-off"></span> Mute</button></div>
+		        		<div class="col-lg-2"><button type="button" class="btn btn-default" onclick="unMuteVideo();"><span class="glyphicon glyphicon-volume-up"></span> Unmute</button></div>
+		        	</div>
+		        	</p>
+		        	<div class="row">
+		        		<div class="col-lg-3">
+		        			<div class="input-group">
+		        				<input id="seekTo" type="text" class="form-control" />
+		        					<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="seekVideoTime();">Seek to</button></span>
+		        			</div>
+		        		</div>
+		        		<div class="col-lg-4">
+		        			<div class="input-group">
+		        				<input id="volumeSetting" type="text" class="form-control" />
+		        					<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="setVideoVolume();">Set Volume</button></span>
+		        			</div>
+		        		</div>
 	        		</div>
-	        		<input id="volumeSetting" type="text" size="3" />&nbsp;<a href="javascript:void(0)" onclick="setVideoVolume();">&lt;- Set Volume</a> | Volume: <span id="volume">--</span>
 	        	</div>
         	</div>
         	
@@ -145,16 +158,13 @@
 							<div class="col-lg-10"><input type="text" class="form-control" id="recExerciseId" placeholder="Exercise ID or URL" value="U1MbBtkIGZQ.flv"></div>
 						</div>
 						<div class="form-group">
-							<label for="eventDataArea" class="col-lg-2 control-label">Event data</label>
+							<label for="eventDataChooser" class="col-lg-2 control-label">Event data</label>
 							<div class="col-lg-10">
-								<table class="table">
-									<thead>
-										<tr><th>Time</th><th>Target</th><th>Action</th><th>Parameters</th></tr>
-									</thead>
-									<tbody>
-									</tbody>
-								</table>
-								<textarea id="eventDataArea" rows="5" class="form-control"></textarea>
+								<select id="eventDataChooser" class="form-control">
+								    <option value="default" selected="selected"></option>
+								    <option value="shaman">Shaman</option>
+								    <option value="sintel">Sintel</option>
+								</select>
 							</div>
 						</div>
 						<div class="form-group">
@@ -213,7 +223,11 @@
 	     //Get the selected role and make an object with the cuepoints
  		  var cuepoints_shaman = {
  				  'character': 'Shaman',
- 				  'eventpoints': { 
+ 				  'eventpoints': {
+ 					  '00:00:00.000': {
+  					  	'exercise': {'action': 'volumechange', 'value': '100'},
+  					  	'response': {'action': 'volumechange', 'value': '0'},
+  				  	  },
  					  '00:00:02.090': {
  					  	'exercise': {'action': 'volumechange', 'value': '0'},
  					  	'response': {'action': 'volumechange', 'value': '100'},
@@ -292,9 +306,6 @@
 	    		"4": "UPLOAD MODE"
 	      };
 	      
-	      document.getElementById('eventDataArea').innerHTML = JSON.stringify(cuepoints_shaman);
-	      
-	      
 	      // Update a particular HTML element with a new value
 	      function updateHTML(elmId, value) {
 	        document.getElementById(elmId).innerHTML = value;
@@ -344,24 +355,19 @@
 	        // page, it will destroy the SWF before clearing the interval.
 	        if(babeliumPlayer && babeliumPlayer.getDuration) {
 	        	
-	          updateHTML("videoDuration", babeliumPlayer.getDuration());
-	          updateHTML("videoCurrentTime", babeliumPlayer.getCurrentTime());
+	          updateHTML("videoDuration", ms2time(babeliumPlayer.getDuration(),0,1));
+	          updateHTML("videoCurrentTime", ms2time(babeliumPlayer.getCurrentTime(),0,1));
 	          updateHTML("bytesTotal", babeliumPlayer.getBytesTotal());
 	          updateHTML("bytesLoaded", babeliumPlayer.getBytesLoaded());
 	          
-	          updateHTML("rightVideoDuration", babeliumPlayer.getRightStreamDuration());
-	          updateHTML("rightVideoCurrentTime", babeliumPlayer.getRightStreamCurrentTime());
+	          updateHTML("rightVideoDuration", ms2time(babeliumPlayer.getRightStreamDuration(),0,1));
+	          updateHTML("rightVideoCurrentTime", ms2time(babeliumPlayer.getRightStreamCurrentTime(),0,1));
 	          updateHTML("rightVideoBytesTotal", babeliumPlayer.getRightStreamBytesTotal());
 	          updateHTML("rightVideoBytesLoaded", babeliumPlayer.getRightStreamBytesLoaded());
-	          
-	          
-	          
+	           
 	          updateHTML("micActivityLevel", babeliumPlayer.getMicActivityLevel());
 	          updateHTML("volume", babeliumPlayer.getVolume());
 	          
-	          
-	          //updateHTML("rightVideoVolume", babeliumPlayer.getRightStreamVolume());
-	          //updateHTML("startBytes", babeliumPlayer.getStartBytes());
 	        }
 	      }
 	      
@@ -404,14 +410,22 @@
 	    		  //Get the recording method
 	    		  var useWebcam = 0;
 	    		  var rmet = document.getElementsByName("recMethod");
-	    		  var stream1 = document.getElementById("recExerciseId").value;
+	    		  var stream = document.getElementById("recExerciseId").value;
+	    		  
+	    		  var element = document.getElementById("eventDataChooser");
+	    		  var role = element.options[element.selectedIndex].value; //if you want the label of the option instead use .text at the end
+	    		  
+	    		  eventData = null;
+	    		  if (role == 'shaman') eventData = cuepoints_shaman;
+	    		  if (role == 'sintel') eventData = cuepoints_sintel;  
+	    		  
 	    		  if (rmet.length > 1){
 	    			  for (var i=0; i<rmet.length; i++){
 	    				  if(rmet[i].checked)
 	    				  	useWebcam = rmet[i].value - 0;
 	    			  }
 	    		  }
-	    		  babeliumPlayer.recordVideo(useWebcam, stream1, cuepoints_shaman);
+	    		  babeliumPlayer.recordVideo(useWebcam, stream, eventData);
 	    	  }
 	      }
 	      
@@ -438,6 +452,32 @@
 	        	babeliumPlayer.unMuteVideo();
 	        }
 	      }
+	      
+	      function ms2time(milliseconds, displayHours, displayMs) {
+	    	  var p_num = parseFloat(milliseconds) * 1000;
+	    	  var num_ms = p_num>>0;
+	    	  //Efficient integer division in js: a/b>>0
+	    	  
+	    	  var hours = num_ms/3600000>>0;
+	    	  var minutes = (num_ms - (hours*3600000))/60000>>0;
+	    	  var seconds = (num_ms - (hours*3600000) - (minutes*60000))/1000>>0;
+	    	  var ms = num_ms - (hours * 3600000) - (minutes * 60000) - (seconds * 1000);
+	    	  
+	    	  //Format the numbers
+	    	    if (hours   < 10) {hours   = "0"+hours;}
+	    	    if (minutes < 10) {minutes = "0"+minutes;}
+	    	    if (seconds < 10) {seconds = "0"+seconds;}
+	    	    var ms_str = ms;
+	    	    if (ms < 100) {ms_str = "0"+ms;}
+	    	    if (ms < 10) {ms_str = "0"+ms_str;}
+	    	    var time = minutes+':'+seconds;
+	    	    if(displayHours)
+	    	    	time = hours+':' + time;
+	    	    if(displayMs)
+	    	    	time = time + "." + ms_str;
+	    	    
+	    	    return time;
+	       }
 	      
 	      
 	      // This function is automatically called by the player once it loads
