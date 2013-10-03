@@ -69,6 +69,7 @@ package api
 			addCB("getRightStreamBytesLoaded", VP.rightStreamBytesLoaded);
 			
 			addCB("loadStreamByUrl", loadVideoByUrl);
+			addCB("loadStreamById", loadVideoById);
 			
 			//Events
 			addCB("addEventListener",addEventListener);
@@ -254,6 +255,10 @@ package api
 		
 		private function loadVideoByUrl(url:String):void{
 			VP.loadVideoByUrl(url);
+		}
+		
+		private function loadVideoById(id:String):void{
+			VP.loadVideoById(id);
 		}
 		
 		private function abortRecording():void{

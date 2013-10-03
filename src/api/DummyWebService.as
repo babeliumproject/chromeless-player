@@ -10,26 +10,32 @@ package api
 	public class DummyWebService
 	{
 		private static var baseurl:String='rtmpt://babelium/vod/';
+		private static var posterurl:String='http://development/chromeless_player/images/posters/';
+		
 		private static const MAX_RECORD_SECONDS:uint = 600;
 		private static const MIN_RECORD_SECONDS:uint = 15;
 
-		public static function retrieveVideoById(id:String):String
+		public static function retrieveVideoById(id:String):Array
 		{
+			var a:Array = new Array();
 			if (!Helpers.parseUrl(id)) //Check whether the provided id has a valid format or not
 			{
 				if (id.search(/^resp-/) != -1)
 				{
-					return baseurl + "responses/" + id;
+					a['url'] = baseurl + "responses/" + id;
 				}
 				else
 				{
-					return baseurl + "exercises/" + id;
+					a['url'] = baseurl + "exercises/" + id;
 				}
+				a['poster'] = posterurl + id + '/default.jpg';
 			}
 			else
 			{
-				return id;
+				a['url'] = id;
+				a['poster'] = null;
 			}
+			return a;
 		}
 
 		public static function requestRecordingSlot():Array

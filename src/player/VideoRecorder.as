@@ -83,10 +83,10 @@ package player
 		public static const SUBTILE_INSERT_DELAY:Number=0.5;
 
 		
-		private var _onTop:Sprite;
+		private var _topLayer:Sprite;
 
 		private var eventPointManager:EventPointManager;
-		private var noConnectionSprite:ErrorOverlay;
+		private var noConnectionSprite:ErrorSprite;
 		private var privacySprite:PrivacyPanel;
 		private var _micImage:MicImage;
 		
@@ -116,10 +116,10 @@ package player
 			_countdownTxt=new TextField();
 			_camVideo=new Video();
 			_micImage=new MicImage();
-			_onTop=new Sprite();
+			_topLayer=new Sprite();
 		
 			
-			noConnectionSprite=new ErrorOverlay();
+			noConnectionSprite=new ErrorSprite();
 			privacySprite = new PrivacyPanel();
 			privacyRights=new UserDeviceManager();
 			privacyRights.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, onPrivacyStateChange);
@@ -127,7 +127,7 @@ package player
 			addChild(_micImage);
 			addChild(_camVideo);
 			addChild(_countdownTxt);
-			addChild(_onTop);
+			addChild(_topLayer);
 			
 			drawGraphics(_defaultWidth, _defaultHeight);
 		}
@@ -405,6 +405,9 @@ package player
 		{
 			if (streamReady(_nsc))
 				this.dispatchEvent(new PollingEvent(PollingEvent.ENTER_FRAME, _nsc.netStream.time));
+			if (streamReady(_recNsc)){
+				//TODO Check if we've run out of time for the recording
+			}
 		}
 		
 		
@@ -529,23 +532,6 @@ package player
 			}
 		}
 
-	
-
-		/**
-		 * On subtitling controls clicked: start or end subtitling button
-		 * This method adds ns.time to event and gives it to parent component
-		 *
-		 * NOTE: Made public because the subtitling module has it's own subtitling
-		 * controls that need access to the current video time.
-		 */
-		public function onSubtitlingEvent(e:SubtitlingEvent):void
-		{
-			var time:Number=_nsc.netStream != null ? _nsc.netStream.time : 0;
-
-			this.dispatchEvent(new SubtitlingEvent(e.type, time - SUBTILE_INSERT_DELAY));
-		}
-
-
 		/**
 		 * Switch video's perspective based on video player's
 		 * actual state
@@ -610,8 +596,8 @@ package player
 			}
 			else
 			{
-				_onTop.removeChildren();
-				_onTop.addChild(privacySprite);
+				_topLayer.removeChildren();
+				_topLayer.addChild(privacySprite);
 				
 				privacySprite.addEventListener(PrivacyEvent.CLOSE, privacyBoxClosed);
 				privacySprite.displaySettings();
@@ -629,7 +615,10 @@ package player
 			_mic=privacyManager.microphone;
 			//_mic.setUseEchoSuppression(true);
 			_mic.setLoopBack(false); // Don't echo the microphone to local speakers
-			_mic.setSilenceLevel(0, _maxRecTime*1000); //_maxRecTime is given in seconds, setSilencelevel() uses milliseconds
+			_mic.setSilenceLevel(0, 600000);
+				
+			//TODO _maxRectime is retrieved at a later function, so the function below wont work
+			//_mic.setSilenceLevel(0,_maxRecTime*1000); //_maxRecTime is given in seconds, setSilencelevel() uses milliseconds
 
 			_video.visible=false;
 			_micImage.visible=false;
@@ -652,7 +641,7 @@ package player
 		{
 			var privacyManager:UserDeviceManager=SharedData.getInstance().privacyManager;
 			//Remove the privacy settings & the rest of layers from the top layer
-			_onTop.removeChildren();
+			_topLayer.removeChildren();
 
 			_micCamEnabled=privacyManager.deviceAccessGranted;
 			if (getState() == RECORD_MIC_STATE)
@@ -728,10 +717,7 @@ package player
 			{
 				_recordingReady=false;
 				
-				var recSlot:Array = DummyWebService.requestRecordingSlot();
 				
-				_recordingUrl = recSlot['url'];
-				_maxRecTime = recSlot['maxduration'];
 				_recNsc=new NetStreamClient(_recordingUrl, "recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
 				_recNsc.setup();
@@ -788,7 +774,7 @@ package player
 					//_secondStreamSource=true;
 					logger.debug("Secondstreamsource: {0}", [_secondStreamSource]);
 					if(_autoPlay || _forcePlay) {
-						logger.debug("ABout to call startVideo");
+						logger.debug("About to call startVideo");
 						startVideo();
 						_autoPlay=_lastAutoplay;
 						_forcePlay=false;
@@ -911,6 +897,11 @@ package player
 				endVideo();
 			}
 			
+			//Ask for a slot in the server to record the new stream
+			var recSlot:Array = DummyWebService.requestRecordingSlot();
+			_recordingUrl = recSlot['url'];
+			_maxRecTime = recSlot['maxduration'];
+			
 			//Set the video player's state to recording
 			var newState:int = useWebcam ? VideoRecorder.RECORD_MICANDCAM_STATE : VideoRecorder.RECORD_MIC_STATE;
 			setState(newState);
@@ -919,6 +910,8 @@ package player
 		public function abortRecording():void{
 			resetCountdown();
 			unattachUserDevices();
+			
+			_recording=false;
 			
 			//Remove the event point polling
 			removeEventListener(PollingEvent.ENTER_FRAME, eventPointManager.pollEventPoints);
@@ -980,7 +973,11 @@ package player
 		
 		public function get rightStreamDuration():Number
 		{
-			return streamReady(_sbsNsc) ? _sbsNsc.duration : 0;
+			if(_recording){
+				return streamReady(_recNsc) ? _maxRecTime : 0;
+			} else {
+				return streamReady(_sbsNsc) ? _sbsNsc.duration : 0;
+			}
 		}
 		
 		public function get letfStreamTime():Number
@@ -990,7 +987,11 @@ package player
 		
 		public function get rightStreamTime():Number
 		{
-			return streamReady(_sbsNsc) ? _sbsNsc.netStream.time : 0;
+			if(_recording){
+				return streamReady(_recNsc) ? _recNsc.netStream.time : 0;
+			} else {
+				return streamReady(_sbsNsc) ? _sbsNsc.netStream.time : 0;
+			}
 		}
 		
 		public function leftStreamLoadedFragment():Number

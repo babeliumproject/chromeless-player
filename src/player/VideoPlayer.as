@@ -33,6 +33,8 @@ package player
 	
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
+	
+	import view.BitmapSprite;
 
 	public class VideoPlayer extends Sprite
 	{
@@ -43,6 +45,7 @@ package player
 		protected var _nsc:NetStreamClient;
 
 		protected var _videoUrl:String=null;
+		protected var _videoPosterUrl:String=null;
 
 		protected var _lastAutoplay:Boolean;
 		protected var _autoPlay:Boolean=true;
@@ -65,6 +68,9 @@ package player
 		protected var _playbackSoundTransform:SoundTransform;
 		protected var _lastVolume:Number;
 		protected var _muted:Boolean=false;
+		
+		protected var _posterSprite:BitmapSprite;
+		protected var _topLayer2:Sprite;
 
 
 		private static const logger:ILogger=getLogger(VideoPlayer);
@@ -81,7 +87,10 @@ package player
 			_video=new Video();
 			_video.smoothing=_smooth;
 			
+			_topLayer2 = new Sprite();
+			
 			addChild(_video);
+			addChild(_topLayer2);
 
 			drawGraphics(_defaultWidth, _defaultHeight);
 
@@ -278,7 +287,16 @@ package player
 			if (videoId != '')
 			{
 				resetAppearance();
-				_videoUrl=DummyWebService.retrieveVideoById(videoId);
+				
+				var videoData:Array=DummyWebService.retrieveVideoById(videoId);
+				_videoUrl=videoData['url'];
+				_videoPosterUrl=videoData['poster'];
+				
+				if(!_autoPlay){
+					_posterSprite = new BitmapSprite(_videoPosterUrl, _lastWidth, _lastHeight);
+					_topLayer2.addChild(_posterSprite);
+				}
+				
 				if (streamReady(_nsc))
 				{
 					_nsc.netStream.dispose();
@@ -307,6 +325,7 @@ package player
 				_videoReady=true;
 				if (_autoPlay || _forcePlay)
 				{
+					_topLayer2.removeChildren();
 					startVideo();
 					_forcePlay=false;
 				}

@@ -123,6 +123,7 @@
 		        		<div class="col-lg-2"><button type="button" class="btn btn-default" onclick="pauseVideo();"><span class="glyphicon glyphicon-pause"></span> Pause</button></div>
 		        		<div class="col-lg-2"><button type="button" class="btn btn-default" onclick="muteVideo();"><span class="glyphicon glyphicon-volume-off"></span> Mute</button></div>
 		        		<div class="col-lg-2"><button type="button" class="btn btn-default" onclick="unMuteVideo();"><span class="glyphicon glyphicon-volume-up"></span> Unmute</button></div>
+		        		<div class="col-lg-2"><button type="button" class="btn btn-default" onclick="autoPlay();" data-toggle="button">Autoplay</button></div>
 		        	</div>
 		        	</p>
 		        	<div class="row">
@@ -155,7 +156,7 @@
 		        		</div>
 						<div class="form-group">
 							<label for="recExerciseId" class="col-lg-2 control-label">Exercise</label>
-							<div class="col-lg-10"><input type="text" class="form-control" id="recExerciseId" placeholder="Exercise ID or URL" value="U1MbBtkIGZQ.flv"></div>
+							<div class="col-lg-10"><input type="text" class="form-control" id="recExerciseId" placeholder="Exercise ID or URL (empty for free recording)" value="U1MbBtkIGZQ.flv"></div>
 						</div>
 						<div class="form-group">
 							<label for="eventDataChooser" class="col-lg-2 control-label">Event data</label>
@@ -169,19 +170,61 @@
 						</div>
 						<div class="form-group">
 							<div class="col-lg-offset-2 col-lg-10">
-		        				<button type="button" class="btn btn-default" onclick="recordVideo();">Record</button>
-		        				<button type="button" class="btn btn-danger" onclick="abortRecording();"><span class="glyphicon glyphicon-ban-circle"></span> Abort recording</button>
+		        				<button type="button" class="btn btn-danger" onclick="recordVideo();"><span class="glyphicon glyphicon-record"></span> Record</button>
+		        				<button type="button" class="btn btn-default" onclick="abortRecording();"><span class="glyphicon glyphicon-stop"></span> Stop recording</button>
 		        			</div>
 		        		</div>
 					</form>
 				</div>
 			</div>
         	
-        	<div class="input-group">
-       			<input id="loadStreamByUrl" type="text" class="form-control"/>
-       		 		<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="loadStreamByUrl();">Load stream by url</button></span>
-       		</div>
-        
+        	<div class="panel panel-default">
+        		<div class="panel-heading">Normal playback</div>
+        		<div class="panel-body">
+        			<div class="input-group">
+       					<input id="loadStreamByUrl" type="text" class="form-control" placeholder="Stream URL"/>
+       		 				<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="loadStreamByUrl();">Load stream by url</button></span>
+       				</div>
+       				<div class="input-group">
+       					<input id="loadStreamById" type="text" class="form-control" placeholder="Stream ID"/>
+       		 				<span class="input-group-btn"><button class="btn btn-default" type="button" onclick="loadStreamById();">Load stream by id</button></span>
+       				</div>
+       			</div>
+        	</div>
+        	<div class="panel panel-default">
+        		<div class="panel-heading">Side by side playback</div>
+        		<div class="panel-body">
+        			<form class="form-horizontal" role="form">
+        				<div class="form-group">
+        					<label for="leftStream" class="col-lg-2 control-label">Left stream</label>
+        					<div class="col-lg-10">
+        						<input type="text" class="form-control" id="leftStreamInput" placeholder="Left stream ID or URL" />
+        					</div>
+        				</div>
+        				<div class="form-group">
+        					<label for="rightStream" class="col-lg-2 control-label">Right stream</label>
+        					<div class="col-lg-10">
+        						<input type="text" class="form-control" id="rightStreamInput" placeholder="Right stream ID or URL" />
+        					</div>
+        				</div>
+        				<div class="form-group">
+							<label for="eventDataChooserSbs" class="col-lg-2 control-label">Event data</label>
+							<div class="col-lg-10">
+								<select id="eventDataChooserSbs" class="form-control">
+								    <option value="default" selected="selected"></option>
+								    <option value="shaman">Shaman</option>
+								    <option value="sintel">Sintel</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-lg-offset-2 col-lg-10">
+								<button type="button" class="btn btn-default" onclick="loadSideBySideStreamsById();">Load side by side streams</button>
+							</div>
+						</div>
+        			</form>
+        		</div>
+        	</div>
         </td>
         </tr>
         </table>
@@ -197,7 +240,7 @@
             var swfVersionStr = "${version_major}.${version_minor}.${version_revision}";
             // To use express install, set to playerProductInstall.swf, otherwise the empty string. 
             var xiSwfUrlStr = "${expressInstallSwf}";
-            var flashvars = {"video_id":"U1MbBtkIGZQ.flv", "language_file":"http://development/chromeless_player/player-strings-eu_ES.xml"};
+            var flashvars = {"video_id":"U1MbBtkIGZQ", "language_file":"http://development/chromeless_player/player-strings-eu_ES.xml"};
             var params = {};
             params.quality = "high";
             params.bgcolor = "${bgcolor}";
@@ -397,6 +440,12 @@
 	    	  	babeliumPlayer.loadStreamByUrl(url);
 	      };
 	      
+	      function loadStreamById(){
+	    	  var id = document.getElementById("loadStreamById").value;
+	    	  if(babeliumPlayer)
+	    		 babeliumPlayer.loadStreamById(id);
+	      }
+	      
 	      function playVideo() {
 	        if (babeliumPlayer) {
 	        	babeliumPlayer.playVideo();
@@ -452,6 +501,10 @@
 	        	babeliumPlayer.unMuteVideo();
 	        }
 	      }
+	      
+	      function autoPlay(){
+	    	  
+	      };
 	      
 	      function ms2time(milliseconds, displayHours, displayMs) {
 	    	  var p_num = parseFloat(milliseconds) * 1000;

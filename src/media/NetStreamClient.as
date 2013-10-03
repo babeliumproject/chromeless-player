@@ -42,7 +42,7 @@ package media
 		private var _nc:NetConnection;
 		private var _name:String;
 		private var _connected:Boolean;
-		private var _streamStatus:uint;
+		private var _streamStatus:int;
 
 		//Media resource metadata
 		private var _videoWidth:uint;
@@ -79,7 +79,7 @@ package media
 			super();
 
 			_streamStatus=STREAM_UNREADY;
-			_duration=0; //Until we receiving metadata set the duration to 0
+			_duration=0; //Until receiving metadata set the duration to 0
 			_name=name;
 
 			if (isStreamingUrl(url))
@@ -230,7 +230,7 @@ package media
 			return _duration;
 		}
 
-		public function get streamState():uint
+		public function get streamState():int
 		{
 			return _streamStatus;
 		}

@@ -17,7 +17,7 @@ package view
 	
 	import model.SharedData;
 	
-	public class ErrorOverlay extends Sprite
+	public class ErrorSprite extends Sprite
 	{
 		
 		private var dWidth:uint = 640;
@@ -27,9 +27,7 @@ package view
 		private var textHolder:TextField;
 		private var message:String;
 		
-		private var backgrImg:Bitmap;
-		
-		public function ErrorOverlay()
+		public function ErrorSprite()
 		{
 			super();
 			//loadAsset(StreamingManager.getInstance().uploadDomain+"resources/images/popup_bgr_wrong.png");
@@ -49,8 +47,6 @@ package view
 			var nHeightBox:Number = nHeight*0.6;
 			if(box != null && this.contains(box))
 				this.removeChild(box);
-			if(backgrImg != null && this.contains(backgrImg))
-				this.removeChild(backgrImg);
 			if(textHolder != null && this.contains(textHolder))
 				this.removeChild(textHolder);
 			
@@ -86,44 +82,7 @@ package view
 			this.addChild(box);
 			this.addChild(textHolder);
 			
-			if(backgrImg){
-				backgrImg.width=191;
-				backgrImg.height=192;
-				backgrImg.x = (nWidth/2) + (nWidthBox/2) - backgrImg.width;
-				backgrImg.y = (nHeight/2)-(nHeightBox/2);
-				this.addChild(backgrImg);
-			}
 		}
-		
-		/**
-		 * Requests an external asset and loads it into flash runtime 
-		 * @param url
-		 * 		The asset's url, can be either relative to flash runtime's url or absolute
-		 */		
-		private function loadAsset(url:String):void{
-			var loader:Loader = new Loader();
-			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, completeHandler);
-			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
-			
-			var request:URLRequest = new URLRequest(url);
-			loader.load(request);
-		}
-		
-		/**
-		 * Cast the data retrieved using the loader to Bitmap object to
-		 * use as background image.
-		 * @param event
-		 * 		The Complete event of a loader function
-		 */		
-		private function completeHandler(event:Event):void{
-			var loader:Loader = Loader(event.target.loader);
-			backgrImg = Bitmap(loader.content);
-		}
-		
-		private function ioErrorHandler(event:IOErrorEvent):void{
-			trace("Unable to load image: " + event);
-		}
-		
 		
 	}
 }
