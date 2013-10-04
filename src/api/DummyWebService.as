@@ -12,7 +12,7 @@ package api
 		private static var baseurl:String='rtmpt://babelium/vod/';
 		private static var posterurl:String='http://development/chromeless_player/images/posters/';
 		
-		private static const MAX_RECORD_SECONDS:uint = 600;
+		private static const MAX_RECORD_SECONDS:uint = 180;
 		private static const MIN_RECORD_SECONDS:uint = 15;
 
 		public static function retrieveVideoById(id:String):Array

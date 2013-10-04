@@ -70,7 +70,7 @@ package player
 		protected var _muted:Boolean=false;
 		
 		protected var _posterSprite:BitmapSprite;
-		protected var _topLayer2:Sprite;
+		protected var _topLayer:Sprite;
 
 
 		private static const logger:ILogger=getLogger(VideoPlayer);
@@ -84,13 +84,15 @@ package player
 			_lastWidth = _defaultWidth;
 			_lastHeight = _defaultHeight;
 			
+			_lastAutoplay = _autoPlay;
+			
 			_video=new Video();
 			_video.smoothing=_smooth;
 			
-			_topLayer2 = new Sprite();
+			_topLayer = new Sprite();
 			
 			addChild(_video);
-			addChild(_topLayer2);
+			addChild(_topLayer);
 
 			drawGraphics(_defaultWidth, _defaultHeight);
 
@@ -294,7 +296,7 @@ package player
 				
 				if(!_autoPlay){
 					_posterSprite = new BitmapSprite(_videoPosterUrl, _lastWidth, _lastHeight);
-					_topLayer2.addChild(_posterSprite);
+					_topLayer.addChild(_posterSprite);
 				}
 				
 				if (streamReady(_nsc))
@@ -325,7 +327,6 @@ package player
 				_videoReady=true;
 				if (_autoPlay || _forcePlay)
 				{
-					_topLayer2.removeChildren();
 					startVideo();
 					_forcePlay=false;
 				}
@@ -339,6 +340,7 @@ package player
 			try
 			{
 				//_nsc.play("exercises/"+_videoUrl);
+				_topLayer.removeChildren();
 				_nsc.play();
 			}
 			catch (e:Error)

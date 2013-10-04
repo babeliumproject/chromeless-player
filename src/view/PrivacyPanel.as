@@ -33,6 +33,9 @@ package view
 
 		private var container:Sprite=new Sprite();
 		private var containerBgImg:UnlockImage=new UnlockImage();
+		
+		private var default_font_color:uint=0xffffff;
+		private var default_font_size:uint=14;
 
 		private var layer:Sprite=new Sprite();
 		//private var layerImg:MicImage=new MicImage();
@@ -99,7 +102,7 @@ package view
 				{
 					//acceptButton.label=ResourceManager.getInstance().getString('messages', 'BUTTON_RECORD');
 					drawPrivacyNotice();
-					acceptButton.label="Record";
+					acceptButton.label=SharedData.getInstance().getText('BUTTON_RECORD');
 				}
 				default:
 				{
@@ -115,7 +118,7 @@ package view
 
 		private function cancelClickHandler(event:MouseEvent):void
 		{
-			dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE));
+			dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_CANCEL));
 		}
 
 		private function acceptClickHandler(event:MouseEvent):void
@@ -123,7 +126,7 @@ package view
 			if (!SharedData.getInstance().privacyManager.deviceAccessGranted)
 				privacyManager.showPrivacySettings();
 			else
-				dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE));
+				dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_ACCEPT));
 		}
 
 		private function drawBackground(nWidth:uint, nHeight:uint, padding:uint=30, gap:uint=2):void
@@ -134,11 +137,11 @@ package view
 			this.graphics.endFill();
 
 			titleFmt.font="Arial";
-			titleFmt.color=0xFFFFFF;
+			titleFmt.color=default_font_color;
 			titleFmt.size=18;
 			titleFmt.bold=true;
 			title.defaultTextFormat=titleFmt;
-			title.text="Privacy Settings";
+			title.text=SharedData.getInstance().getText('PRIVACY_SETTINGS');
 			//title.text=ResourceManager.getInstance().getString('messages','TITLE_PRIVACY_SETTINGS').toUpperCase();
 			title.width=nWidth - 2 * padding;
 			title.x=padding;
@@ -174,14 +177,12 @@ package view
 
 			var message:TextField=new TextField();
 			var messageFmt:TextFormat=new TextFormat();
-			//message.text=ResourceManager.getInstance().getString('messages', 'TEXT_MIC_NOT_FOUND');
-			message.text="Your microphone device couldn't be detected. Please make sure the device is correctly plugged and then click 'Retry' or click 'Cancel' to abort the recording.";
+			
+			message.text=SharedData.getInstance().getText('TEXT_MIC_NOT_FOUND');
 
-			//acceptButton.label=ResourceManager.getInstance().getString('messages','BUTTON_RETRY');
-			acceptButton.label="Retry";
+			acceptButton.label=SharedData.getInstance().getText('BUTTON_RETRY');
 			acceptButton.addEventListener(MouseEvent.CLICK, retryClickHandler);
-			//cancelButton.label=ResourceManager.getInstance().getString('messages','BUTTON_CANCEL');
-			cancelButton.label="Cancel";
+			cancelButton.label=SharedData.getInstance().getText('BUTTON_CANCEL');
 			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
 
 			layer.addChild(message);
@@ -197,13 +198,11 @@ package view
 			var message:TextField=new TextField();
 			var messageFmt:TextFormat=new TextFormat();
 
-			//message.text=ResourceManager.getInstance().getString('messages', 'TEXT_CAMERA_NOT_FOUND');
-			message.text="Your camera device couldn't be detected. Please make sure the device is correctly plugged and then click 'Retry' or click 'Cancel' to abort the recording.";
-			//acceptButton=ResourceManager.getInstance().getString('messages','BUTTON_RETRY');
-			acceptButton.label="Retry";
+			message.text=SharedData.getInstance().getText('TEXT_CAMERA_NOT_FOUND');
+
+			acceptButton.label=SharedData.getInstance().getText('BUTTON_RETRY');
 			acceptButton.addEventListener(MouseEvent.CLICK, retryClickHandler);
-			//cancelButton.label=ResourceManager.getInstance().getString('messages','BUTTON_CANCEL');
-			cancelButton.label="Cancel";
+			cancelButton.label=SharedData.getInstance().getText('BUTTON_CANCEL');
 			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
 
 			layer.addChild(message);
@@ -219,11 +218,9 @@ package view
 			var message:TextField=new TextField();
 			var messageFmt:TextFormat=new TextFormat();
 
-			//message.text=ResourceManager.getInstance().getString('messages', 'TEXT_ADMINISTRATIVELY_DISABLED');
-			message.text="An administrative rule forbids the access to camera and microphone. Please contact your system administrator.";
+			message.text=SharedData.getInstance().getText('TEXT_ADMINISTRATIVELY_DISABLED');
 
-			//cancelButton.label=ResourceManager.getInstance().getString('messages','BUTTON_CANCEL');
-			cancelButton.label="Cancel";
+			cancelButton.label=SharedData.getInstance().getText('BUTTON_CANCEL');
 			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
 
 			layer.addChild(message);
@@ -240,13 +237,12 @@ package view
 			var messageFmt:TextFormat=new TextFormat();
 
 			messageFmt.font="Arial";
-			messageFmt.size=14;
-			messageFmt.color=0x000000;
+			messageFmt.size=default_font_size;
+			messageFmt.color=default_font_color;
 			messageFmt.bold=false;
 			message.defaultTextFormat=messageFmt;
 
-			//message.text=ResourceManager.getInstance().getString('messages', 'TEXT_PRIVACY_RIGHTS_EXPLAIN');
-			message.text="Please click 'Allow' when you see this window. Also click on 'Remember' to skip this step the next time you want to record something.";
+			message.text=SharedData.getInstance().getText('TEXT_PRIVACY_RIGHTS_EXPLAIN');
 			message.width=layer.width * 0.65;
 			message.y=(layer.height-message.height)/2;
 			message.wordWrap=true;
@@ -268,12 +264,10 @@ package view
 			layerImg.x = -layerImgOffsetX + (layer.width - layerImg.width) - (layer.width * 0.3 - layerImg.width) / 2;
 			layerImg.y = -layerImgOffsetY + (layer.height - layerImg.height) / 2;
 
-			//acceptButton.label=ResourceManager.getInstance().getString('messages','BUTTON_SHOW_PRIVACY_SETTINGS');
-			acceptButton.label="Show Privacy Settings";
+			acceptButton.label=SharedData.getInstance().getText('BUTTON_SHOW_PRIVACY_SETTINGS');
 			acceptButton.addEventListener(MouseEvent.CLICK, acceptClickHandler);
 			acceptButton.y=layer.height * 0.9;
-			//cancelButton.label=ResourceManager.getInstance().getString('messages','BUTTON_CANCEL');
-			cancelButton.label="Cancel";
+			cancelButton.label=SharedData.getInstance().getText('BUTTON_CANCEL');
 			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
 			cancelButton.x=acceptButton.width + 20;
 			cancelButton.y=layer.height * 0.9;

@@ -13,7 +13,8 @@ package events
 		*/
 
 		public static const DEVICE_STATE_CHANGE:String="deviceStateChange";
-		public static const CLOSE:String="close";
+		public static const CLOSE_CANCEL:String="close_cancel";
+		public static const CLOSE_ACCEPT:String="close_accept";
 
 		public static const AV_HARDWARE_DISABLED:int=-1;
 		public static const NO_MICROPHONE_FOUND:int=0;

@@ -74,16 +74,11 @@ package player
 		
 		private var _maxRecTime:Number;
 
-		//private var _fileName:String;
 		private var _recordingUrl:String;
 		private var _recordingMuted:Boolean=false;
 
 		private var _cuePointTimer:Timer;
-
-		public static const SUBTILE_INSERT_DELAY:Number=0.5;
-
 		
-		private var _topLayer:Sprite;
 
 		private var eventPointManager:EventPointManager;
 		private var noConnectionSprite:ErrorSprite;
@@ -116,7 +111,6 @@ package player
 			_countdownTxt=new TextField();
 			_camVideo=new Video();
 			_micImage=new MicImage();
-			_topLayer=new Sprite();
 		
 			
 			noConnectionSprite=new ErrorSprite();
@@ -127,7 +121,9 @@ package player
 			addChild(_micImage);
 			addChild(_camVideo);
 			addChild(_countdownTxt);
-			addChild(_topLayer);
+			
+			//The top layer was added below the recording layers, bring it forth to keep it at the top
+			setChildIndex(_topLayer, numChildren-1);
 			
 			drawGraphics(_defaultWidth, _defaultHeight);
 		}
@@ -406,10 +402,12 @@ package player
 			if (streamReady(_nsc))
 				this.dispatchEvent(new PollingEvent(PollingEvent.ENTER_FRAME, _nsc.netStream.time));
 			if (streamReady(_recNsc)){
-				//TODO Check if we've run out of time for the recording
+				//If the user didn't stop recording after _maxRecTime elapsed, force a stop
+				if ((_maxRecTime - _recNsc.netStream.time) <=0){
+					abortRecording();
+				}
 			}
-		}
-		
+		}	
 		
 		override public function playVideo():void
 		{
@@ -599,7 +597,8 @@ package player
 				_topLayer.removeChildren();
 				_topLayer.addChild(privacySprite);
 				
-				privacySprite.addEventListener(PrivacyEvent.CLOSE, privacyBoxClosed);
+				privacySprite.addEventListener(PrivacyEvent.CLOSE_ACCEPT, privacyCloseAccept);
+				privacySprite.addEventListener(PrivacyEvent.CLOSE_CANCEL, privacyCloseCancel);
 				privacySprite.displaySettings();
 			}
 		}
@@ -636,10 +635,18 @@ package player
 				
 			}
 		}
+		
+		private function privacyCloseCancel(event:Event):void{
+			//Remove the privacy settings & the rest of layers from the top layer
+			_topLayer.removeChildren();
+			abortRecording();
+			dispatchEvent(new RecordingEvent(RecordingEvent.ABORTED));
+		}
 
-		private function privacyBoxClosed(event:Event):void
+		private function privacyCloseAccept(event:Event):void
 		{
 			var privacyManager:UserDeviceManager=SharedData.getInstance().privacyManager;
+			
 			//Remove the privacy settings & the rest of layers from the top layer
 			_topLayer.removeChildren();
 
@@ -819,8 +826,6 @@ package player
 			if (getState() == RECORD_MICANDCAM_STATE)
 				_recNsc.netStream.attachCamera(_camera);
 			
-			
-			//_recNsc.netStream.publish(responseFilename, "record");
 			_recNsc.publish();
 			
 			_recording=true;
@@ -863,7 +868,7 @@ package player
 			//	removeAllChildren(_onTop); //Remove the privacy box in case someone cancels the recording before starting
 		}
 		
-		public function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
+		public function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):String{
 						
 			//Clean the previous sessions
 			unattachUserDevices();
@@ -892,6 +897,8 @@ package player
 			if(exerciseId){
 				//Load the exercise to play alongside the recording, if any
 				loadVideoById(exerciseId);
+				//Remove the exercise poster, we don't need it when about to record something
+				_topLayer.removeChildren();
 			} else {
 				_videoUrl=null;
 				endVideo();
@@ -905,6 +912,8 @@ package player
 			//Set the video player's state to recording
 			var newState:int = useWebcam ? VideoRecorder.RECORD_MICANDCAM_STATE : VideoRecorder.RECORD_MIC_STATE;
 			setState(newState);
+			
+			return _recordingUrl;
 		}
 		
 		public function abortRecording():void{

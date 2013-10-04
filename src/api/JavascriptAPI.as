@@ -16,6 +16,8 @@ package api
 	
 	import model.SharedData;
 	
+	import mx.utils.ObjectUtil;
+	
 	import player.VideoRecorder;
 	
 	public class JavascriptAPI
@@ -43,7 +45,7 @@ package api
 			addCB("pauseVideo",VP.pauseVideo);
 			addCB("seekTo",VP.seekTo);
 			
-			addCB("recordVideo", recordVideo);
+			addCB("recordStream", recordVideo);
 			addCB("abortRecording", abortRecording);
 				
 			addCB("getVolume", getVolume);
@@ -74,6 +76,7 @@ package api
 			//Events
 			addCB("addEventListener",addEventListener);
 			addCB("removeEventListener",removeEventListener);
+			
 		}
 		
 		/**
@@ -249,8 +252,8 @@ package api
 			VP.loadVideoById(video);
 		}
 		
-		private function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):void{
-			VP.recordVideo(useWebcam, exerciseId, recdata);
+		private function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):String{
+			return VP.recordVideo(useWebcam, exerciseId, recdata);
 		}
 		
 		private function loadVideoByUrl(url:String):void{

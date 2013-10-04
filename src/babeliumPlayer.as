@@ -23,6 +23,7 @@ package
 	import model.SharedData;
 	
 	import mx.resources.ResourceManager;
+	import mx.utils.ObjectUtil;
 	
 	import org.as3commons.logging.api.LOGGER_FACTORY;
 	import org.as3commons.logging.setup.LevelTargetSetup;
@@ -75,6 +76,7 @@ package
 			addChild(mediarecorder);
 			
 			// Setups javascripts external controls
+			
 			JavascriptAPI.getInstance().setup(mediarecorder);
 			onVideoPlayerLoaded(null);
 		}

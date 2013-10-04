@@ -38,6 +38,8 @@ package model
 			localizationBundle=new Object();
 		}
 		
-		
+		public function getText(code:String):String{
+			return (code && localizationBundle[code]) ? localizationBundle[code] : ''; 
+		}
 	}
 }

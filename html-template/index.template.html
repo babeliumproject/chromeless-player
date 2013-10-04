@@ -169,6 +169,13 @@
 							</div>
 						</div>
 						<div class="form-group">
+							<label for="recordStreamUrl" class="col-lg-2 control-label">Recording URL</label>
+							<div class="col-lg-10">
+      							<p class="form-control-static" id="recordStreamUrl">Player returns the recording URL when you record something</p>
+    						</div>
+							
+						</div>
+						<div class="form-group">
 							<div class="col-lg-offset-2 col-lg-10">
 		        				<button type="button" class="btn btn-danger" onclick="recordVideo();"><span class="glyphicon glyphicon-record"></span> Record</button>
 		        				<button type="button" class="btn btn-default" onclick="abortRecording();"><span class="glyphicon glyphicon-stop"></span> Stop recording</button>
@@ -474,7 +481,8 @@
 	    				  	useWebcam = rmet[i].value - 0;
 	    			  }
 	    		  }
-	    		  babeliumPlayer.recordVideo(useWebcam, stream, eventData);
+	    		  var recUrl = babeliumPlayer.recordStream(useWebcam, stream, eventData);
+	    		  document.getElementById("recordStreamUrl").innerHTML = recUrl;
 	    	  }
 	      }
 	      

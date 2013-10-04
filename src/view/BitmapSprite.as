@@ -77,7 +77,7 @@ package view
 			img=Bitmap(loader.content);
 			img_width=img.bitmapData.width;
 			img_height=img.bitmapData.height;
-			trace("img reported dimensions: " + img_width + "x" + img_height);
+			//trace("img reported dimensions: " + img_width + "x" + img_height);
 
 			this.addChild(img);
 			updateDisplayList(0, 0);

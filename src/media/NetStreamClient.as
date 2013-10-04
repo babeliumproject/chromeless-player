@@ -44,9 +44,12 @@ package media
 		private var _connected:Boolean;
 		private var _streamStatus:int;
 
-		//Media resource metadata
-		private var _videoWidth:uint;
-		private var _videoHeight:uint;
+		//Provide some default 4:3 AR video dimensions to avoid the scaling function to determine
+		//the appropriate dimensions are 0x0. This happens when the video itself doesn't provide 
+		//metadata about its dimensions (Red5 recordings).
+		private var _videoWidth:uint  = 320;
+		private var _videoHeight:uint = 240;
+		
 		private var _duration:Number;
 		private var _hasVideo:Boolean;
 		private var _hasAudio:Boolean;
