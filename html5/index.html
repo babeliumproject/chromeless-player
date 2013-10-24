@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="recorder">
+	<head>
+		<meta charset="utf-8">
+		<title>Speech to Server</title>
+		<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.min.css" rel="stylesheet">
+		<link href="//netdna.bootstrapcdn.com/font-awesome/3.0.2/css/font-awesome.css" rel="stylesheet">
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
+		<script src="app.js"></script>
+		<style type="text/css"> 
+			.red-btn { color: #D00000; }
+			video::cue(v[voice="Sintel"]) { color: Yellow }
+			video::cue(v[voice="Shaman"]) { color: White }
+			video::cue(v[voice="Char1"]) { color: White   }
+			video::cue(v[voice="Char2"]) { color: #fffd22 }
+			video::cue(v[voice="Char3"]) { color: #69fc00 }
+			video::cue(v[voice="Char4"]) { color: #fd7200 }
+			video::cue(v[voide="Char5"]) { color: #056cf9 }
+			video::cue(v[voice="Char6"]) { color: #ff0f0b }
+			video::cue(v[voice="Char7"]) { color: #c314c9 }
+			video::cue(v[voice="Char8"]) { color: #ff6be5 }	
+		</style>
+	</head>
+	<body ng-controller="RecorderController">
+		<div class="container well">
+			<h1 class="text-center">Record Stuff from the Browser <a href="uploads/" class="btn btn-info"><i class="icon-download-alt"></i>&nbsp;Download Recordings</a></h1>
+			<div class="row">
+				<div class="span12 text-center">	
+				<video preload="auto" controls="" autoplay="" height=360 width=640 id="videoPlayer">
+					<source src="sintel_fragment.webm" type="video/webm">
+					<track kind="subtitles" src="sintel_en.vtt" type="text/vtt" srclang="en" label="English subtitles" default=""></track>
+				</video>
+				</div>
+			</div>
+			<div class="row">
+				<div class="offset3 span3 text-center">
+					<label>Sample Rate: <select ng-model="samplerate" ng-options="s + ' Hz' for s in samplerates"></select></label>
+				</div>
+				<div class="span3 text-center">
+					<label>Bit Rate: <select ng-model="bitrate" ng-options="b + ' kbps' for b in bitrates"></select></label>
+				</div>
+			</div>
+			<div class="row">
+				<div class="offset3 span3 text-center">
+					<button class="btn" ng-click="startRecording()" ng-disabled="recording"><i class="icon-circle" ng-class="recordButtonStyle"></i>&nbsp;Start recording</button>
+				</div>
+				<div class="span3 text-center">
+					<button class="btn" ng-click="stopRecording()" ng-disabled="!recording"><i class="icon-stop"></i>&nbsp;Stop recording</button>
+				</div>
+			</div>
+			<div class="row">
+				<div class="span12 text-center" ng-show="recording">
+					<span class="label label-important">Recording...</label>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

@@ -141,8 +141,7 @@ package view
 			titleFmt.size=18;
 			titleFmt.bold=true;
 			title.defaultTextFormat=titleFmt;
-			title.text=SharedData.getInstance().getText('PRIVACY_SETTINGS');
-			//title.text=ResourceManager.getInstance().getString('messages','TITLE_PRIVACY_SETTINGS').toUpperCase();
+			title.text=SharedData.getInstance().getText('TITLE_PRIVACY_SETTINGS').toUpperCase();
 			title.width=nWidth - 2 * padding;
 			title.x=padding;
 			title.y=padding;

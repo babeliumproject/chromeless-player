@@ -1,0 +1,10 @@
+{
+    "autoload": {
+	"psr-0": {
+	    "DemoServer": "src"
+	}
+    },
+    "require": {
+        "cboden/Ratchet": "0.3.*"
+    }
+}

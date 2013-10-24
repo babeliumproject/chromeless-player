@@ -54,7 +54,7 @@ package media
 		
 		private var encapsulateRTMP:Boolean=false;
 		private var proxy:String='none';
-		private var encoding:uint=ObjectEncoding.DEFAULT;
+		private var encoding:uint=ObjectEncoding.AMF0;
 		
 		private var streamingResourcesPath:String;
 		

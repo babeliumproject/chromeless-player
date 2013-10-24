@@ -109,16 +109,14 @@ package
 		private function onVideoPlayerLoaded(e:Event):void
 		{
 			trace("VideoRecorded loaded");
-			//mediarecorder.width=appWidth;
-			//mediarecorder.height=appHeight;
 			mediarecorder.unscaledWidth=appWidth;
 			mediarecorder.unscaledHeight=appHeight;
 			
+			JavascriptAPI.getInstance().onBabeliumPlayerReady();
+			
 			if (video_id != null){
 				mediarecorder.loadVideoById(video_id);
-			}	
-			
-			JavascriptAPI.getInstance().onBabeliumPlayerReady();
+			}
 		}
 		
 		private function set onUpdateVPHeight(height:int):void

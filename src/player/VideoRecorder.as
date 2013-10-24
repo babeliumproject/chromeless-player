@@ -179,13 +179,7 @@ package player
 			
 			//_recStopBtn.addEventListener(RecStopButtonEvent.BUTTON_CLICK, onRecStopEvent);
 			
-			
-			
 			//addChild(_overlayButton);
-			
-			
-			
-			
 		}
 		
 		/** Overriden repaint */
@@ -200,8 +194,6 @@ package player
 			// Countdown
 			_countdownTxt.x = _lastWidth/2 - _countdownTxt.textWidth/2;
 			_countdownTxt.y = _lastHeight/2 - _countdownTxt.textHeight/2;
-			//_countdownTxt.width=_spriteWidth;
-			//_countdownTxt.height=_spriteHeight;
 			
 			//Play overlay
 			//_overlayButton.width=_videoWidth;
@@ -286,16 +278,11 @@ package player
 				_camVideo.x+=(w + _defaultMargin);
 			} else {
 				
-			
 				_camVideo.y=_defaultMargin;
 				_camVideo.height-=_defaultMargin * 2;
 				_camVideo.x=_defaultMargin;
 				_camVideo.width-=_defaultMargin * 2;
 				
-				//_camVideo.y=_defaultMargin + 2;
-				//_camVideo.height-=4;
-				//_camVideo.x=_defaultMargin + 2;
-				//_camVideo.width-=4;
 			}
 			
 			_micImage.y=(_lastHeight - _micImage.height)/2;
@@ -515,8 +502,6 @@ package player
 					_sideBySideReady=false;
 				}
 			}
-
-			//setSubtitle("");
 		}
 
 		override public function endVideo():void
@@ -623,7 +608,6 @@ package player
 			_micImage.visible=false;
 
 			prepareRecording();
-			//startCountdown();
 		}
 
 		private function onPrivacyStateChange(event:PrivacyEvent):void{
@@ -702,7 +686,6 @@ package player
 		{
 			// Disable seek
 			seekable=false;
-			//_mic.setLoopBack(false);
 
 			if (getState() & SPLIT_FLAG)
 			{
@@ -713,7 +696,6 @@ package player
 				
 				_camVideo.visible=false;
 				_micImage.visible=false;
-				//disableControls();
 				if(_videoUrl){
 					splitVideoPanel();
 					logger.debug("Panel splitting done");
@@ -724,31 +706,11 @@ package player
 			{
 				_recordingReady=false;
 				
-				
 				_recNsc=new NetStreamClient(_recordingUrl, "recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
 				_recNsc.setup();
-				//disableControls();
 			}
 			
-			/*
-			if(getState() & UPLOAD_FLAG){
-				// Attach Camera
-				_recordingReady=false;
-				_camVideo.attachCamera(_camera);
-				_camVideo.smoothing=true;
-				
-				//	splitVideoPanel();
-				_camVideo.visible=false;
-				_micImage.visible=false;
-				_recNsc=new NetStreamClient('recordingurl', "recordingStream");
-				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
-				_recNsc.setup();
-			}*/
-
-			//_micActivityBar.visible=true;
-			//dispatchEvent(new ControlDisplayEvent(ControlDisplayEvent.MIC_ACTIVYTY_BAR,true));
-			//_micActivityBar.mic=_mic;
 			this.updateDisplayList(0, 0);
 		}
 		
@@ -796,18 +758,13 @@ package player
 		private function startRecording():void
 		{	
 			if (!(getState() & RECORD_FLAG))
-				return; // security check
+				return;
 			
 			if (getState() == RECORD_MICANDCAM_STATE)
 			{
 				_camVideo.visible=true;
 				_micImage.visible=true;
 			}
-			
-			//var d:Date=new Date();
-			//_fileName="resp-" + d.getTime().toString();
-			//var responseFilename:String= "responses/" + _fileName;
-			//_nsc.netStream.togglePause();
 			
 			//If the recording is made following an exercise, show the exercise in the display and start playing it
 			if(_videoUrl){
@@ -820,7 +777,6 @@ package player
 			if (getState() & RECORD_FLAG)
 			{
 				_recNsc.netStream.attachAudio(_mic);
-				//muteRecording(true); // mic starts muted
 			}
 			
 			if (getState() == RECORD_MICANDCAM_STATE)
@@ -847,8 +803,6 @@ package player
 					loadSideBySideVideosById(_videoUrl, _recordingUrl, null);
 					dispatchEvent(new RecordingEvent(RecordingEvent.END, _recordingUrl));
 				} else {
-					//Parent onStreamStateChange does not call the recorder's stopVideo function
-					//stopVideo();
 					dispatchEvent(new RecordingEvent(RecordingEvent.REPLAY_END));
 				}
 			}
@@ -864,8 +818,8 @@ package player
 				_recNsc.netStream.dispose();
 			}
 
-			//if((_onTop.numChildren > 0) && (_onTop.getChildAt(0) is PrivacyRights) )
-			//	removeAllChildren(_onTop); //Remove the privacy box in case someone cancels the recording before starting
+			if((_topLayer.numChildren > 0) && (_topLayer.getChildAt(0) is PrivacyPanel) )
+				_topLayer.removeChildren(); //Remove the privacy box in case someone cancels the recording before starting
 		}
 		
 		public function recordVideo(useWebcam:Boolean, exerciseId:String = null, recdata:Object = null):String{

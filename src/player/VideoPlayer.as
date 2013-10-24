@@ -260,39 +260,13 @@ package player
 		{
 
 		}
-
-		public function loadVideoByUrl(url:String):void
-		{
+		
+		protected function loadVideo():void{
 			_videoReady=false;
-			if (url != '')
-			{
-				resetAppearance();
-				_videoUrl=url;
-				if (streamReady(_nsc))
-				{
-					_nsc.netStream.dispose();
-				}
-				_nsc=null;
-				_nsc=new NetStreamClient(_videoUrl, "playbackStream");
-				_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
-				_nsc.setup();
-			}
-			else
-			{
-				logger.info("Empty video url provided");
-			}
-		}
-
-		public function loadVideoById(videoId:String):void
-		{
-			_videoReady=false;
-			if (videoId != '')
+			if (_videoUrl != '')
 			{
 				resetAppearance();
 				
-				var videoData:Array=DummyWebService.retrieveVideoById(videoId);
-				_videoUrl=videoData['url'];
-				_videoPosterUrl=videoData['poster'];
 				
 				if(!_autoPlay){
 					_posterSprite = new BitmapSprite(_videoPosterUrl, _lastWidth, _lastHeight);
@@ -307,6 +281,30 @@ package player
 				_nsc=new NetStreamClient(_videoUrl, "playbackStream");
 				_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
 				_nsc.setup();
+			}
+		}
+
+		public function loadVideoByUrl(url:String):void
+		{
+			if (url != '')
+			{
+				_videoUrl=url;
+				loadVideo();
+			}
+			else
+			{
+				logger.info("Empty video url provided");
+			}
+		}
+
+		public function loadVideoById(videoId:String):void
+		{
+			if (videoId != '')
+			{
+				var videoData:Array=DummyWebService.retrieveVideoById(videoId);
+				_videoUrl=videoData['url'];
+				_videoPosterUrl=videoData['poster'];
+				loadVideo();
 			}
 			else
 			{

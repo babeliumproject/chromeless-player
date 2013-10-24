@@ -118,6 +118,8 @@ package media
 				_ns.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
 				_ns.addEventListener(StatusEvent.STATUS, onStatus);
 				
+				_ns.bufferTime=2;
+				
 				_nc=connection;
 				_connected=true;
 				dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.NETSTREAM_READY, _name));
