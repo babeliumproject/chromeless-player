@@ -21,7 +21,7 @@ package media
 	import org.osmf.net.NetClient;
 
 
-	public class RTMPMediaManager extends MediaManager implements IMediaManagerCallbacks
+	public class RTMPMediaManager extends MediaManager implements INetConnectionCallbacks
 	{
 		//RTMP protocol constants
 	//	public static const RTMP:String = "rtmp";

@@ -25,7 +25,7 @@ package media
 	import utils.Helpers;
 
 
-	public class NetStreamClient extends EventDispatcher implements INetStreamClientCallbacks
+	public class NetStreamClient extends EventDispatcher implements INetStreamCallbacks
 	{
 		public static const STREAM_UNREADY:int=-1;
 		public static const STREAM_READY:int=0;

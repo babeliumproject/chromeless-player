@@ -1,6 +1,6 @@
 package media
 {
-	public interface INetStreamClientCallbacks
+	public interface INetStreamCallbacks
 	{	
 		function onCuePoint(cuePoint:Object):void;
 			
