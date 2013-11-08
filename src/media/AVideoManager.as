@@ -1,50 +1,72 @@
 package media
 {
+	import events.NetStreamClientEvent;
 	import events.StreamingEvent;
 	
+	import flash.events.AsyncErrorEvent;
+	import flash.events.DRMErrorEvent;
+	import flash.events.DRMStatusEvent;
+	import flash.events.IOErrorEvent;
+	import flash.events.NetDataEvent;
 	import flash.events.NetStatusEvent;
+	import flash.events.StatusEvent;
 	import flash.net.NetConnection;
+	import flash.net.NetStream;
+	
+	import utils.Helpers;
 
 	public class AVideoManager extends AMediaManager
 	{
-		private var _streamUrl:String;
 		
-		public function AVideoManager(url:String, id:String)
+		private var _startTime:Number;
+		private var _endTime:Number;
+		
+		
+		public function AVideoManager(id:String)
 		{
-			super(url, id);
+			super(id);
 		}
 		
-		public function connect(... args):void{
+		public function setup(... args):void{
+			if(args.length){
+				_streamUrl = (args[0] is String) ? args[0] : '';
+				
+				//Check if the url contains start/end fragments
+				var fragments:Array = Helpers.parseUrl(_streamUrl);
+				fragments[2];
+				
+				var startFragment:RegExp=new RegExp("(.+?\?.+start=([0-9\.]+)");
+				var endFragment:RegExp=new RegExp("(.+?\?.+end=([0-9\.]+)");
+				
+				var sresult:Array = startFragment.exec(fragments[2]);
+				if(sresult){
+					_startTime=Math.round(sresult[1]);
+				}
+				var eresult:Array = endFragment.exec(fragments[2]);
+				if(eresult){
+					_endTime=Math.round(eresult[1]);
+				}
+				
+				
+			}
+			this.addEventListener(StreamingEvent.CONNECTED_CHANGE, onConnectionStatusChange);
+			connect();
+		}
+		
+		private function connect():void{
 			
-			if(_nc)
-				_nc = new NetConnection();
+			_nc = new NetConnection();
 			_nc.client=this;
 			_nc.connect(null);
 			_connected=true;
 			dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 		}
-		
 
 		public function close():void
 		{
 			if (_nc)
 			{
 				_nc.close();
-			}
-		}
-		
-		public function play(/*params:Object*/):void
-		{
-			try
-			{
-				//logger.info("[{0}] Play {1}", [_name, Helpers.printObject(params)]);
-				//_ns.play(params);
-				logger.info("[{0}] Play {1}", [_id, _streamUrl]);
-				_ns.play(_streamUrl);
-			}
-			catch (e:Error)
-			{
-				logger.error("[{0}] Play Error [{1}] {2}", [_id, e.name, e.message]);
 			}
 		}
 		
@@ -57,20 +79,97 @@ package media
 				var reqFraction:Number = seconds/duration;
 				//The user seeked to a time that is not yet cached. Try to load the media file from that point onwards (Pseudo-Streaming/Apache Mod h.264)
 				if(loadedFraction < reqFraction){
-					//play(?start=seconds)
+					//Remove any fragments first
+					_streamUrl += '?start=' + seconds;
+					play();
 				} else {
 					_ns.seek(seconds);
 				}
 			}
 		}
 		
-		public function publish():void{
-			//HTTP media has no publish function
+		override public function get duration():Number
+		{
+			return _startTime + _duration;
+		}
+		
+		override public function get currentTime():Number
+		{
+			return _startTime + _ns.time;
+		}
+		
+		override public function get bytesTotal():Number{
+			//Make a calculus to get an estimate of the total bytes when the video starts playing from a point that is not the beginning
+			return _ns.bytesTotal;
 		}
 		
 		override protected function onNetStatus(event:NetStatusEvent):void{
 			super.onNetStatus(event);
 			
+			switch (_netStatusCode)
+			{
+				case "NetStream.Buffer.Empty":
+					if (_streamStatus == STREAM_STOPPED)
+					{
+						_streamStatus=STREAM_FINISHED;
+					}
+					else
+						_streamStatus=STREAM_BUFFERING;
+					break;
+				case "NetStream.Buffer.Full":			
+					if (_streamStatus == STREAM_READY)
+					{
+						_streamStatus=STREAM_STARTED;
+						dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.PLAYBACK_STARTED, _id));
+					}
+					if (_streamStatus == STREAM_BUFFERING)
+						_streamStatus=STREAM_STARTED;
+					if (_streamStatus == STREAM_UNPAUSED)
+						_streamStatus=STREAM_STARTED;
+					if (_streamStatus == STREAM_SEEKING_START)
+						_streamStatus = STREAM_STARTED;
+					
+					break;
+				case "NetStream.Buffer.Flush":
+					break;
+				case "NetStream.Play.Start":
+					_streamStatus=STREAM_READY;
+					break;
+				case "NetStream.Play.Stop":
+					_streamStatus=STREAM_STOPPED;
+					break;
+				case "NetStream.Play.Reset":
+					break;
+				case "NetStream.Play.Failed":
+					break;
+				case "NetStream.Play.FileStructureInvalid":
+					break;
+				case "NetStream.Play.InsufficientBW":
+					break;
+				case "NetStream.Play.NoSupportedTrackFound":
+					break;
+				case "NetStream.Play.StreamNotFound":
+					dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.STREAM_NOT_FOUND, _id));
+					break;
+				case "NetStream.Play.Transition":
+					break;
+				case "NetStream.Pause.Notify":
+					_streamStatus=STREAM_PAUSED;
+					break;
+				case "NetStream.Unpause.Notify":
+					if(_streamStatus==STREAM_PAUSED)
+						_streamStatus=STREAM_STARTED;
+					break;
+				case "NetStream.Seek.Notify":
+					_streamStatus=STREAM_SEEKING_START;
+					break;
+				case "NetStream.SeekStart.Notify":
+					_streamStatus=STREAM_SEEKING_START;
+					break;
+				default:
+					break;
+			}
+			dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.STATE_CHANGED, _id, _streamStatus));
 		}
 	}
 }

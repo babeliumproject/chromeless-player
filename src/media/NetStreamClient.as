@@ -400,8 +400,8 @@ package media
 
 		public function onMetaData(metaData:Object):void
 		{
-			//logger.info("[{0}] MetaData callback", [_name]);
-			logger.debug("[{0}] MetaData {1}", [_name, Helpers.printObject(metaData)]);
+			logger.info("[{0}] MetaData callback", [_name]);
+			//logger.debug("[{0}] MetaData {1}", [_name, Helpers.printObject(metaData)]);
 
 			_metaData=metaData;
 			_duration=metaData.duration ? metaData.duration : _duration;

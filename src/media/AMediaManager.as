@@ -1,6 +1,7 @@
 package media
 {
 	import events.NetStreamClientEvent;
+	import events.StreamingEvent;
 	
 	import flash.events.AsyncErrorEvent;
 	import flash.events.DRMErrorEvent;
@@ -36,10 +37,13 @@ package media
 		public static const STREAM_SEEKING_END:int=8;
 		
 		protected var _streamStatus:int;
+		protected var _streamUrl:String;
 		
 		protected var _ns:NetStream;
 		protected var _nc:NetConnection;
 		protected var _connected:Boolean;
+		protected var _netStatusCode:String;
+		protected var _bwInfo:Object;
 	
 		//Instance id
 		protected var _id:String;
@@ -64,13 +68,64 @@ package media
 		
 		
 		
-		public function AMediaManager(url:String, id:String)
+		public function AMediaManager(id:String)
 		{
 			super();
+			
+			_streamStatus=STREAM_UNREADY;
+			_duration=0; //Until receiving metadata set the duration to 0
+			_id=id;
 		}
 		
-		public function setup():void{
-			
+		public function play(/*params:Object*/):void
+		{
+			try
+			{
+				//logger.info("[{0}] Play {1}", [_name, Helpers.printObject(params)]);
+				//_ns.play(params);
+				logger.info("[{0}] Play {1}", [_id, _streamUrl]);
+				_ns.play(_streamUrl);
+			}
+			catch (e:Error)
+			{
+				logger.error("[{0}] Play Error [{1}] {2}", [_id, e.name, e.message]);
+			}
+		}
+		
+		protected function onConnectionStatusChange(e:StreamingEvent):void
+		{
+			logger.debug("[{0}] Connection status changed", [_id]);
+			if(_connected){
+				initiateStream();
+			} else {
+				//Dispatch an event to let the player know the netConnection failed for some reason.
+			}
+		}
+		
+		protected function initiateStream():void{
+			try
+			{
+				_ns=new NetStream(_nc);
+				_ns.client=this;
+				logger.debug("[{0}] Initiating NetStream...", [_id]);
+				_ns.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onAsyncError);
+				_ns.addEventListener(DRMErrorEvent.DRM_ERROR, onDrmError);
+				_ns.addEventListener(DRMStatusEvent.DRM_STATUS, onDrmStatus);
+				_ns.addEventListener(IOErrorEvent.IO_ERROR, onIoError);
+				_ns.addEventListener(NetDataEvent.MEDIA_TYPE_DATA, onMediaTypeData);
+				_ns.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
+				_ns.addEventListener(StatusEvent.STATUS, onStatus);
+				
+				_ns.bufferTime=2;
+				
+				dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.NETSTREAM_READY, _id));
+			}
+			catch (e:Error)
+			{
+				//netconnection is not connected
+				_connected=false;
+				logger.error("[{0}] Instantiation Error [{1}] {2}", [_id, e.name, e.message]);
+			}
 		}
 		
 		public function get hasVideo():Boolean
@@ -108,9 +163,17 @@ package media
 			return _metaData;
 		}
 		
+		public function get bytesLoaded():Number{
+			return _ns.bytesLoaded;
+		}
+		
+		public function get bytesTotal():Number{
+			return _ns.bytesTotal;
+		}
+		
 		public function get loadedFraction():Number
 		{
-			return _ns.bytesLoaded / _ns.bytesTotal;
+			return bytesLoaded / bytesTotal;
 		}
 		
 		public function get currentTime():Number
@@ -150,11 +213,12 @@ package media
 		protected function onNetStatus(event:NetStatusEvent):void{
 			var info:Object=event.info;
 			var messageClientId:int=info.clientid ? info.clientid : -1;
-			var messageCode:String=info.code;
 			var messageDescription:String=info.description ? info.description : '';
 			var messageDetails:String=info.details ? info.details : '';
 			var messageLevel:String=info.level;
-			logger.debug("[{0}] NetStatus [{1}] {2} {3}", [_id, messageLevel, messageCode, messageDescription]);
+
+			_netStatusCode=info.code;
+			logger.debug("[{0}] NetStatus [{1}] {2} {3}", [_id, messageLevel, _netStatusCode, messageDescription]);
 		}
 		
 		protected function onStatus(event:StatusEvent):void
@@ -166,12 +230,26 @@ package media
 		/**
 		 * INetConnectionCallbacks
 		 */
-		protected function onBWCheck(info:Object=null):void{
-			
+		public function onBWCheck(info:Object=null):void{
+			if(info){
+				/*
+				trace("[bwCheck] count: "+info.count+" cumLatency: "+info.cumLatency+" latency: "+info.latency+" sent: "+info.sent+" timePassed: "+info.timePassed);
+				var payload:Array = info.payload as Array;
+				var payloadTrace:String = '';
+				for (var i:int; i<payload.length; i++){
+				payloadTrace += " ("+i+") "+payload[i];
+				}
+				trace("payload: "+payloadTrace);
+				*/
+			}
 		}
 		
-		protected function onBWDone(info:Object=null):void{
-			
+		public function onBWDone(info:Object=null):void
+		{
+			if(info){
+				_bwInfo = info;
+				logger.debug("[{0}] Bandwidth Measurement done. deltaDown: {1} deltaTime: {2} kbitDown: {3} latency: {4}", [_id, info.deltaDown, info.deltaTime, info.kbitDown, info.latency]);
+			}
 		}
 		
 		

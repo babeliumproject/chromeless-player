@@ -193,7 +193,7 @@ package player
 
 		public function getLoadedFragment():Number
 		{
-			return streamReady(_nsc) ? (_nsc.netStream.bytesLoaded / _nsc.netStream.bytesTotal) : 0;
+			return streamReady(_nsc) ? _nsc.loadedFraction : 0;
 		}
 
 		public function getBytesTotal():Number
