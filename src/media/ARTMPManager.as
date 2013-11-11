@@ -30,8 +30,6 @@ package media
 		{
 			try
 			{
-				//logger.info("[{0}] Play {1}", [_name, Helpers.printObject(params)]);
-				//_ns.play(params);
 				logger.info("[{0}] Play {1}", [_id, _streamUrl]);
 				_ns.play(_streamUrl);
 			}

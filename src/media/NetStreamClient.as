@@ -174,7 +174,18 @@ package media
 				//logger.info("[{0}] Play {1}", [_name, Helpers.printObject(params)]);
 				//_ns.play(params);
 				logger.info("[{0}] Play {1}", [_name, _streamUrl]);
-				_ns.play(_streamUrl);
+			
+				//Spec says if flv "folder/streamname" without extension. If mp3 "mp3:folder/streamname". If mp4 "mp4:folder/streamname"
+				var _stru:String = _streamUrl;
+				if(_streamUrl.search(/\.mp3$/) !=-1){
+					_stru = "mp3:" + _streamUrl.substr(0,-4);
+					
+				}
+				if(_streamUrl.search(/\.mp4$/) != -1 || _streamUrl.search(/\.f4v$/) != -1 || _streamUrl.search(/\.mov$/) != -1){
+					_stru = "mp4:" + _streamUrl.substr(0,-4);
+				}
+				trace(_stru);
+				_ns.play(_stru,0);
 			}
 			catch (e:Error)
 			{
