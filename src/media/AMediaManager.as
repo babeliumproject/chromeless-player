@@ -11,6 +11,7 @@ package media
 	import flash.events.NetDataEvent;
 	import flash.events.NetStatusEvent;
 	import flash.events.StatusEvent;
+	import flash.media.SoundTransform;
 	import flash.net.NetConnection;
 	import flash.net.NetStream;
 	import flash.utils.ByteArray;
@@ -22,7 +23,7 @@ package media
 
 	public class AMediaManager extends EventDispatcher implements INetConnectionCallbacks, INetStreamCallbacks
 	{
-		protected static const logger:ILogger=getLogger((AMediaManager);
+		protected static const logger:ILogger=getLogger(AMediaManager);
 		
 		//Stream state info
 		public static const STREAM_UNREADY:int=-1;
@@ -36,11 +37,14 @@ package media
 		public static const STREAM_SEEKING_START:int=7;
 		public static const STREAM_SEEKING_END:int=8;
 		
+		protected const DEFAULT_VOLUME:Number=0.7;
+		
 		protected var _streamStatus:int;
 		protected var _streamUrl:String;
 		
 		protected var _ns:NetStream;
 		protected var _nc:NetConnection;
+		protected var _sndTransform:SoundTransform;
 		protected var _connected:Boolean;
 		protected var _netStatusCode:String;
 		protected var _bwInfo:Object;
@@ -71,10 +75,14 @@ package media
 		public function AMediaManager(id:String)
 		{
 			super();
-			
+			_sndTransform=new SoundTransform(DEFAULT_VOLUME);
 			_streamStatus=STREAM_UNREADY;
 			_duration=0; //Until receiving metadata set the duration to 0
 			_id=id;
+		}
+		
+		public function setup(... args):void{
+			
 		}
 		
 		public function play(/*params:Object*/):void
@@ -89,6 +97,36 @@ package media
 			catch (e:Error)
 			{
 				logger.error("[{0}] Play Error [{1}] {2}", [_id, e.name, e.message]);
+			}
+		}
+		
+		public function stop():void{
+			logger.debug("Stop was called");
+			if(_ns) _ns.play(false);
+		}
+		
+		public function publish(mode:String='record'):void{
+			
+		}
+		
+		public function pause():void{
+			if (_streamStatus == NetStreamClient.STREAM_SEEKING_START)
+				return;
+			if (_nc.connected && (_streamStatus == NetStreamClient.STREAM_STARTED || _streamStatus == NetStreamClient.STREAM_BUFFERING))
+				_ns.togglePause();
+		}
+		
+		public function resume():void{
+			if (_streamStatus == NetStreamClient.STREAM_SEEKING_START)
+				return;
+			if (_nc.connected && _streamStatus == NetStreamClient.STREAM_PAUSED)
+				_ns.togglePause();
+		}
+		
+		public function seek(seconds:Number):void{
+			if (!isNaN(seconds) && seconds >= 0 && seconds < _duration && _nc.connected)
+			{
+				_ns.seek(seconds);
 			}
 		}
 		
@@ -128,6 +166,14 @@ package media
 			}
 		}
 		
+		public function get netStream():NetStream
+		{
+			if (_nc)
+				return _nc.connected ? _ns : null;
+			else
+				return _ns;
+		}
+		
 		public function get hasVideo():Boolean
 		{
 			return _hasVideo;
@@ -164,21 +210,44 @@ package media
 		}
 		
 		public function get bytesLoaded():Number{
-			return _ns.bytesLoaded;
+			return _connected ? _ns.bytesLoaded : 0;
 		}
 		
 		public function get bytesTotal():Number{
-			return _ns.bytesTotal;
+			return _connected ? _ns.bytesTotal : 0;
 		}
 		
 		public function get loadedFraction():Number
 		{
-			return bytesLoaded / bytesTotal;
+			return _connected ? (bytesLoaded / bytesTotal) : 0;
+		}
+		
+		public function get volume():Number{
+			try
+			{
+				return _nc.connected ? _ns.soundTransform.volume * 100 : 0;
+			}
+			catch (e:Error)
+			{
+				logger.error("Error while retrieving stream volume. [{0}] {1}", [e.errorID, e.message]);
+			}
+			return NaN;
+		}
+		
+		public function set volume(value:Number):void{
+			if (!isNaN(value) && value >= 0 && value <= 100)
+			{
+				_sndTransform.volume=value / 100;
+				if (_nc.connected)
+				{
+					_ns.soundTransform=_sndTransform;
+				}
+			}
 		}
 		
 		public function get currentTime():Number
 		{
-			return _ns.time;
+			return _connected ?  _ns.time : 0;
 		}
 		
 		/**
@@ -256,17 +325,17 @@ package media
 		/**
 		 * INetStreamCallbacks
 		 */
-		protected function onCuePoint(cuePoint:Object):void{
+		public function onCuePoint(cuePoint:Object):void{
 			logger.info("[{0}] CuePoint callback", [_id]);
 			logger.debug("[{0}] CuePoint {1}", [_id, Helpers.printObject(cuePoint)]);
 		}
 		
-		protected function onImageData(imageData:Object):void{
+		public function onImageData(imageData:Object):void{
 			var rawData:ByteArray=imageData.data as ByteArray;
 			logger.info("[{0}] ImageData callback", [_id]);
 		}
 		
-		protected function onMetaData(metaData:Object):void{
+		public function onMetaData(metaData:Object):void{
 			logger.debug("[{0}] MetaData {1}", [_id, Helpers.printObject(metaData)]);
 			
 			_metaData=metaData;
@@ -293,7 +362,7 @@ package media
 			dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.METADATA_RETRIEVED, _id));
 		}
 		
-		protected function onPlayStatus(playStatus:Object):void{
+		public function onPlayStatus(playStatus:Object):void{
 			logger.debug("[{0}] PlayStatus [{1}] {2}", [_id, playStatus.level, playStatus.code]);
 			//if(playStatus.code == "NetStream.Play.Complete"){
 			//	_streamStatus=STREAM_FINISHED;
@@ -302,17 +371,17 @@ package media
 			//logger.debug("[{0}] PlayStatus {1}", [_name, Helpers.printObject(playStatus)]);
 		}
 		
-		protected function onSeekPoint(seekPoint:Object):void{
+		public function onSeekPoint(seekPoint:Object):void{
 			//logger.info("[{0}] SeekPoint callback", [_name]);
 			//logger.debug("[{0}] SeekPoint {1}", [_name, Helpers.printObject(seekPoint)]);
 		}
 		
-		protected function onTextData(textData:Object):void{
+		public function onTextData(textData:Object):void{
 			//logger.info("[{0}] TextData callback", [_name]);
 			//logger.debug("[{0}] TextData {1}", [_name, Helpers.printObject(textData)]);
 		}
 		
-		protected function onXMPData(xmpData:Object):void{
+		public function onXMPData(xmpData:Object):void{
 			//data, a string The string is generated from a top-level UUID box. 
 			//(The 128-bit UUID of the top level box is BE7ACFCB-97A9-42E8-9C71-999491E3AFAC.) This top-level UUID box contains exactly one XML document represented as a null-terminated UTF-8 string.
 			//logger.info("[{0}] XMPData callback", [_name]);

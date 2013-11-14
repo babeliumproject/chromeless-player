@@ -26,6 +26,9 @@ package player
 	import flash.utils.Dictionary;
 	import flash.utils.Timer;
 	
+	import media.AMediaManager;
+	import media.ARTMPManager;
+	import media.AVideoManager;
 	import media.NetStreamClient;
 	import media.RTMPMediaManager;
 	
@@ -33,6 +36,8 @@ package player
 	
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
+	
+	import utils.Helpers;
 	
 	import view.BitmapSprite;
 
@@ -42,7 +47,7 @@ package player
 		protected const DEFAULT_VOLUME:Number=0.7;
 
 		protected var _video:Video;
-		protected var _nsc:NetStreamClient;
+		protected var _nsc:AMediaManager;
 
 		protected var _videoUrl:String=null;
 		protected var _videoPosterUrl:String=null;
@@ -175,10 +180,7 @@ package player
 
 		public function seekTo(seconds:Number):void
 		{
-			if (!isNaN(seconds) && seconds >= 0 && seconds < _duration && streamReady(_nsc))
-			{
-				_nsc.netStream.seek(seconds);
-			}
+			_nsc.seek(seconds);
 		}
 
 		public function get duration():Number
@@ -188,22 +190,22 @@ package player
 
 		public function get streamTime():Number
 		{
-			return streamReady(_nsc) ? _nsc.netStream.time : 0;
+			return _nsc.currentTime;
 		}
 
 		public function getLoadedFragment():Number
 		{
-			return streamReady(_nsc) ? _nsc.loadedFraction : 0;
+			return _nsc.loadedFraction;
 		}
 
 		public function getBytesTotal():Number
 		{
-			return streamReady(_nsc) ? _nsc.netStream.bytesTotal : 0;
+			return _nsc.bytesTotal;
 		}
 
 		public function getBytesLoaded():Number
 		{
-			return streamReady(_nsc) ? _nsc.netStream.bytesLoaded : 0;
+			return _nsc.bytesLoaded;
 		}
 
 		public function get mute():Boolean
@@ -277,10 +279,22 @@ package player
 				{
 					_nsc.netStream.dispose();
 				}
+				
 				_nsc=null;
-				_nsc=new NetStreamClient(_videoUrl, "playbackStream");
-				_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
-				_nsc.setup();
+				var rtmpFragments:Array = Helpers.parseRTMPUrl(_videoUrl);
+				if(rtmpFragments){
+					_nsc=new ARTMPManager("playbackStream");
+					_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_nsc.setup(rtmpFragments[1], rtmpFragments[2]);
+				} else {
+					_nsc=new AVideoManager("playbackStream");
+					_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_nsc.setup(_videoUrl);
+				}
+				
+				//_nsc=null;
+				//_nsc=new NetStreamClient(_videoUrl, "playbackStream");
+				
 			}
 		}
 
@@ -520,7 +534,7 @@ package player
 			_video.visible=false;
 		}
 
-		protected function streamReady(nsc:NetStreamClient):Boolean
+		protected function streamReady(nsc:AMediaManager):Boolean
 		{
 			return nsc && nsc.netStream;
 		}

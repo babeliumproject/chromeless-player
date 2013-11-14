@@ -28,6 +28,8 @@ package player
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
 	
+	import utils.Helpers;
+	
 	import view.*;
 
 	public class VideoRecorder extends VideoPlayer
@@ -52,8 +54,8 @@ package player
 		
 		private var _state:int;
 
-		private var _recNsc:NetStreamClient;
-		private var _sbsNsc:NetStreamClient;
+		private var _recNsc:AMediaManager;
+		private var _sbsNsc:AMediaManager;
 		private var _secondStreamSource:String;
 
 		private var _mic:Microphone;
@@ -706,9 +708,9 @@ package player
 			{
 				_recordingReady=false;
 				
-				_recNsc=new NetStreamClient(_recordingUrl, "recordingStream");
+				_recNsc=new ARTMPManager("recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
-				_recNsc.setup();
+				_recNsc.setup(_recordingUrl);
 			}
 			
 			this.updateDisplayList(0, 0);
@@ -906,10 +908,18 @@ package player
 					_sbsNsc.netStream.dispose();
 					_sbsNsc.removeEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
 				}
+				
 				_sbsNsc=null;
-				_sbsNsc=new NetStreamClient(rightStreamId, "sidebysideStream");
-				_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
-				_sbsNsc.setup();
+				var rtmpFragment:Array=Helpers.parseRTMPUrl(_secondStreamSource);
+				if(rtmpFragment){
+					_sbsNsc=new ARTMPManager("sidebysideStream");
+					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_sbsNsc.setup(rtmpFragment[1], rtmpFragment[2]);
+				} else {
+					_sbsNsc=new AVideoManager("sidebysideStream");
+					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_sbsNsc.setup(_secondStreamSource);
+				}
 			}
 			else
 			{

@@ -27,13 +27,12 @@ package media
 			super(id);
 		}
 		
-		public function setup(... args):void{
+		override public function setup(... args):void{
 			if(args.length){
 				_streamUrl = (args[0] is String) ? args[0] : '';
 				
 				//Check if the url contains start/end fragments
-				var fragments:Array = Helpers.parseUrl(_streamUrl);
-				fragments[2];
+				var fragments:Array = new Array();//Helpers.parseUrl(_streamUrl);
 				
 				var startFragment:RegExp=new RegExp("(.+?\?.+start=([0-9\.]+)");
 				var endFragment:RegExp=new RegExp("(.+?\?.+end=([0-9\.]+)");
@@ -70,11 +69,7 @@ package media
 			}
 		}
 		
-		public function stop():void{
-			_ns.play(false);
-		}
-		
-		public function seek(seconds:Number):void{
+		override public function seek(seconds:Number):void{
 			if(!isNaN(seconds) && seconds >= 0 && seconds < duration){
 				var reqFraction:Number = seconds/duration;
 				//The user seeked to a time that is not yet cached. Try to load the media file from that point onwards (Pseudo-Streaming/Apache Mod h.264)

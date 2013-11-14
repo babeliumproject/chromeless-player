@@ -26,7 +26,7 @@ package media
 			super(id);
 		}
 		
-		public function play(/*params:Object*/):void
+		override public function play(/*params:Object*/):void
 		{
 			try
 			{
@@ -39,16 +39,16 @@ package media
 			}
 		}
 		
-		public function stop():void{
+		override public function stop():void{
 			logger.debug("Stop was called");
 			_ns.close();
 		}
 		
-		public function publish(mode:String='record'):void{
+		override public function publish(mode:String='record'):void{
 			_ns.publish(_streamUrl, mode);
 		}
 		
-		public function setup(... args):void{
+		override public function setup(... args):void{
 			if(args.length){
 				_streamUrl = (args[0] is String) ? args[0] : '';
 				_serverUrl = (args[1] is String) ? args[1] : '';
@@ -146,13 +146,13 @@ package media
 		}
 
 
-		override protected function onNetIOError(event:IOErrorEvent):void
+		override protected function onIoError(event:IOErrorEvent):void
 		{
 			super.onIoError(event);
 			_netConnectOngoingAttempt=false;
 		}
 
-		override protected function onASyncError(event:AsyncErrorEvent):void
+		override protected function onAsyncError(event:AsyncErrorEvent):void
 		{
 			super.onAsyncError(event);
 			_netConnectOngoingAttempt=false;
@@ -212,11 +212,7 @@ package media
 				switch (_netStatusCode)
 				{
 					case "NetStream.Buffer.Empty":
-						if (_streamStatus == STREAM_STOPPED)
-						{
-							_streamStatus=STREAM_FINISHED;
-						}
-						else
+						if (_streamStatus != STREAM_STOPPED)
 							_streamStatus=STREAM_BUFFERING;
 						break;
 					case "NetStream.Buffer.Full":
@@ -233,6 +229,8 @@ package media
 							_streamStatus=STREAM_STARTED;
 						break;
 					case "NetStream.Buffer.Flush":
+						if (_streamStatus == STREAM_STOPPED)
+							_streamStatus=STREAM_FINISHED;
 						break;
 					case "NetStream.Publish.Start":
 						break;
