@@ -2,7 +2,7 @@ package media
 {
 	import events.NetStreamClientEvent;
 	import events.StreamingEvent;
-
+	
 	import flash.errors.IOError;
 	import flash.events.AsyncErrorEvent;
 	import flash.events.IOErrorEvent;
@@ -10,9 +10,25 @@ package media
 	import flash.events.SecurityErrorEvent;
 	import flash.net.NetConnection;
 	import flash.net.ObjectEncoding;
+	
+	import mx.utils.ObjectUtil;
 
 	public class ARTMPManager extends AMediaManager
 	{
+		
+		/*
+		 * Allowed values are -2, -1, 0, or a positive number. 
+		 * The default value is -2, which looks for a live stream, then a recorded stream, and if it finds neither, opens a live stream. You cannot use -2 with MP3 files. 
+		 * If -1, plays only a live stream. 
+		 * If 0 or a positive number, plays a recorded stream, beginning start seconds in.
+		 */
+		private const PLAY_MODE_WAIT_LIVE:int=-2;
+		private const PLAY_MODE_ONLY_LIVE:int=-1;
+		private const PLAY_MODE_ONLY_RECORDED:int=0;
+		
+		private var _defaultPlayMode:int = PLAY_MODE_ONLY_RECORDED;
+			
+		private var _streamFinishBuffer:Object = {"NetStream.Buffer.Empty": 0, "NetStream.Buffer.Flush": 0, "NetStream.Play.Stop": 0};
 
 		private var _encoding:uint;
 		private var _proxy:String;
@@ -29,9 +45,17 @@ package media
 		override public function play(/*params:Object*/):void
 		{
 			try
-			{
-				logger.info("[{0}] Play {1}", [_id, _streamUrl]);
-				_ns.play(_streamUrl);
+			{		
+				//Spec says if flv "folder/streamname" without extension. If mp3 "mp3:folder/streamname". If mp4 "mp4:folder/streamname"
+				var formattedStreamUrl:String = _streamUrl;
+				if(_streamUrl.search(/\.flv$/) !=-1)
+					formattedStreamUrl = _streamUrl.substr(0,-4);
+				if(_streamUrl.search(/\.mp3$/) !=-1)
+					formattedStreamUrl = "mp3:" + _streamUrl.substr(0,-4);
+				if(_streamUrl.search(/\.mp4$/) != -1 || _streamUrl.search(/\.f4v$/) != -1 || _streamUrl.search(/\.mov$/) != -1)
+					formattedStreamUrl = "mp4:" + _streamUrl.substr(0,-4);
+				logger.info("[{0}] Play {1}", [_id, formattedStreamUrl]);
+				_ns.play(formattedStreamUrl,_defaultPlayMode);
 			}
 			catch (e:Error)
 			{
@@ -49,10 +73,11 @@ package media
 		}
 		
 		override public function setup(... args):void{
-			if(args.length){
-				_streamUrl = (args[0] is String) ? args[0] : '';
-				_serverUrl = (args[1] is String) ? args[1] : '';
+			if(args && args.length){
+				_serverUrl = (args[0] is String) ? args[0] : null;
+				_streamUrl = (args[1] is String) ? args[1] : null;
 			}
+			//logger.debug("Streaming server: {0} stream name: {1}" [_serverUrl, _streamUrl]);
 			this.addEventListener(StreamingEvent.CONNECTED_CHANGE, onConnectionStatusChange);
 			connect(_serverUrl);
 		}
@@ -62,8 +87,8 @@ package media
 			if (args.length >= 1)
 			{
 				var rtmpServerUrl:String=(args[0] is String) ? args[0] : '';
-				_proxy=(args[1] is String) ? args[1] : 'none';
-				_encoding=(args[2] is uint) ? args[2] : ObjectEncoding.DEFAULT;
+				_proxy= args[1] ? args[1] as String : 'none';
+				_encoding= args[2] ? args[2] as uint : ObjectEncoding.DEFAULT;
 			}
 
 			if (!rtmpServerUrl)
@@ -78,12 +103,11 @@ package media
 			{
 				_netConnectOngoingAttempt=true;
 
-				if (_nc)
-					_nc=new NetConnection();
+				_nc=new NetConnection();
 				_nc.client=this;
-
 				_nc.objectEncoding=_encoding;
 				_nc.proxyType=_proxy;
+		
 				// Setup the NetConnection and listen for NetStatusEvent and SecurityErrorEvent events.
 				_nc.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
 				_nc.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onAsyncError);
@@ -211,10 +235,6 @@ package media
 			{
 				switch (_netStatusCode)
 				{
-					case "NetStream.Buffer.Empty":
-						if (_streamStatus != STREAM_STOPPED)
-							_streamStatus=STREAM_BUFFERING;
-						break;
 					case "NetStream.Buffer.Full":
 						if (_streamStatus == STREAM_READY)
 						{
@@ -228,9 +248,13 @@ package media
 						if (_streamStatus == STREAM_SEEKING_END)
 							_streamStatus=STREAM_STARTED;
 						break;
+					case "NetStream.Buffer.Empty":
+						//if (_streamStatus != STREAM_STOPPED && _streamStatus != STREAM_FINISHED)
+							_streamStatus=STREAM_BUFFERING;
+						break;
 					case "NetStream.Buffer.Flush":
-						if (_streamStatus == STREAM_STOPPED)
-							_streamStatus=STREAM_FINISHED;
+						//if (_streamStatus == STREAM_STOPPED)
+						//	_streamStatus=STREAM_FINISHED;
 						break;
 					case "NetStream.Publish.Start":
 						break;
@@ -285,8 +309,25 @@ package media
 					default:
 						break;
 				}
+				if(checkEndingBuffer(_netStatusCode))
+					_streamStatus=STREAM_FINISHED;
 				dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.STATE_CHANGED, _id, _streamStatus));
 			}
+		}
+		
+		private function checkEndingBuffer(currentNetStatus:String):uint{
+			if(_streamFinishBuffer.hasOwnProperty(currentNetStatus)){
+				_streamFinishBuffer[currentNetStatus] = 1;
+			} else {
+				for(var k:String in _streamFinishBuffer){
+					_streamFinishBuffer[k]=0;
+				}
+			}
+			var result:uint=1;
+			for each(var val:int in _streamFinishBuffer){
+				result &= val;
+			}
+			return result;
 		}
 
 	}

@@ -34,8 +34,8 @@ package media
 				//Check if the url contains start/end fragments
 				var fragments:Array = new Array();//Helpers.parseUrl(_streamUrl);
 				
-				var startFragment:RegExp=new RegExp("(.+?\?.+start=([0-9\.]+)");
-				var endFragment:RegExp=new RegExp("(.+?\?.+end=([0-9\.]+)");
+				var startFragment:RegExp=new RegExp(".+?\?.+start=([0-9\.]+)");
+				var endFragment:RegExp=new RegExp(".+?\?.+end=([0-9\.]+)");
 				
 				var sresult:Array = startFragment.exec(fragments[2]);
 				if(sresult){

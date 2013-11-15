@@ -34,6 +34,8 @@ package player
 	
 	import model.SharedData;
 	
+	import mx.utils.ObjectUtil;
+	
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
 	
@@ -180,7 +182,8 @@ package player
 
 		public function seekTo(seconds:Number):void
 		{
-			_nsc.seek(seconds);
+			if(_nsc)
+				_nsc.seek(seconds);
 		}
 
 		public function get duration():Number
@@ -190,22 +193,22 @@ package player
 
 		public function get streamTime():Number
 		{
-			return _nsc.currentTime;
+			return _nsc ? _nsc.currentTime : 0;
 		}
 
 		public function getLoadedFragment():Number
 		{
-			return _nsc.loadedFraction;
+			return _nsc ? _nsc.loadedFraction : 0;
 		}
 
 		public function getBytesTotal():Number
 		{
-			return _nsc.bytesTotal;
+			return _nsc ? _nsc.bytesTotal : 0;
 		}
 
 		public function getBytesLoaded():Number
 		{
-			return _nsc.bytesLoaded;
+			return _nsc ? _nsc.bytesLoaded : 0;
 		}
 
 		public function get mute():Boolean

@@ -44,9 +44,6 @@ package media
 			{
 				netConnection.close();
 			}
-		}
-		
-		
-		
+		}	
 	}
 }
