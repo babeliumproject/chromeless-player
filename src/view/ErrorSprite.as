@@ -19,67 +19,53 @@ package view
 	
 	public class ErrorSprite extends Sprite
 	{
+		private var localizationBundle:Object;
 		
-		private var dWidth:uint = 640;
-		private var dHeight:uint = 480;
+		private var container_width:uint = 320;
+		private var container_height:uint = 240;
 
-		private var box:Shape;
+		private var frame:Shape;
 		private var textHolder:TextField;
 		private var message:String;
 		
-		public function ErrorSprite()
+		public function ErrorSprite(errorCode:String, unscaledWidth:uint, unscaledHeight:uint)
 		{
 			super();
-			//loadAsset(StreamingManager.getInstance().uploadDomain+"resources/images/popup_bgr_wrong.png");
-			
-			message=SharedData.getInstance().localizationBundle["NO_CONNECTION"] ? SharedData.getInstance().localizationBundle["NO_CONNECTION"] : "Communication lost. Trying to reconnect...";
-			updateChildren(dWidth,dHeight);
+		
+			localizationBundle=SharedData.getInstance().localizationBundle;
+			message = localizationBundle[errorCode] ? localizationBundle[errorCode] : "An error occurred. Please try again later.";
+			updateDisplayList(unscaledWidth,unscaledHeight);
 		}
 		
-		public function setText(text:String):void{
-			this.message=text;
-			updateChildren(dWidth, dHeight);
-		}
-		
-		public function updateChildren(nWidth:Number, nHeight:Number):void{
+		public function updateDisplayList(unscaledWidth:uint, unscaledHeight:uint):void{
 			
-			var nWidthBox:Number = nWidth*0.85;
-			var nHeightBox:Number = nHeight*0.6;
-			if(box != null && this.contains(box))
-				this.removeChild(box);
-			if(textHolder != null && this.contains(textHolder))
-				this.removeChild(textHolder);
+			container_width  = !unscaledWidth  ? container_width  : unscaledWidth;
+			container_height = !unscaledHeight ? container_height : unscaledHeight;
 			
+			var m:Matrix = new Matrix();
+			m.createGradientBox(container_width, container_height, 90*Math.PI/180, 0, 0);
 			this.graphics.clear();
-			this.graphics.beginFill(0x000000,1);
-			this.graphics.drawRect(0,0,nWidth,nHeight);
-			this.graphics.endFill();		
-			
-			box = new Shape();
-			var matr:Matrix = new Matrix();
-			matr.createGradientBox(nWidthBox, nHeightBox, 90*Math.PI/180, 0, 0);
-			box.graphics.clear();
-			box.graphics.beginGradientFill(GradientType.LINEAR, [0xF5F5F5,0xE6E6E6], [1,1],[120,255],matr);
-			box.graphics.lineStyle(1, 0xa7a7a7);
-			box.graphics.drawRect(nWidth/2-(nWidthBox/2),nHeight/2-(nHeightBox/2),nWidthBox,nHeightBox);
-			
-			box.graphics.endFill();
+			this.graphics.beginGradientFill(GradientType.LINEAR, [0x383838, 0x131313], [1,1], [80,255], m);
+			this.graphics.drawRect(0, 0, container_width, container_height);
+			this.graphics.endFill();
 			
 			var _textFormat:TextFormat = new TextFormat();
 			_textFormat.align = "center";
-			_textFormat.font = "Arial";
-			_textFormat.bold = true;
-			_textFormat.size = 14;
+			_textFormat.font = "arial,sans-serif";
+			_textFormat.color=0xFFFFFF;
+			//_textFormat.bold = true;
+			_textFormat.size = Math.floor(container_height * .04); //Make the text's height proportional to the frame height
 			
 			textHolder = new TextField();
 			textHolder.text = message;
-			textHolder.selectable = false;
+			textHolder.setTextFormat(_textFormat);
+			textHolder.width = container_width * .8;
 			textHolder.autoSize = TextFieldAutoSize.CENTER;
-			textHolder.x = nWidth/2 - textHolder.textWidth/2;
-			textHolder.y = nHeight/2 - textHolder.textHeight/2;
+			textHolder.wordWrap = true;
+			textHolder.x = container_width/2 - textHolder.width/2;
+			textHolder.y = container_height/2 - textHolder.height/2;
 			textHolder.setTextFormat(_textFormat);
 			
-			this.addChild(box);
 			this.addChild(textHolder);
 			
 		}

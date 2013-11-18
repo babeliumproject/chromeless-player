@@ -37,7 +37,7 @@ package media
 		public static const STREAM_SEEKING_START:int=7;
 		public static const STREAM_SEEKING_END:int=8;
 		
-		protected const DEFAULT_VOLUME:Number=0.7;
+		//protected const DEFAULT_VOLUME:Number=0.7;
 		
 		protected var _streamStatus:int;
 		protected var _streamUrl:String;
@@ -75,7 +75,7 @@ package media
 		public function AMediaManager(id:String)
 		{
 			super();
-			_sndTransform=new SoundTransform(DEFAULT_VOLUME);
+			//_sndTransform=new SoundTransform(DEFAULT_VOLUME);
 			_streamStatus=STREAM_UNREADY;
 			_duration=0; //Until receiving metadata set the duration to 0
 			_id=id;
@@ -137,6 +137,7 @@ package media
 				initiateStream();
 			} else {
 				//Dispatch an event to let the player know the netConnection failed for some reason.
+				dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.NETSTREAM_ERROR, _id, -1, "NO_CONNECTION"));
 			}
 		}
 		
@@ -217,15 +218,19 @@ package media
 			return _connected ? _ns.bytesTotal : 0;
 		}
 		
+		public function get startBytes():Number{
+			return 0;
+		}
+		
 		public function get loadedFraction():Number
 		{
-			return _connected ? (bytesLoaded / bytesTotal) : 0;
+			return (_connected && bytesTotal) ? (_ns.bytesLoaded / _ns.bytesTotal) : 0;
 		}
 		
 		public function get volume():Number{
 			try
 			{
-				return _nc.connected ? _ns.soundTransform.volume * 100 : 0;
+				return _connected ? _ns.soundTransform.volume * 100 : 0;
 			}
 			catch (e:Error)
 			{
@@ -237,6 +242,8 @@ package media
 		public function set volume(value:Number):void{
 			if (!isNaN(value) && value >= 0 && value <= 100)
 			{
+				if(!_sndTransform)
+					_sndTransform=new SoundTransform();
 				_sndTransform.volume=value / 100;
 				if (_nc.connected)
 				{
@@ -247,7 +254,7 @@ package media
 		
 		public function get currentTime():Number
 		{
-			return _connected ?  _ns.time : 0;
+			return _connected ? _ns.time : 0;
 		}
 		
 		/**

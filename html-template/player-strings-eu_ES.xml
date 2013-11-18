@@ -5,11 +5,13 @@
 		<msg name="BUTTON_RECORD">Grabatu</msg>
 		<msg name="BUTTON_RETRY">Saiatu Berriz</msg>
 		<msg name="BUTTON_SHOW_PRIVACY_SETTINGS">Pribatutasun hobespenak ikusi</msg>
+		<msg name="ERROR_STREAM_PROCESSING">Bideo hau prozesatzen ari da. Barkatu eragozpenak.</msg>
+		<msg name="ERROR_STREAM_NOT_FOUND">Bideo hau ez dago eskuragarri. Barkatu eragozpenak.</msg>
 		<msg name="HIDE_SUBTITLES">Azpitituluak izkutatu</msg>
 		<msg name="LABEL_MIC_INPUT_LEVEL">Mikrofono sarrera maila</msg>
 		<msg name="LABEL_MIC_WAITING_FOR_INPUT">Mikrofono aktibitateari itxaroten</msg>
 		<msg name="LABEL_ROLE_CURRENTLY_TALKING">Hizketan</msg>
-		<msg name="NO_CONNECTION">Streaming konexioa galdu da. Birkonektatzen saiatzen...</msg>
+		<msg name="NO_CONNECTION">Konexioa ezin da ezarri. Barkatu eragozpenak.</msg>
 		<msg name="SHOW_SUBTITLES">Azpitituluak agertarazi</msg>
 		<msg name="SUBITLE_START_TIME_TOOLTIP">Azpititulu lerroa hasieratu</msg>
 		<msg name="SUBTITLE_STOP_TIME_TOOLTIP">Azpititulu lerror geldiarazi</msg>

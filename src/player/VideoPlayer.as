@@ -42,6 +42,7 @@ package player
 	import utils.Helpers;
 	
 	import view.BitmapSprite;
+	import view.ErrorSprite;
 
 	public class VideoPlayer extends Sprite
 	{
@@ -72,11 +73,12 @@ package player
 		protected var _lastWidth:Number;
 		protected var _lastHeight:Number;
 
-		protected var _playbackSoundTransform:SoundTransform;
+		protected var _currentVolume:Number;
 		protected var _lastVolume:Number;
 		protected var _muted:Boolean=false;
 		
 		protected var _posterSprite:BitmapSprite;
+		protected var _errorSprite:ErrorSprite;
 		protected var _topLayer:Sprite;
 
 
@@ -85,7 +87,7 @@ package player
 		public function VideoPlayer()
 		{
 			//TODO retrieve the volume from a previously stored flash/http cookie
-			_playbackSoundTransform=new SoundTransform(DEFAULT_VOLUME);
+			_currentVolume=DEFAULT_VOLUME;
 			_lastVolume=DEFAULT_VOLUME;
 			
 			_lastWidth = _defaultWidth;
@@ -188,7 +190,7 @@ package player
 
 		public function get duration():Number
 		{
-			return _duration;
+			return _nsc ? _nsc.duration : 0;
 		}
 
 		public function get streamTime():Number
@@ -219,45 +221,32 @@ package player
 		public function set mute(value:Boolean):void
 		{
 			_muted=value;
+			var newVolume:Number;
 			if (value)
 			{
 				//Store the volume that we had before muting to restore to that volume when unmuting
-				_lastVolume=_playbackSoundTransform.volume;
-				_playbackSoundTransform.volume=0;
+				_lastVolume=_currentVolume;
+				newVolume=0;
 			}
 			else
 			{
-				_playbackSoundTransform.volume=_lastVolume;
+				newVolume=_lastVolume;
 			}
 			//Make sure we have a working NetStream object before setting its sound transform
-			if (streamReady(_nsc))
-			{
-				_nsc.netStream.soundTransform=_playbackSoundTransform;
-			}
+			if (_nsc) _nsc.volume=newVolume;
 		}
 
 		public function getVolume():Number
 		{
-			try
-			{
-				return streamReady(_nsc) ? _nsc.netStream.soundTransform.volume * 100 : 0;
-			}
-			catch (e:Error)
-			{
-				logger.error("Error while retrieving stream volume. [{0}] {1}", [e.errorID, e.message]);
-			}
-			return NaN;
+			return _currentVolume * 100;
 		}
 
 		public function setVolume(value:Number):void
 		{
 			if (!isNaN(value) && value >= 0 && value <= 100)
 			{
-				_playbackSoundTransform.volume=value / 100;
-				if (streamReady(_nsc))
-				{
-					_nsc.netStream.soundTransform=_playbackSoundTransform;
-				}
+				_currentVolume=value / 100;
+				if(_nsc) _nsc.volume = value;
 			}
 		}
 
@@ -288,10 +277,12 @@ package player
 				if(rtmpFragments){
 					_nsc=new ARTMPManager("playbackStream");
 					_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_ERROR, onNetStreamUnready);
 					_nsc.setup(rtmpFragments[1], rtmpFragments[2]);
 				} else {
 					_nsc=new AVideoManager("playbackStream");
 					_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_nsc.addEventListener(NetStreamClientEvent.NETSTREAM_ERROR, onNetStreamUnready);
 					_nsc.setup(_videoUrl);
 				}
 				
@@ -334,7 +325,7 @@ package player
 			logger.debug("NetStreamClient {0} is ready", [event.streamId]);
 			_video.attachNetStream(_nsc.netStream);
 			_video.visible=true;
-			_nsc.netStream.soundTransform=_playbackSoundTransform;
+			_nsc.volume=_currentVolume;
 			_nsc.addEventListener(NetStreamClientEvent.METADATA_RETRIEVED, onMetaData);
 			_nsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
 			if (_videoUrl != '')
@@ -346,6 +337,12 @@ package player
 					_forcePlay=false;
 				}
 			}
+		}
+		
+		protected function onNetStreamUnready(event:NetStreamClientEvent):void{
+			_errorSprite=new ErrorSprite(event.message, _lastWidth, _lastHeight);
+			_topLayer.removeChildren();
+			_topLayer.addChild(_errorSprite);
 		}
 
 		protected function startVideo():void

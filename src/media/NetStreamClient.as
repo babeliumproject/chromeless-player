@@ -358,7 +358,7 @@ package media
 				case "NetStream.Play.NoSupportedTrackFound":
 					break;
 				case "NetStream.Play.StreamNotFound":
-					dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.STREAM_NOT_FOUND, _name));
+					dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.NETSTREAM_ERROR, _name, -1, "ERROR_STREAM_NOT_FOUND"));
 					break;
 				case "NetStream.Play.Transition":
 					break;

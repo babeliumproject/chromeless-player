@@ -83,7 +83,6 @@ package player
 		
 
 		private var eventPointManager:EventPointManager;
-		private var noConnectionSprite:ErrorSprite;
 		private var privacySprite:PrivacyPanel;
 		private var _micImage:MicImage;
 		
@@ -115,7 +114,7 @@ package player
 			_micImage=new MicImage();
 		
 			
-			noConnectionSprite=new ErrorSprite();
+			
 			privacySprite = new PrivacyPanel();
 			privacyRights=new UserDeviceManager();
 			privacyRights.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, onPrivacyStateChange);
@@ -200,9 +199,7 @@ package player
 			//Play overlay
 			//_overlayButton.width=_videoWidth;
 			//_overlayButton.height=_videoHeight;
-			
-			//Error message overlay
-			noConnectionSprite.updateChildren(this.width, this.height);
+
 			
 			//Privacy rights overlay
 			//privacySprite.updateChildren(this.width, this.height);
@@ -710,6 +707,7 @@ package player
 				
 				_recNsc=new ARTMPManager("recordingStream");
 				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+				_recNsc.addEventListener(NetStreamClientEvent.NETSTREAM_ERROR, onNetStreamUnready);
 				_recNsc.setup(_recordingUrl);
 			}
 			
@@ -737,7 +735,7 @@ package player
 				logger.debug("NetStreamClient {0} is ready", [event.streamId]);
 				_camVideo.attachNetStream(_sbsNsc.netStream);
 				_camVideo.visible=true;
-				_sbsNsc.netStream.soundTransform=_playbackSoundTransform;
+				_sbsNsc.volume=_currentVolume;
 				_sbsNsc.addEventListener(NetStreamClientEvent.METADATA_RETRIEVED, onMetaData);
 				_sbsNsc.addEventListener(NetStreamClientEvent.STATE_CHANGED, onStreamStateChange);
 				if (_secondStreamSource != '')
@@ -752,6 +750,11 @@ package player
 					}
 				}
 			}
+		}
+		
+		override protected function onNetStreamUnready(event:NetStreamClientEvent):void{
+			super.onNetStreamUnready(event);
+			abortRecording();
 		}
 
 		/**
@@ -888,8 +891,7 @@ package player
 			_autoPlay=_lastAutoplay;
 			
 			//Return the playback stream to its previous volume, if any stream is available
-			_playbackSoundTransform.volume = _lastVolume;
-			if (streamReady(_nsc)) _nsc.netStream.soundTransform=_playbackSoundTransform;
+			if (streamReady(_nsc)) _nsc.volume = _lastVolume;
 			
 			setState(PLAY_STATE);
 		}
@@ -914,10 +916,12 @@ package player
 				if(rtmpFragment){
 					_sbsNsc=new ARTMPManager("sidebysideStream");
 					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_ERROR, onNetStreamUnready);
 					_sbsNsc.setup(rtmpFragment[1], rtmpFragment[2]);
 				} else {
 					_sbsNsc=new AVideoManager("sidebysideStream");
 					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_ERROR, onNetStreamUnready);
 					_sbsNsc.setup(_secondStreamSource);
 				}
 			}
@@ -974,7 +978,7 @@ package player
 		
 		public function rightStreamLoadedFragment():Number
 		{
-			return streamReady(_sbsNsc) ? (_sbsNsc.netStream.bytesLoaded / _sbsNsc.netStream.bytesTotal) : 0;
+			return _sbsNsc ? _sbsNsc.loadedFraction : 0;
 		}
 		
 		public function leftStreamBytesTotal():Number
@@ -984,7 +988,7 @@ package player
 		
 		public function rightStreamBytesTotal():Number
 		{
-			return streamReady(_sbsNsc) ? _sbsNsc.netStream.bytesTotal : 0;
+			return streamReady(_sbsNsc) ? _sbsNsc.bytesTotal : 0;
 		}
 		
 		public function letfStreamBytesLoaded():Number
@@ -994,7 +998,7 @@ package player
 		
 		public function rightStreamBytesLoaded():Number
 		{
-			return streamReady(_sbsNsc) ? _sbsNsc.netStream.bytesLoaded : 0;
+			return streamReady(_sbsNsc) ? _sbsNsc.bytesLoaded : 0;
 		}
 		
 		public function getLeftStreamVolume():Number
@@ -1006,7 +1010,7 @@ package player
 		{
 			try
 			{
-				return streamReady(_sbsNsc) ? _sbsNsc.netStream.soundTransform.volume * 100 : 0;
+				return streamReady(_sbsNsc) ? _sbsNsc.volume * 100 : 0;
 			}
 			catch (e:Error)
 			{

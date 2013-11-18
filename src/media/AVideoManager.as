@@ -28,6 +28,8 @@ package media
 		}
 		
 		override public function setup(... args):void{
+			_startTime=0;
+			_endTime=0;
 			if(args.length){
 				_streamUrl = (args[0] is String) ? args[0] : '';
 				
@@ -38,15 +40,11 @@ package media
 				var endFragment:RegExp=new RegExp(".+?\?.+end=([0-9\.]+)");
 				
 				var sresult:Array = startFragment.exec(fragments[2]);
-				if(sresult){
+				if(sresult)
 					_startTime=Math.round(sresult[1]);
-				}
 				var eresult:Array = endFragment.exec(fragments[2]);
-				if(eresult){
+				if(eresult)
 					_endTime=Math.round(eresult[1]);
-				}
-				
-				
 			}
 			this.addEventListener(StreamingEvent.CONNECTED_CHANGE, onConnectionStatusChange);
 			connect();
@@ -71,11 +69,12 @@ package media
 		
 		override public function seek(seconds:Number):void{
 			if(!isNaN(seconds) && seconds >= 0 && seconds < duration){
-				var reqFraction:Number = seconds/duration;
-				//The user seeked to a time that is not yet cached. Try to load the media file from that point onwards (Pseudo-Streaming/Apache Mod h.264)
-				if(loadedFraction < reqFraction){
+				var realseconds:Number = seconds - _startTime;
+				var reqFraction:Number = realseconds/_duration;
+				//The user seeked to a time that is not cached. Try to load the media file from that point onwards (Pseudo-Streaming/Apache Mod h.264)
+				if(loadedFraction < reqFraction || realseconds < 0){
 					//Remove any fragments first
-					_streamUrl += '?start=' + seconds;
+					_streamUrl += '?start=' + Math.abs(realseconds);
 					play();
 				} else {
 					_ns.seek(seconds);
@@ -85,17 +84,21 @@ package media
 		
 		override public function get duration():Number
 		{
-			return _startTime + _duration;
+			return _connected ? (_startTime + _duration) : 0;
 		}
 		
 		override public function get currentTime():Number
 		{
-			return _startTime + _ns.time;
+			return _connected ? (_startTime + _ns.time) : 0;
+		}
+		
+		override public function get startBytes():Number{
+			return _ns && _duration ? _startTime * (_ns.bytesTotal / _duration) : 0;
 		}
 		
 		override public function get bytesTotal():Number{
 			//Make a calculus to get an estimate of the total bytes when the video starts playing from a point that is not the beginning
-			return _ns.bytesTotal;
+			return _ns ? startBytes + _ns.bytesTotal : 0;
 		}
 		
 		override protected function onNetStatus(event:NetStatusEvent):void{
@@ -144,7 +147,7 @@ package media
 				case "NetStream.Play.NoSupportedTrackFound":
 					break;
 				case "NetStream.Play.StreamNotFound":
-					dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.STREAM_NOT_FOUND, _id));
+					dispatchEvent(new NetStreamClientEvent(NetStreamClientEvent.NETSTREAM_ERROR, _id, -1, "ERROR_STREAM_NOT_FOUND"));
 					break;
 				case "NetStream.Play.Transition":
 					break;
