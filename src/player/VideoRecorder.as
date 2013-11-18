@@ -114,11 +114,11 @@ package player
 			_micImage=new MicImage();
 		
 			
-			
-			privacySprite = new PrivacyPanel();
+			/*
+			privacySprite=new PrivacyPanel(_lastWidth, _lastHeight);
 			privacyRights=new UserDeviceManager();
 			privacyRights.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, onPrivacyStateChange);
-			
+			*/
 			addChild(_micImage);
 			addChild(_camVideo);
 			addChild(_countdownTxt);
@@ -578,12 +578,13 @@ package player
 			}
 			else
 			{
-				_topLayer.removeChildren();
-				_topLayer.addChild(privacySprite);
-				
+				privacySprite = new PrivacyPanel(_lastWidth, _lastHeight);
 				privacySprite.addEventListener(PrivacyEvent.CLOSE_ACCEPT, privacyCloseAccept);
 				privacySprite.addEventListener(PrivacyEvent.CLOSE_CANCEL, privacyCloseCancel);
 				privacySprite.displaySettings();
+				
+				_topLayer.removeChildren();
+				_topLayer.addChild(privacySprite);
 			}
 		}
 
@@ -609,6 +610,7 @@ package player
 			prepareRecording();
 		}
 
+		/*
 		private function onPrivacyStateChange(event:PrivacyEvent):void{
 			dispatchEvent(new PrivacyEvent(event.type,event.state));
 			if(event.state==PrivacyEvent.DEVICE_ACCESS_GRANTED){
@@ -617,7 +619,7 @@ package player
 				//Some kind of error in the privacy settings abort the recording and prompt the user.
 				
 			}
-		}
+		}*/
 		
 		private function privacyCloseCancel(event:Event):void{
 			//Remove the privacy settings & the rest of layers from the top layer

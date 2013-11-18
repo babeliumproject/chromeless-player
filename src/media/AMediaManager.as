@@ -244,9 +244,10 @@ package media
 			{
 				if(!_sndTransform)
 					_sndTransform=new SoundTransform();
-				_sndTransform.volume=value / 100;
-				if (_nc.connected)
-				{
+				var t:Number = value/100;
+				_sndTransform.volume=t;
+				if (_connected){
+					logger.debug("Soundtransform set volume: {0}", [t]);
 					_ns.soundTransform=_sndTransform;
 				}
 			}

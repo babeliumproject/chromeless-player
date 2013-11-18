@@ -12,6 +12,9 @@ package media
 	import flash.events.StatusEvent;
 	import flash.net.NetConnection;
 	import flash.net.NetStream;
+	import flash.net.URLVariables;
+	
+	import mx.utils.ObjectUtil;
 	
 	import utils.Helpers;
 
@@ -31,23 +34,37 @@ package media
 			_startTime=0;
 			_endTime=0;
 			if(args.length){
-				_streamUrl = (args[0] is String) ? args[0] : '';
-				
-				//Check if the url contains start/end fragments
-				var fragments:Array = new Array();//Helpers.parseUrl(_streamUrl);
-				
-				var startFragment:RegExp=new RegExp(".+?\?.+start=([0-9\.]+)");
-				var endFragment:RegExp=new RegExp(".+?\?.+end=([0-9\.]+)");
-				
-				var sresult:Array = startFragment.exec(fragments[2]);
-				if(sresult)
-					_startTime=Math.round(sresult[1]);
-				var eresult:Array = endFragment.exec(fragments[2]);
-				if(eresult)
-					_endTime=Math.round(eresult[1]);
+				//URL should be previously parsed with a general purpose HTTP regexp
+				var url:String = (args[0] is String) ? args[0] : '';
+				var urlParts:Array = url.split('?');
+				_streamUrl = urlParts[0];
+				//Url has query string
+				if(urlParts.length > 1){
+					var queryString:String = urlParts[1];
+					var params:Object = parseQueryString(queryString);
+					_startTime = params.hasOwnProperty('start') ? params.start : 0;
+					_endTime = params.hasOwnProperty('end') ? params.end : 0;
+					logger.debug("URL contains query string: start={0}, end={1}", [_startTime, _endTime]);
+				}
 			}
 			this.addEventListener(StreamingEvent.CONNECTED_CHANGE, onConnectionStatusChange);
 			connect();
+		}
+			
+		private function parseQueryString(queryStr:String):Object{
+			var params:Object = new Object();
+			var allParams:Array = queryStr.split('&');
+			for(var i:int=0, index:int=-1; i < allParams.length; i++)
+			{
+				var keyValuePair:String = allParams[i];
+				if((index = keyValuePair.indexOf("=")) > 0)
+				{
+					var paramKey:String = keyValuePair.substring(0,index);
+					var paramValue:String = keyValuePair.substring(index+1);
+					params[paramKey] = paramValue;
+				}
+			}
+			return params;
 		}
 		
 		private function connect():void{
@@ -58,12 +75,22 @@ package media
 			_connected=true;
 			dispatchEvent(new StreamingEvent(StreamingEvent.CONNECTED_CHANGE));
 		}
-
-		public function close():void
+		
+		override public function play(/*params:Object*/):void
 		{
-			if (_nc)
+			try
 			{
-				_nc.close();
+				var qs:URLVariables = new  URLVariables();
+				if(_startTime) qs.start = _startTime;
+				//if(_endTime) qs.end = _endTime;
+				var queryString:String = unescape(qs.toString());
+				var playUrl:String = queryString.length ? _streamUrl + '?' + queryString : _streamUrl;
+				logger.info("[{0}] Play {1}", [_id, playUrl]);
+				_ns.play(playUrl);
+			}
+			catch (e:Error)
+			{
+				logger.error("[{0}] Play Error [{1}] {2}", [_id, e.name, e.message]);
 			}
 		}
 		
@@ -73,8 +100,8 @@ package media
 				var reqFraction:Number = realseconds/_duration;
 				//The user seeked to a time that is not cached. Try to load the media file from that point onwards (Pseudo-Streaming/Apache Mod h.264)
 				if(loadedFraction < reqFraction || realseconds < 0){
-					//Remove any fragments first
-					_streamUrl += '?start=' + Math.abs(realseconds);
+					//Set the new start time
+					_startTime = Math.abs(realseconds);
 					play();
 				} else {
 					_ns.seek(seconds);
@@ -93,7 +120,7 @@ package media
 		}
 		
 		override public function get startBytes():Number{
-			return _ns && _duration ? _startTime * (_ns.bytesTotal / _duration) : 0;
+			return _ns && _duration ? Math.round(_startTime * (_ns.bytesTotal / _duration)) : 0;
 		}
 		
 		override public function get bytesTotal():Number{

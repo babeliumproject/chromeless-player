@@ -1,5 +1,6 @@
 package view
 {
+	import assets.DefaultStyle;
 	import assets.MicImage;
 	import assets.UnlockImage;
 	
@@ -7,7 +8,9 @@ package view
 	
 	import flash.display.Shape;
 	import flash.display.Sprite;
+	import flash.events.FocusEvent;
 	import flash.events.MouseEvent;
+	import flash.geom.Matrix;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.text.TextField;
@@ -22,20 +25,28 @@ package view
 	import mx.resources.IResourceManager;
 	import mx.resources.ResourceManager;
 	import mx.utils.ObjectUtil;
+	
+	import org.as3commons.logging.api.ILogger;
+	import org.as3commons.logging.api.getLogger;
 
 	public class PrivacyPanel extends Sprite
 	{
-		private var dWidth:uint=640;
-		private var dHeight:uint=480;
+		protected static const logger:ILogger=getLogger(PrivacyPanel);
+		
+		private var localizationBundle:Object;
+		
+		private var container_width:uint = 320;
+		private var container_height:uint = 240;
+		
+		private var frame:Sprite;
+		private var instrText:TextField;
+		private var instrMsg:String;
 
 		private var title:TextField=new TextField();
 		private var titleFmt:TextFormat=new TextFormat();
 
 		private var container:Sprite=new Sprite();
 		private var containerBgImg:UnlockImage=new UnlockImage();
-		
-		private var default_font_color:uint=0xffffff;
-		private var default_font_size:uint=14;
 
 		private var layer:Sprite=new Sprite();
 		//private var layerImg:MicImage=new MicImage();
@@ -46,10 +57,17 @@ package view
 
 		private var privacyManager:UserDeviceManager;
 
-		public function PrivacyPanel()
+		public function PrivacyPanel(unscaledWidth:uint, unscaledHeight:uint)
 		{
 			super();
-			drawBackground(dWidth, dHeight);
+			localizationBundle=SharedData.getInstance().localizationBundle;
+			addEventListener(FocusEvent.FOCUS_IN, onFocusEvent);
+			addEventListener(FocusEvent.FOCUS_OUT, onFocusEvent);
+			updateDisplayList(unscaledWidth, unscaledHeight);		
+		}
+		
+		private function onFocusEvent(event:FocusEvent):void{
+			logger.debug(event.type);
 		}
 
 		private function getChildenHeigth():uint
@@ -62,73 +80,67 @@ package view
 			return occupiedHeigth;
 		}
 
-		public function updateDisplayList(nWidth:uint, nHeight:uint):void
-		{
-			drawBackground(nWidth, nHeight);
+		public function updateDisplayList(unscaledWidth:uint, unscaledHeight:uint):void{
+			
+			container_width  = !unscaledWidth  ? container_width  : unscaledWidth;
+			container_height = !unscaledHeight ? container_height : unscaledHeight;
+		
+			drawBackground(container_width, container_height);
 		}
-
-		public function displaySettings():void
-		{
-			privacyManager=SharedData.getInstance().privacyManager;
-			privacyManager.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, deviceStateChangeHandler);
-			privacyManager.initDevices();
+		
+		private function drawBackground2():void{
+			var m:Matrix = new Matrix();
+			m.createGradientBox(container_width, container_height, 
+								90*Math.PI/DefaultStyle.BGR_GRADIENT_ANGLE_DEC, 0, 0);
+			this.graphics.clear();
+			this.graphics.beginGradientFill(DefaultStyle.BGR_GRADIENT_TYPE, 
+											DefaultStyle.BGR_GRADIENT_COLORS,
+											DefaultStyle.BGR_GRADIENT_ALPHAS,
+											DefaultStyle.BGR_GRADIENT_RATIOS, m);
+			this.graphics.drawRect(0, 0, container_width, container_height);
+			this.graphics.endFill();
 		}
-
-		private function deviceStateChangeHandler(event:PrivacyEvent):void
-		{
-			switch (event.state)
-			{
-				case PrivacyEvent.AV_HARDWARE_DISABLED:
-				{
-					drawAdmForbid();
-					break;
-				}
-				case PrivacyEvent.NO_MICROPHONE_FOUND:
-				{
-					drawMicNotFound();
-					break;
-				}
-				case PrivacyEvent.NO_CAMERA_FOUND:
-				{
-					drawCamNotFound();
-					break;
-				}
-				case PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED:
-				{
-					drawPrivacyNotice();
-					break;
-				}
-				case PrivacyEvent.DEVICE_ACCESS_GRANTED:
-				{
-					//acceptButton.label=ResourceManager.getInstance().getString('messages', 'BUTTON_RECORD');
-					drawPrivacyNotice();
-					acceptButton.label=SharedData.getInstance().getText('BUTTON_RECORD');
-				}
-				default:
-				{
-					break;
-				}
-			}
+		
+		private function drawPrivacyNotice2(msg:String):void{
+			
+			// Remove previous 'frame' from background
+			if(frame != null && this.contains(frame)) this.removeChild(frame);
+			
+			var frame_width:uint = container_width * .85;
+			var frame_height:uint = container_height * .80;
+			frame = new Sprite();
+			frame.graphics.clear();
+			frame.graphics.beginFill(DefaultStyle.BGR_SOLID_COLOR,1);
+			frame.graphics.drawRect(0,0,frame_width, frame_height);
+			frame.graphics.endFill();
+			frame.x = container_width/2-(frame_width/2);
+			frame.y = container_height/2-(frame_height/2);
+			
+			var _textFormat:TextFormat = new TextFormat();
+			_textFormat.align = DefaultStyle.FONT_ALIGN;
+			_textFormat.font = DefaultStyle.FONT_FAMILY;
+			_textFormat.color= DefaultStyle.FONT_COLOR;
+			//_textFormat.bold = true;
+			_textFormat.size = Math.floor(container_height * .04); //Make the text's height proportional to the frame height
+			
+			instrText = new TextField();
+			instrText.text = localizationBundle[msg] ? localizationBundle[msg] : '';
+			instrText.setTextFormat(_textFormat);
+			instrText.width = frame_width;
+			instrText.autoSize = TextFieldAutoSize.CENTER;
+			instrText.wordWrap = true;
+			instrText.x = frame_width/2 - instrText.width/2;
+			//instrText.y = container_height/2 - instrText.height/2;
+			instrText.setTextFormat(_textFormat);
+		
+			
+			frame.addChild(instrText);
+			
+			addChild(frame);
+			privacyManager.showPrivacySettings();
+			
 		}
-
-		private function retryClickHandler(event:MouseEvent):void
-		{
-			privacyManager.initDevices();
-		}
-
-		private function cancelClickHandler(event:MouseEvent):void
-		{
-			dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_CANCEL));
-		}
-
-		private function acceptClickHandler(event:MouseEvent):void
-		{
-			if (!SharedData.getInstance().privacyManager.deviceAccessGranted)
-				privacyManager.showPrivacySettings();
-			else
-				dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_ACCEPT));
-		}
-
+		
 		private function drawBackground(nWidth:uint, nHeight:uint, padding:uint=30, gap:uint=2):void
 		{
 			this.graphics.clear();
@@ -137,7 +149,7 @@ package view
 			this.graphics.endFill();
 
 			titleFmt.font="Arial";
-			titleFmt.color=default_font_color;
+			titleFmt.color=0xffffff;
 			titleFmt.size=18;
 			titleFmt.bold=true;
 			title.defaultTextFormat=titleFmt;
@@ -236,8 +248,8 @@ package view
 			var messageFmt:TextFormat=new TextFormat();
 
 			messageFmt.font="Arial";
-			messageFmt.size=default_font_size;
-			messageFmt.color=default_font_color;
+			messageFmt.size=14;
+			messageFmt.color=0xffffff;
 			messageFmt.bold=false;
 			message.defaultTextFormat=messageFmt;
 
@@ -275,6 +287,75 @@ package view
 			layer.addChild(layerImg);
 			layer.addChild(acceptButton);
 			layer.addChild(cancelButton);
+		}
+		
+		/*
+		 * Methods to deal with user interaction
+		 */
+		public function displaySettings():void
+		{
+			privacyManager=SharedData.getInstance().privacyManager;
+			privacyManager.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, deviceStateChangeHandler);
+			privacyManager.initDevices();
+		}
+		
+		private function deviceStateChangeHandler(event:PrivacyEvent):void
+		{
+			switch (event.state)
+			{
+				case PrivacyEvent.AV_HARDWARE_DISABLED:
+				{
+					drawAdmForbid();
+					break;
+				}
+				case PrivacyEvent.NO_MICROPHONE_FOUND:
+				{
+					drawMicNotFound();
+					break;
+				}
+				case PrivacyEvent.NO_CAMERA_FOUND:
+				{
+					drawCamNotFound();
+					break;
+				}
+				case PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED:
+				{
+					//drawPrivacyNotice2("SELECT_ALLOW");
+					drawPrivacyNotice();
+					acceptClickHandler(null);
+					break;
+				}
+				case PrivacyEvent.DEVICE_ACCESS_GRANTED:
+				{
+					//drawPrivacyNotice2("NOW_CLICK_REMEMBER");
+					acceptButton.label=ResourceManager.getInstance().getString('messages', 'BUTTON_RECORD');
+					drawPrivacyNotice();
+					acceptButton.label=SharedData.getInstance().getText('BUTTON_RECORD');
+					break;
+				}
+				default:
+				{
+					break;
+				}
+			}
+		}
+		
+		private function retryClickHandler(event:MouseEvent):void
+		{
+			privacyManager.initDevices();
+		}
+		
+		private function cancelClickHandler(event:MouseEvent):void
+		{
+			dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_CANCEL));
+		}
+		
+		private function acceptClickHandler(event:MouseEvent):void
+		{
+			if (!SharedData.getInstance().privacyManager.deviceAccessGranted)
+				privacyManager.showPrivacySettings();
+			else
+				dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_ACCEPT));
 		}
 	}
 }

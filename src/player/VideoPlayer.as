@@ -47,7 +47,7 @@ package player
 	public class VideoPlayer extends Sprite
 	{
 
-		protected const DEFAULT_VOLUME:Number=0.7;
+		protected const DEFAULT_VOLUME:Number=70;
 
 		protected var _video:Video;
 		protected var _nsc:AMediaManager;
@@ -212,6 +212,11 @@ package player
 		{
 			return _nsc ? _nsc.bytesLoaded : 0;
 		}
+		
+		public function getStartBytes():Number
+		{
+			return _nsc ? _nsc.startBytes : 0;
+		}
 
 		public function get mute():Boolean
 		{
@@ -238,14 +243,14 @@ package player
 
 		public function getVolume():Number
 		{
-			return _currentVolume * 100;
+			return _currentVolume;
 		}
 
 		public function setVolume(value:Number):void
 		{
 			if (!isNaN(value) && value >= 0 && value <= 100)
 			{
-				_currentVolume=value / 100;
+				_currentVolume=value;
 				if(_nsc) _nsc.volume = value;
 			}
 		}

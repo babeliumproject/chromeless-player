@@ -59,6 +59,7 @@ package api
 			addCB("getLoadedFragment", VP.getLoadedFragment);
 			addCB("getBytesTotal", VP.getBytesTotal);
 			addCB("getBytesLoaded", VP.getBytesLoaded);
+			addCB("getStartBytes", VP.getStartBytes);
 		
 			addCB("getState", getState);
 
