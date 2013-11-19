@@ -11,8 +11,8 @@ package view
 
 	public class PrivacyButton extends Sprite
 	{
-		private var defWidth:uint=100;
-		private var defHeight:uint=30;
+		private var defWidth:uint=60;
+		private var defHeight:uint=20;
 
 		private var btn:SimpleButton=new SimpleButton();
 
@@ -47,7 +47,7 @@ package view
 
 			tf.color=LABEL_FILL_UPSTATE;
 			tf.font="Arial";
-			tf.size=20;
+			tf.size=12;
 			tf.align="center";
 			upTxt.defaultTextFormat=tf;
 			overTxt.defaultTextFormat=tf;

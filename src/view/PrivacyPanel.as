@@ -1,11 +1,14 @@
 package view
 {
 	import assets.DefaultStyle;
+	import assets.EncircledShape;
 	import assets.MicImage;
 	import assets.UnlockImage;
+	import assets.VectorShape;
 	
 	import events.PrivacyEvent;
 	
+	import flash.display.DisplayObject;
 	import flash.display.Shape;
 	import flash.display.Sprite;
 	import flash.events.FocusEvent;
@@ -41,6 +44,7 @@ package view
 		private var frame:Sprite;
 		private var instrText:TextField;
 		private var instrMsg:String;
+		private var bgrShape:VectorShape;
 
 		private var title:TextField=new TextField();
 		private var titleFmt:TextFormat=new TextFormat();
@@ -76,6 +80,8 @@ package view
 		
 		private function onMouseEvent(event:MouseEvent):void{
 			logger.debug(event.type);
+			if (SharedData.getInstance().privacyManager.deviceAccessGranted)
+				dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_ACCEPT));
 		}
 
 		private function getChildenHeigth():uint
@@ -103,7 +109,7 @@ package view
 								90*Math.PI/DefaultStyle.BGR_GRADIENT_ANGLE_DEC, 0, 0);
 			this.graphics.clear();
 			this.graphics.beginGradientFill(DefaultStyle.BGR_GRADIENT_TYPE, 
-											DefaultStyle.BGR_GRADIENT_COLORS,
+											DefaultStyle.PRIVACY_BGR_GRADIENT_COLORS,
 											DefaultStyle.BGR_GRADIENT_ALPHAS,
 											DefaultStyle.BGR_GRADIENT_RATIOS, m);
 			this.graphics.drawRect(0, 0, container_width, container_height);
@@ -111,6 +117,33 @@ package view
 			
 			//TODO
 			//Add some nice graphic at the lower-left part of the background
+			/*
+			bgrShape=new VectorShape(DefaultStyle.ASSET_DEFAULT_WIDTH, DefaultStyle.ASSET_DEFAULT_HEIGHT,
+									 DefaultStyle.ASSET_LOCK_VECCMD, DefaultStyle.ASSET_LOCK_VECDATA,
+									 DefaultStyle.ASSET_GRADIENT_TYPE, DefaultStyle.ASSET_LOCK_GRADIENT_COLORS, 
+									 DefaultStyle.ASSET_LOCK_GRADIENT_ALPHAS, DefaultStyle.ASSET_GRADIENT_RATIOS, 
+									 DefaultStyle.ASSET_GRADIENT_ANGLE_DEC);
+			scaleDisplayObject(bgrShape,container_width*0.7,container_height*0.7);
+			bgrShape.x = (-bgrShape.offsetX) - bgrShape.width*.25;
+			bgrShape.y = (-bgrShape.offsetY) - bgrShape.height*.25;
+			*/
+			var es:EncircledShape=new EncircledShape();
+			es.draw(DefaultStyle.ASSET_DEFAULT_WIDTH, DefaultStyle.ASSET_DEFAULT_HEIGHT,
+				DefaultStyle.ASSET_LOCK_VECCMD, DefaultStyle.ASSET_LOCK_VECDATA,
+				DefaultStyle.ASSET_GRADIENT_TYPE, DefaultStyle.ASSET_LOCK_GRADIENT_COLORS, 
+				DefaultStyle.ASSET_LOCK_GRADIENT_ALPHAS, DefaultStyle.ASSET_GRADIENT_RATIOS, 
+				DefaultStyle.ASSET_GRADIENT_ANGLE_DEC);
+			scaleDisplayObject(es,container_width,container_height);
+			es.x=-es.width*0.25;
+			es.y=+es.height*0.25;
+			this.addChild(es);
+			
+			var frame_decoration:Shape = new Shape();
+			frame_decoration.graphics.clear();
+			frame_decoration.graphics.lineStyle(1,DefaultStyle.BGR_SOLID_COLOR,0.6);
+			frame_decoration.graphics.drawRect(0, 0, container_width-1, container_height-1);
+			frame_decoration.graphics.endFill();
+			this.addChild(frame_decoration);
 		}
 		
 		private function drawPrivacyNotice2(msg:String):void{
@@ -131,9 +164,9 @@ package view
 			var _textFormat:TextFormat = new TextFormat();
 			_textFormat.align = DefaultStyle.FONT_ALIGN;
 			_textFormat.font = DefaultStyle.FONT_FAMILY;
-			_textFormat.color= DefaultStyle.FONT_COLOR;
+			_textFormat.color= DefaultStyle.PRIVACY_FONT_COLOR;
 			//_textFormat.bold = true;
-			_textFormat.size = Math.floor(container_height * .04); //Make the text's height proportional to the frame height
+			_textFormat.size = Math.floor(container_height * .06); //Make the text's height proportional to the frame height
 			
 			instrText = new TextField();
 			instrText.text = localizationBundle[msg] ? localizationBundle[msg] : '';
@@ -150,8 +183,51 @@ package view
 			
 			//TODO
 			//Add a little panel (218x138) centered in the frame with a "No mic" or "No cam" notice text and the buttons "Try again"/"Ignore" 
+			layer=new Sprite();
+			layer.graphics.clear();
+			layer.graphics.beginFill(0xffffff,1);
+			layer.graphics.lineStyle(1,0,1);
+			layer.graphics.drawRect(0,0,218,138);
+			layer.graphics.endFill();
+			
+			var message:TextField=new TextField();
+			var messageFmt:TextFormat=new TextFormat();
+			
+			message.text=localizationBundle['TEXT_MIC_NOT_FOUND'];
+			
+			acceptButton.label=localizationBundle['BUTTON_RETRY'];
+			acceptButton.addEventListener(MouseEvent.CLICK, retryClickHandler);
+			cancelButton.label=localizationBundle['BUTTON_CANCEL'];
+			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
+			
+
+			acceptButton.y=layer.height * 0.9;
+			cancelButton.x=acceptButton.width + 20;
+			cancelButton.y=layer.height * 0.9;
+			
+			layer.addChild(message);
+			//layer.addChild(layerImg);
+			layer.addChild(acceptButton);
+			layer.addChild(cancelButton);
+			
+			addChild(layer);
+			layer.x=(container_width-layer.width)/2;
+			layer.y=(container_height-layer.height)/2;
 			
 			privacyManager.showPrivacySettings();		
+		}
+		
+		protected function scaleDisplayObject(target:DisplayObject, scaled_width:uint, scaled_height:uint):void{
+			
+			//Get the scale factor of each dimension, pick the smaller one to maintain the aspect ratio of the DisplayObject
+			var scaleX:Number=scaled_width / target.width;
+			var scaleY:Number=scaled_height / target.height;
+			var scaleC:Number=scaleX < scaleY ? scaleX : scaleY;
+			
+			//Scale the DisplayObject
+			//target.width=Math.ceil(target.width * scaleC);
+			//target.height=Math.ceil(target.height * scaleC);
+			target.scaleX=target.scaleY=scaleC;
 		}
 		
 		private function drawBackground(nWidth:uint, nHeight:uint, padding:uint=30, gap:uint=2):void
@@ -166,7 +242,7 @@ package view
 			titleFmt.size=18;
 			titleFmt.bold=true;
 			title.defaultTextFormat=titleFmt;
-			title.text=SharedData.getInstance().getText('TITLE_PRIVACY_SETTINGS').toUpperCase();
+			title.text=localizationBundle['TITLE_PRIVACY_SETTINGS'] ? localizationBundle['TITLE_PRIVACY_SETTINGS'].toUpperCase() : '';
 			title.width=nWidth - 2 * padding;
 			title.x=padding;
 			title.y=padding;
@@ -266,7 +342,7 @@ package view
 			messageFmt.bold=false;
 			message.defaultTextFormat=messageFmt;
 
-			message.text=SharedData.getInstance().getText('TEXT_PRIVACY_RIGHTS_EXPLAIN');
+			message.text=localizationBundle['TEXT_PRIVACY_RIGHTS_EXPLAIN'];
 			message.width=layer.width * 0.65;
 			message.y=(layer.height-message.height)/2;
 			message.wordWrap=true;
