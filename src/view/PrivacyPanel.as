@@ -63,10 +63,18 @@ package view
 			localizationBundle=SharedData.getInstance().localizationBundle;
 			addEventListener(FocusEvent.FOCUS_IN, onFocusEvent);
 			addEventListener(FocusEvent.FOCUS_OUT, onFocusEvent);
-			updateDisplayList(unscaledWidth, unscaledHeight);		
+			addEventListener(FocusEvent.KEY_FOCUS_CHANGE, onFocusEvent);
+			addEventListener(FocusEvent.MOUSE_FOCUS_CHANGE, onFocusEvent);
+			addEventListener(MouseEvent.MOUSE_OVER, onMouseEvent);
+			updateDisplayList(unscaledWidth, unscaledHeight);
+			
 		}
 		
 		private function onFocusEvent(event:FocusEvent):void{
+			logger.debug(event.type);
+		}
+		
+		private function onMouseEvent(event:MouseEvent):void{
 			logger.debug(event.type);
 		}
 
@@ -85,7 +93,8 @@ package view
 			container_width  = !unscaledWidth  ? container_width  : unscaledWidth;
 			container_height = !unscaledHeight ? container_height : unscaledHeight;
 		
-			drawBackground(container_width, container_height);
+			//drawBackground(container_width, container_height);
+			drawBackground2();
 		}
 		
 		private function drawBackground2():void{
@@ -99,6 +108,9 @@ package view
 											DefaultStyle.BGR_GRADIENT_RATIOS, m);
 			this.graphics.drawRect(0, 0, container_width, container_height);
 			this.graphics.endFill();
+			
+			//TODO
+			//Add some nice graphic at the lower-left part of the background
 		}
 		
 		private function drawPrivacyNotice2(msg:String):void{
@@ -110,7 +122,7 @@ package view
 			var frame_height:uint = container_height * .80;
 			frame = new Sprite();
 			frame.graphics.clear();
-			frame.graphics.beginFill(DefaultStyle.BGR_SOLID_COLOR,1);
+			frame.graphics.beginFill(DefaultStyle.BGR_SOLID_COLOR,0);
 			frame.graphics.drawRect(0,0,frame_width, frame_height);
 			frame.graphics.endFill();
 			frame.x = container_width/2-(frame_width/2);
@@ -132,13 +144,14 @@ package view
 			instrText.x = frame_width/2 - instrText.width/2;
 			//instrText.y = container_height/2 - instrText.height/2;
 			instrText.setTextFormat(_textFormat);
-		
 			
 			frame.addChild(instrText);
-			
 			addChild(frame);
-			privacyManager.showPrivacySettings();
 			
+			//TODO
+			//Add a little panel (218x138) centered in the frame with a "No mic" or "No cam" notice text and the buttons "Try again"/"Ignore" 
+			
+			privacyManager.showPrivacySettings();		
 		}
 		
 		private function drawBackground(nWidth:uint, nHeight:uint, padding:uint=30, gap:uint=2):void
@@ -320,17 +333,17 @@ package view
 				}
 				case PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED:
 				{
-					//drawPrivacyNotice2("SELECT_ALLOW");
-					drawPrivacyNotice();
-					acceptClickHandler(null);
+					drawPrivacyNotice2("SELECT_ALLOW");
+					//drawPrivacyNotice();
+					//acceptClickHandler(null);
 					break;
 				}
 				case PrivacyEvent.DEVICE_ACCESS_GRANTED:
 				{
-					//drawPrivacyNotice2("NOW_CLICK_REMEMBER");
-					acceptButton.label=ResourceManager.getInstance().getString('messages', 'BUTTON_RECORD');
-					drawPrivacyNotice();
-					acceptButton.label=SharedData.getInstance().getText('BUTTON_RECORD');
+					drawPrivacyNotice2("NOW_CLICK_REMEMBER");
+					//acceptButton.label=ResourceManager.getInstance().getString('messages', 'BUTTON_RECORD');
+					//drawPrivacyNotice();
+					//acceptButton.label=SharedData.getInstance().getText('BUTTON_RECORD');
 					break;
 				}
 				default:
