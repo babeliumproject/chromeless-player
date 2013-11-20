@@ -1,5 +1,7 @@
 package view
 {
+	import assets.DefaultStyle;
+	
 	import flash.display.DisplayObject;
 	import flash.display.GradientType;
 	import flash.display.Shape;
@@ -25,30 +27,14 @@ package view
 		private var overBg:Sprite=new Sprite();
 		private var downBg:Sprite=new Sprite();
 
-		private const BG_FILL_UPSTATE:Array=[0xFFFFFF, 0xD8D8D8];
-		private const BG_FILL_OVERSTATE:Array=[0xBBBDBD, 0x9FA0A1];
-		private const BG_FILL_DOWNSTATE:Array=[0xAAAAAA, 0x929496];
-
-		private const LABEL_FILL_UPSTATE:uint=0xFFFFFF;
-		private const LABEL_FILL_OVERSTATE:uint=0x000000;
-		private const LABEL_FILL_DOWNSTATE:uint=0x000000;
-
-		//private const ALPHAS:Array=[0.85, 0.85];
-		private const ALPHAS:Array=[0,0];
-		private const RATIOS:Array=[127, 255];
-		
-		private const LINE_COLOR:uint = 0xFFFFFF;
-		private const LINE_THICKNESS:uint = 1;
-		private const LINE_ALPHA:Number = 1.0;
-
 		public function PrivacyButton()
 		{
 			super();
 
-			tf.color=LABEL_FILL_UPSTATE;
-			tf.font="Arial";
-			tf.size=12;
-			tf.align="center";
+			tf.color=DefaultStyle.PRIVACY_BUTTON_FONT_COLOR_UPSTATE;
+			tf.font=DefaultStyle.FONT_FAMILY;
+			tf.size=DefaultStyle.FONT_SIZE;
+			tf.align=DefaultStyle.FONT_ALIGN;
 			upTxt.defaultTextFormat=tf;
 			overTxt.defaultTextFormat=tf;
 			downTxt.defaultTextFormat=tf;
@@ -57,25 +43,27 @@ package view
 
 		public function updateChildren(newWidth:uint, newHeight:uint):void
 		{
+			removeChildren();
+			
 			var matr:Matrix=new Matrix();
-			matr.createGradientBox(newHeight, newHeight, 90 * Math.PI / 180, 0, 0);
+			matr.createGradientBox(newHeight, newHeight, 90 * Math.PI / DefaultStyle.BGR_GRADIENT_ANGLE_DEC, 0, 0);
 
 			upBg.graphics.clear();
-			upBg.graphics.lineStyle(LINE_THICKNESS, LINE_COLOR, LINE_ALPHA);
-			upBg.graphics.beginGradientFill(GradientType.LINEAR, BG_FILL_UPSTATE, ALPHAS, RATIOS, matr);
-			upBg.graphics.drawRoundRect(0, 0, newWidth, newHeight, 8, 8);
+			upBg.graphics.lineStyle(DefaultStyle.PRIVACY_BUTTON_LINE_THICKNESS, DefaultStyle.PRIVACY_BUTTON_LINE_COLOR_UPSTATE, DefaultStyle.PRIVACY_BUTTON_LINE_ALPHA);
+			upBg.graphics.beginGradientFill(DefaultStyle.BGR_GRADIENT_TYPE, DefaultStyle.PRIVACY_BUTTON_BGR_GRADIENT_COLORS_UPSTATE, DefaultStyle.PRIVACY_BUTTON_ALPHAS, DefaultStyle.PRIVACY_BUTTON_RATIOS, matr);
+			upBg.graphics.drawRoundRect(0, 0, newWidth, newHeight, DefaultStyle.PRIVACY_BUTTON_CORNER_RADIUS, DefaultStyle.PRIVACY_BUTTON_CORNER_RADIUS);
 			upBg.graphics.endFill();
 
 			overBg.graphics.clear();
-			overBg.graphics.lineStyle(LINE_THICKNESS, LINE_COLOR, LINE_ALPHA);
-			overBg.graphics.beginGradientFill(GradientType.LINEAR, BG_FILL_OVERSTATE, ALPHAS, RATIOS, matr);
-			overBg.graphics.drawRoundRect(0, 0, newWidth, newHeight, 8, 8);
+			overBg.graphics.lineStyle(DefaultStyle.PRIVACY_BUTTON_LINE_THICKNESS, DefaultStyle.PRIVACY_BUTTON_LINE_COLOR_OVERSTATE, DefaultStyle.PRIVACY_BUTTON_LINE_ALPHA);
+			overBg.graphics.beginGradientFill(DefaultStyle.BGR_GRADIENT_TYPE, DefaultStyle.PRIVACY_BUTTON_BGR_GRADIENT_COLORS_OVERSTATE, DefaultStyle.PRIVACY_BUTTON_ALPHAS, DefaultStyle.PRIVACY_BUTTON_RATIOS, matr);
+			overBg.graphics.drawRoundRect(0, 0, newWidth, newHeight, DefaultStyle.PRIVACY_BUTTON_CORNER_RADIUS, DefaultStyle.PRIVACY_BUTTON_CORNER_RADIUS);
 			overBg.graphics.endFill();
 
 			downBg.graphics.clear();
-			downBg.graphics.lineStyle(LINE_THICKNESS, LINE_COLOR, LINE_ALPHA);
-			downBg.graphics.beginGradientFill(GradientType.LINEAR, BG_FILL_DOWNSTATE, ALPHAS, RATIOS, matr);
-			downBg.graphics.drawRoundRect(0, 0, newWidth, newHeight, 8, 8);
+			downBg.graphics.lineStyle(DefaultStyle.PRIVACY_BUTTON_LINE_THICKNESS, DefaultStyle.PRIVACY_BUTTON_LINE_COLOR_DOWNSTATE, DefaultStyle.PRIVACY_BUTTON_LINE_ALPHA);
+			downBg.graphics.beginGradientFill(DefaultStyle.BGR_GRADIENT_TYPE, DefaultStyle.PRIVACY_BUTTON_BGR_GRADIENT_COLORS_DOWNSTATE, DefaultStyle.PRIVACY_BUTTON_ALPHAS, DefaultStyle.PRIVACY_BUTTON_RATIOS, matr);
+			downBg.graphics.drawRoundRect(0, 0, newWidth, newHeight, DefaultStyle.PRIVACY_BUTTON_CORNER_RADIUS, DefaultStyle.PRIVACY_BUTTON_CORNER_RADIUS);
 			downBg.graphics.endFill();
 
 			upBg.addChild(upTxt);
@@ -87,7 +75,7 @@ package view
 			btn.downState=downBg;
 			btn.useHandCursor=true;
 			btn.hitTestState=overBg;
-
+	
 			addChild(btn);
 		}
 

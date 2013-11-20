@@ -24,6 +24,7 @@ package assets
 			//Center shape in circle
 			vectorShape.x = (-vectorShape.offsetX) + (circle.width - vectorShape.width) / 2;
 			vectorShape.y = (-vectorShape.offsetY) + (circle.height - vectorShape.height) / 2;
+			//Fit whole circle in the sprite. By default the center of the circle is placed at x=0, y=0
 			circle.x=circle.width/2;
 			circle.y=circle.height/2;
 			addChild(circle);

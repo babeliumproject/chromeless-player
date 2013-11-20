@@ -5,13 +5,15 @@
 		<msg name="BUTTON_RECORD">Grabatu</msg>
 		<msg name="BUTTON_RETRY">Saiatu Berriz</msg>
 		<msg name="BUTTON_SHOW_PRIVACY_SETTINGS">Pribatutasun hobespenak ikusi</msg>
+		<msg name="DEVICES_NOT_ACTIVATED">Gailuak oraindik ez dira aktibatu.</msg>
+		<msg name="DEVICES_ADM_DISABLED">Gailuak administratiboki desgaituta daude.</msg>
 		<msg name="ERROR_STREAM_PROCESSING">Bideo hau prozesatzen ari da. Barkatu eragozpenak.</msg>
 		<msg name="ERROR_STREAM_NOT_FOUND">Bideo hau ez dago eskuragarri. Barkatu eragozpenak.</msg>
 		<msg name="HIDE_SUBTITLES">Azpitituluak izkutatu</msg>
 		<msg name="LABEL_MIC_INPUT_LEVEL">Mikrofono sarrera maila</msg>
 		<msg name="LABEL_MIC_WAITING_FOR_INPUT">Mikrofono aktibitateari itxaroten</msg>
 		<msg name="LABEL_ROLE_CURRENTLY_TALKING">Hizketan</msg>
-		<msg name="MIC_NOT_ACTIVATED">Microphone not yet activated.</msg>
+		<msg name="MIC_NOT_FOUND">Mikrofonorik ez da aurkitu.</msg>
 		<msg name="NO_CONNECTION">Konexioa ezin da ezarri. Barkatu eragozpenak.</msg>
 		<msg name="NOW_CLICK_REMEMBER">Now click "Remember" and then "Close"</msg>
 		<msg name="SELECT_ALLOW">Select "Allow"</msg>
@@ -27,7 +29,7 @@
 		<msg name="TITLE_ERROR">Errorea</msg>
 		<msg name="TITLE_INFORMATION">Informazioa</msg>
 		<msg name="TITLE_PRIVACY_SETTINGS">Pribatutasunaren konfigurazioa</msg>
-		<msg name="TRY_AGAIN">To proceed, please try again.</msg>
-		<msg name="WEBCAM_NOT_ACTIVATED">Webcam not yet activated.</msg>
+		<msg name="TRY_AGAIN">Jarraitzeko, mesedez saiatu berriz.</msg>
+		<msg name="WEBCAM_NOT_FOUND">Web kamerarik ez da aurkitu.</msg>
 	</messages>
 </localizationbundle>

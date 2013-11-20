@@ -13,6 +13,7 @@ package view
 	import flash.display.Sprite;
 	import flash.events.FocusEvent;
 	import flash.events.MouseEvent;
+	import flash.filters.DropShadowFilter;
 	import flash.geom.Matrix;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
@@ -79,7 +80,7 @@ package view
 		}
 		
 		private function onMouseEvent(event:MouseEvent):void{
-			logger.debug(event.type);
+			//logger.debug(event.type);
 			if (SharedData.getInstance().privacyManager.deviceAccessGranted)
 				dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_ACCEPT));
 		}
@@ -115,18 +116,6 @@ package view
 			this.graphics.drawRect(0, 0, container_width, container_height);
 			this.graphics.endFill();
 			
-			//TODO
-			//Add some nice graphic at the lower-left part of the background
-			/*
-			bgrShape=new VectorShape(DefaultStyle.ASSET_DEFAULT_WIDTH, DefaultStyle.ASSET_DEFAULT_HEIGHT,
-									 DefaultStyle.ASSET_LOCK_VECCMD, DefaultStyle.ASSET_LOCK_VECDATA,
-									 DefaultStyle.ASSET_GRADIENT_TYPE, DefaultStyle.ASSET_LOCK_GRADIENT_COLORS, 
-									 DefaultStyle.ASSET_LOCK_GRADIENT_ALPHAS, DefaultStyle.ASSET_GRADIENT_RATIOS, 
-									 DefaultStyle.ASSET_GRADIENT_ANGLE_DEC);
-			scaleDisplayObject(bgrShape,container_width*0.7,container_height*0.7);
-			bgrShape.x = (-bgrShape.offsetX) - bgrShape.width*.25;
-			bgrShape.y = (-bgrShape.offsetY) - bgrShape.height*.25;
-			*/
 			var es:EncircledShape=new EncircledShape();
 			es.draw(DefaultStyle.ASSET_DEFAULT_WIDTH, DefaultStyle.ASSET_DEFAULT_HEIGHT,
 				DefaultStyle.ASSET_LOCK_VECCMD, DefaultStyle.ASSET_LOCK_VECDATA,
@@ -181,17 +170,37 @@ package view
 			frame.addChild(instrText);
 			addChild(frame);
 			
-			//TODO
-			//Add a little panel (218x138) centered in the frame with a "No mic" or "No cam" notice text and the buttons "Try again"/"Ignore" 
+			if(!SharedData.getInstance().privacyManager.deviceAccessGranted){
+				if(layer != null && this.contains(layer)) this.removeChild(layer);
+				drawMessagePanel();
+				layer.x=(container_width-layer.width)/2;
+				layer.y=(container_height-layer.height)/2;
+				addChild(layer);
+			}
+			
+			privacyManager.showPrivacySettings();		
+		}
+		
+		protected function drawMessagePanel():void{
 			layer=new Sprite();
 			layer.graphics.clear();
-			layer.graphics.beginFill(0xffffff,1);
-			layer.graphics.lineStyle(1,0,1);
-			layer.graphics.drawRect(0,0,218,138);
+			layer.graphics.beginFill(DefaultStyle.PRIVACY_RETRY_BGR_SOLID_COLOR,DefaultStyle.BGR_SOLID_ALPHA);
+			layer.graphics.lineStyle(DefaultStyle.PRIVACY_RETRY_LINE_WEIGHT,DefaultStyle.PRIVACY_RETRY_LINE_COLOR,DefaultStyle.PRIVACY_RETRY_LINE_ALPHA);
+			layer.graphics.drawRect(0,0,DefaultStyle.PRIVACY_RETRY_WIDTH,DefaultStyle.PRIVACY_RETRY_HEIGHT);
 			layer.graphics.endFill();
 			
 			var message:TextField=new TextField();
 			var messageFmt:TextFormat=new TextFormat();
+			
+			messageFmt.font=DefaultStyle.FONT_FAMILY;
+			messageFmt.size=DefaultStyle.FONT_SIZE;
+			messageFmt.color=DefaultStyle.PRIVACY_BUTTON_FONT_COLOR_UPSTATE;
+			message.defaultTextFormat=messageFmt;
+			
+			//message.text=localizationBundle['TEXT_PRIVACY_RIGHTS_EXPLAIN'];
+			message.width=layer.width;
+			message.y=(layer.height-message.height)/2;
+			message.wordWrap=true;
 			
 			message.text=localizationBundle['TEXT_MIC_NOT_FOUND'];
 			
@@ -200,21 +209,27 @@ package view
 			cancelButton.label=localizationBundle['BUTTON_CANCEL'];
 			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
 			
-
-			acceptButton.y=layer.height * 0.9;
-			cancelButton.x=acceptButton.width + 20;
-			cancelButton.y=layer.height * 0.9;
+			acceptButton.x=10;
+			acceptButton.y=layer.height * 0.9 - acceptButton.height/2;
+			cancelButton.x=acceptButton.x + acceptButton.width + 10;
+			cancelButton.y=layer.height * 0.9 - cancelButton.height/2;
 			
 			layer.addChild(message);
 			//layer.addChild(layerImg);
 			layer.addChild(acceptButton);
 			layer.addChild(cancelButton);
 			
-			addChild(layer);
-			layer.x=(container_width-layer.width)/2;
-			layer.y=(container_height-layer.height)/2;
+			var layerShadow:DropShadowFilter = new DropShadowFilter();
+			layerShadow.color=DefaultStyle.PRIVACY_RETRY_SHADOW_COLOR;
+			layerShadow.blurX=DefaultStyle.PRIVACY_RETRY_SHADOW_BLURX;
+			layerShadow.blurY=DefaultStyle.PRIVACY_RETRY_SHADOW_BLURY;
+			layerShadow.alpha=DefaultStyle.PRIVACY_RETRY_SHADOW_ALPHA;
+			layerShadow.strength=DefaultStyle.PRIVACY_RETRY_SHADOW_STRENGTH;
+			layerShadow.distance=DefaultStyle.PRIVACY_RETRY_SHADOW_DISTANCE;
+			layerShadow.angle=DefaultStyle.PRIVACY_RETRY_SHADOW_ANGLE;
 			
-			privacyManager.showPrivacySettings();		
+			layer.filters = [layerShadow];
+			
 		}
 		
 		protected function scaleDisplayObject(target:DisplayObject, scaled_width:uint, scaled_height:uint):void{

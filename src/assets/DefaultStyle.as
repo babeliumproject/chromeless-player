@@ -7,7 +7,9 @@ package assets
 		public static const FONT_FAMILY:String="arial,sans-serif";
 		public static const FONT_ALIGN:String="center";
 		public static const FONT_COLOR:uint=0xFFFFFF;
+		public static const FONT_SIZE:uint=12;
 		public static const BGR_SOLID_COLOR:uint=0x131313;
+		public static const BGR_SOLID_ALPHA:Number=1;
 		public static const BGR_GRADIENT_TYPE:String=GradientType.LINEAR;
 		public static const BGR_GRADIENT_COLORS:Array=[0x383838,0x131313];
 		public static const BGR_GRADIENT_ALPHAS:Array=[1,1];
@@ -17,6 +19,35 @@ package assets
 		public static const PRIVACY_BGR_GRADIENT_COLORS:Array=[0xfdfffc,0xf5f9f0];
 		public static const PRIVACY_FONT_COLOR:uint=0x131313;
 		
+		public static const PRIVACY_RETRY_WIDTH:uint=212;
+		public static const PRIVACY_RETRY_HEIGHT:uint=135;
+		public static const PRIVACY_RETRY_BGR_SOLID_COLOR:uint=0xffffff;
+		public static const PRIVACY_RETRY_LINE_COLOR:uint=0x666666;
+		public static const PRIVACY_RETRY_LINE_WEIGHT:uint=1;
+		public static const PRIVACY_RETRY_LINE_ALPHA:Number=1;
+		public static const PRIVACY_RETRY_SHADOW_COLOR:uint=0x666666;
+		public static const PRIVACY_RETRY_SHADOW_BLURX:uint=0;
+		public static const PRIVACY_RETRY_SHADOW_BLURY:uint=0;
+		public static const PRIVACY_RETRY_SHADOW_ALPHA:Number=0.25;
+		public static const PRIVACY_RETRY_SHADOW_STRENGTH:Number=255;
+		public static const PRIVACY_RETRY_SHADOW_DISTANCE:Number=3;
+		public static const PRIVACY_RETRY_SHADOW_ANGLE:Number=45;
+	
+		public static const PRIVACY_BUTTON_BGR_GRADIENT_COLORS_UPSTATE:Array=[0xFFFFFF, 0xe6e6e6];
+		public static const PRIVACY_BUTTON_BGR_GRADIENT_COLORS_OVERSTATE:Array=[0xFFFFFF, 0xe6e6e6];
+		public static const PRIVACY_BUTTON_BGR_GRADIENT_COLORS_DOWNSTATE:Array=[0xe6e6e6, 0xe6e6e6];
+		public static const PRIVACY_BUTTON_FONT_COLOR_UPSTATE:uint=0x333333;
+		public static const PRIVACY_BUTTON_FONT_COLOR_OVERSTATE:uint=0x333333;
+		public static const PRIVACY_BUTTON_FONT_COLOR_DOWNSTATE:uint=0x333333;
+		public static const PRIVACY_BUTTON_ALPHAS:Array=[1,1];
+		public static const PRIVACY_BUTTON_RATIOS:Array=[0, 255];
+		public static const PRIVACY_BUTTON_LINE_COLOR_UPSTATE:uint=0xcccccc;
+		public static const PRIVACY_BUTTON_LINE_COLOR_OVERSTATE:uint=0xadadad;
+		public static const PRIVACY_BUTTON_LINE_COLOR_DOWNSTATE:uint=0xe0e0e0;
+		public static const PRIVACY_BUTTON_LINE_THICKNESS:uint=1;
+		public static const PRIVACY_BUTTON_LINE_ALPHA:Number=1;
+		public static const PRIVACY_BUTTON_CORNER_RADIUS:uint=4;
+		
 		public static const ASSET_SOLID_COLOR:uint=0xa3a3a3;
 		public static const ASSET_GRADIENT_TYPE:String=GradientType.LINEAR;
 		public static const ASSET_GRADIENT_COLORS:Array=[0xe4e4e4, 0xa3a3a3];
@@ -25,7 +56,7 @@ package assets
 		public static const ASSET_GRADIENT_ANGLE_DEC:int=180;
 		public static const ASSET_LINE_WEIGHT:uint=0;
 		public static const ASSET_LINE_COLOR:uint=0x000000;
-		public static const ASSET_LINE_ALPHA:uint=0;
+		public static const ASSET_LINE_ALPHA:Number=0;
 		public static const ASSET_DEFAULT_WIDTH:uint=512;
 		public static const ASSET_DEFAULT_HEIGHT:uint=512;
 		
