@@ -37,25 +37,27 @@ package view
 	{
 		protected static const logger:ILogger=getLogger(PrivacyPanel);
 		
+		public static const IGNORE:uint = 0x0001;
+		public static const RETRY:uint = 0x0002;
+		
 		private var localizationBundle:Object;
 		
 		private var container_width:uint = 320;
 		private var container_height:uint = 240;
+		private var container_border:Shape;
+		private var container_icon:EncircledShape;
 		
 		private var frame:Sprite;
-		private var instrText:TextField;
-		private var instrMsg:String;
-		private var bgrShape:VectorShape;
+		private var frame_width:uint;
+		private var frame_height:uint;
+		private var frame_textfield:TextField;
+		private var frame_textformat:TextFormat;
 
-		private var title:TextField=new TextField();
-		private var titleFmt:TextFormat=new TextFormat();
-
-		private var container:Sprite=new Sprite();
-		private var containerBgImg:UnlockImage=new UnlockImage();
-
-		private var layer:Sprite=new Sprite();
-		//private var layerImg:MicImage=new MicImage();
-		private var message:TextField=new TextField();
+		private var layer:Sprite;
+		private var layer_textfield:TextField;
+		private var layer_textformat:TextFormat;
+		private var layer_padding:uint=8;
+		private var layer_icon:VectorShape;
 
 		private var acceptButton:PrivacyButton=new PrivacyButton();
 		private var cancelButton:PrivacyButton=new PrivacyButton();
@@ -66,33 +68,21 @@ package view
 		{
 			super();
 			localizationBundle=SharedData.getInstance().localizationBundle;
-			addEventListener(FocusEvent.FOCUS_IN, onFocusEvent);
-			addEventListener(FocusEvent.FOCUS_OUT, onFocusEvent);
-			addEventListener(FocusEvent.KEY_FOCUS_CHANGE, onFocusEvent);
-			addEventListener(FocusEvent.MOUSE_FOCUS_CHANGE, onFocusEvent);
+			
+			acceptButton.label=localizationBundle['BUTTON_RETRY'];
+			acceptButton.addEventListener(MouseEvent.CLICK, retryClickHandler);
+			cancelButton.label=localizationBundle['BUTTON_CANCEL'];
+			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
+			
 			addEventListener(MouseEvent.MOUSE_OVER, onMouseEvent);
 			updateDisplayList(unscaledWidth, unscaledHeight);
 			
 		}
-		
-		private function onFocusEvent(event:FocusEvent):void{
-			logger.debug(event.type);
-		}
-		
+	
 		private function onMouseEvent(event:MouseEvent):void{
 			//logger.debug(event.type);
 			if (SharedData.getInstance().privacyManager.deviceAccessGranted)
 				dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_ACCEPT));
-		}
-
-		private function getChildenHeigth():uint
-		{
-			var occupiedHeigth:uint=0;
-			for (var i:uint; i < this.numChildren; i++)
-			{
-				occupiedHeigth+=this.getChildAt(i).height;
-			}
-			return occupiedHeigth;
 		}
 
 		public function updateDisplayList(unscaledWidth:uint, unscaledHeight:uint):void{
@@ -101,13 +91,14 @@ package view
 			container_height = !unscaledHeight ? container_height : unscaledHeight;
 		
 			//drawBackground(container_width, container_height);
-			drawBackground2();
+			drawBackground();
 		}
 		
-		private function drawBackground2():void{
+		private function drawBackground():void{
 			var m:Matrix = new Matrix();
 			m.createGradientBox(container_width, container_height, 
 								90*Math.PI/DefaultStyle.BGR_GRADIENT_ANGLE_DEC, 0, 0);
+			
 			this.graphics.clear();
 			this.graphics.beginGradientFill(DefaultStyle.BGR_GRADIENT_TYPE, 
 											DefaultStyle.PRIVACY_BGR_GRADIENT_COLORS,
@@ -116,33 +107,37 @@ package view
 			this.graphics.drawRect(0, 0, container_width, container_height);
 			this.graphics.endFill();
 			
-			var es:EncircledShape=new EncircledShape();
-			es.draw(DefaultStyle.ASSET_DEFAULT_WIDTH, DefaultStyle.ASSET_DEFAULT_HEIGHT,
-				DefaultStyle.ASSET_LOCK_VECCMD, DefaultStyle.ASSET_LOCK_VECDATA,
-				DefaultStyle.ASSET_GRADIENT_TYPE, DefaultStyle.ASSET_LOCK_GRADIENT_COLORS, 
-				DefaultStyle.ASSET_LOCK_GRADIENT_ALPHAS, DefaultStyle.ASSET_GRADIENT_RATIOS, 
-				DefaultStyle.ASSET_GRADIENT_ANGLE_DEC);
-			scaleDisplayObject(es,container_width,container_height);
-			es.x=-es.width*0.25;
-			es.y=+es.height*0.25;
-			this.addChild(es);
+			if(!container_icon){
+				container_icon=new EncircledShape();
+				container_icon.draw(DefaultStyle.ASSET_DEFAULT_WIDTH, DefaultStyle.ASSET_DEFAULT_HEIGHT,
+					DefaultStyle.ASSET_LOCK_VECCMD, DefaultStyle.ASSET_LOCK_VECDATA,
+					DefaultStyle.ASSET_GRADIENT_TYPE, DefaultStyle.ASSET_LOCK_GRADIENT_COLORS, 
+					DefaultStyle.ASSET_LOCK_GRADIENT_ALPHAS, DefaultStyle.ASSET_GRADIENT_RATIOS, 
+					DefaultStyle.ASSET_GRADIENT_ANGLE_DEC);
+				this.addChild(container_icon);
+			}
+			scaleDisplayObject(container_icon,container_width,container_height);
+			container_icon.x=-container_icon.width*0.25;
+			container_icon.y=+container_icon.height*0.25;
 			
-			var frame_decoration:Shape = new Shape();
-			frame_decoration.graphics.clear();
-			frame_decoration.graphics.lineStyle(1,DefaultStyle.BGR_SOLID_COLOR,0.6);
-			frame_decoration.graphics.drawRect(0, 0, container_width-1, container_height-1);
-			frame_decoration.graphics.endFill();
-			this.addChild(frame_decoration);
+			if(!container_border){
+				container_border = new Shape();
+				this.addChild(container_border);
+			}
+			container_border.graphics.clear();
+			container_border.graphics.lineStyle(1,DefaultStyle.BGR_SOLID_COLOR,0.6);
+			container_border.graphics.drawRect(0, 0, container_width-1, container_height-1);
+			container_border.graphics.endFill();	
 		}
 		
-		private function drawPrivacyNotice2(msg:String):void{
+		private function drawExplanationLayer(msg:String):void{
 			
-			// Remove previous 'frame' from background
-			if(frame != null && this.contains(frame)) this.removeChild(frame);
-			
-			var frame_width:uint = container_width * .85;
-			var frame_height:uint = container_height * .80;
-			frame = new Sprite();
+			if(!frame){
+				frame = new Sprite();
+				this.addChild(frame);
+			}
+			frame_width = container_width * .85;
+			frame_height = container_height * .80;
 			frame.graphics.clear();
 			frame.graphics.beginFill(DefaultStyle.BGR_SOLID_COLOR,0);
 			frame.graphics.drawRect(0,0,frame_width, frame_height);
@@ -150,86 +145,109 @@ package view
 			frame.x = container_width/2-(frame_width/2);
 			frame.y = container_height/2-(frame_height/2);
 			
-			var _textFormat:TextFormat = new TextFormat();
-			_textFormat.align = DefaultStyle.FONT_ALIGN;
-			_textFormat.font = DefaultStyle.FONT_FAMILY;
-			_textFormat.color= DefaultStyle.PRIVACY_FONT_COLOR;
-			//_textFormat.bold = true;
-			_textFormat.size = Math.floor(container_height * .06); //Make the text's height proportional to the frame height
-			
-			instrText = new TextField();
-			instrText.text = localizationBundle[msg] ? localizationBundle[msg] : '';
-			instrText.setTextFormat(_textFormat);
-			instrText.width = frame_width;
-			instrText.autoSize = TextFieldAutoSize.CENTER;
-			instrText.wordWrap = true;
-			instrText.x = frame_width/2 - instrText.width/2;
-			//instrText.y = container_height/2 - instrText.height/2;
-			instrText.setTextFormat(_textFormat);
-			
-			frame.addChild(instrText);
-			addChild(frame);
-			
-			if(!SharedData.getInstance().privacyManager.deviceAccessGranted){
-				if(layer != null && this.contains(layer)) this.removeChild(layer);
-				drawMessagePanel();
-				layer.x=(container_width-layer.width)/2;
-				layer.y=(container_height-layer.height)/2;
-				addChild(layer);
+			if(!frame_textfield){
+				frame_textformat = new TextFormat();
+				frame_textformat.align = DefaultStyle.FONT_ALIGN;
+				frame_textformat.font = DefaultStyle.FONT_FAMILY;
+				frame_textformat.color= DefaultStyle.PRIVACY_FONT_COLOR;
+				frame_textfield = new TextField();
+				frame_textfield.autoSize = TextFieldAutoSize.CENTER;
+				frame_textfield.wordWrap = true;
+				frame.addChild(frame_textfield);
 			}
-			
+			frame_textfield.text = msg;
+			frame_textformat.size = Math.floor(container_height * .06);
+			frame_textfield.setTextFormat(frame_textformat);
+			frame_textfield.width = frame_width;
+			frame_textfield.x = frame_width/2 - frame_textfield.width/2;
+
 			privacyManager.showPrivacySettings();		
 		}
 		
-		protected function drawMessagePanel():void{
-			layer=new Sprite();
-			layer.graphics.clear();
-			layer.graphics.beginFill(DefaultStyle.PRIVACY_RETRY_BGR_SOLID_COLOR,DefaultStyle.BGR_SOLID_ALPHA);
-			layer.graphics.lineStyle(DefaultStyle.PRIVACY_RETRY_LINE_WEIGHT,DefaultStyle.PRIVACY_RETRY_LINE_COLOR,DefaultStyle.PRIVACY_RETRY_LINE_ALPHA);
-			layer.graphics.drawRect(0,0,DefaultStyle.PRIVACY_RETRY_WIDTH,DefaultStyle.PRIVACY_RETRY_HEIGHT);
-			layer.graphics.endFill();
+		protected function drawErrorLayer(text:String, flags:uint=0x0003, iconClass:DisplayObject=null):void{
 			
-			var message:TextField=new TextField();
-			var messageFmt:TextFormat=new TextFormat();
+			if(!layer){
+				layer=new Sprite();
+				layer.graphics.clear();
+				layer.graphics.beginFill(DefaultStyle.PRIVACY_RETRY_BGR_SOLID_COLOR,DefaultStyle.BGR_SOLID_ALPHA);
+				layer.graphics.lineStyle(DefaultStyle.PRIVACY_RETRY_LINE_WEIGHT,DefaultStyle.PRIVACY_RETRY_LINE_COLOR,DefaultStyle.PRIVACY_RETRY_LINE_ALPHA);
+				layer.graphics.drawRect(0,0,DefaultStyle.PRIVACY_RETRY_WIDTH,DefaultStyle.PRIVACY_RETRY_HEIGHT);
+				layer.graphics.endFill();
+				
+				var layerShadow:DropShadowFilter = new DropShadowFilter();
+				layerShadow.color=DefaultStyle.PRIVACY_RETRY_SHADOW_COLOR;
+				layerShadow.blurX=DefaultStyle.PRIVACY_RETRY_SHADOW_BLURX;
+				layerShadow.blurY=DefaultStyle.PRIVACY_RETRY_SHADOW_BLURY;
+				layerShadow.alpha=DefaultStyle.PRIVACY_RETRY_SHADOW_ALPHA;
+				layerShadow.strength=DefaultStyle.PRIVACY_RETRY_SHADOW_STRENGTH;
+				layerShadow.distance=DefaultStyle.PRIVACY_RETRY_SHADOW_DISTANCE;
+				layerShadow.angle=DefaultStyle.PRIVACY_RETRY_SHADOW_ANGLE;
+				
+				layer.filters = [layerShadow];	
+			} 
+			if(!this.contains(layer)) this.addChild(layer);
+			layer.x=-1+(container_width-layer.width)/2;
+			layer.y=-1+(container_height-layer.height)/2;
 			
-			messageFmt.font=DefaultStyle.FONT_FAMILY;
-			messageFmt.size=DefaultStyle.FONT_SIZE;
-			messageFmt.color=DefaultStyle.PRIVACY_BUTTON_FONT_COLOR_UPSTATE;
-			message.defaultTextFormat=messageFmt;
+			//Add icon (if any)
+			if(layer_icon && layer.contains(layer_icon)) layer.removeChild(layer_icon);
+			if(iconClass){
+				layer_icon=null;
+				layer_icon=iconClass as VectorShape;
+				scaleDisplayObject(layer_icon, layer.width*0.3, layer.height*0.3);
+				iconClass.x = (-layer_icon.offsetX) + (layer.width - layer_icon.width) / 2;
+				iconClass.y = (-layer_icon.offsetY) + layer_padding;
+				layer.addChild(layer_icon);
+			}
 			
-			//message.text=localizationBundle['TEXT_PRIVACY_RIGHTS_EXPLAIN'];
-			message.width=layer.width;
-			message.y=(layer.height-message.height)/2;
-			message.wordWrap=true;
+			//Add message
+			if(!layer_textfield){
 			
-			message.text=localizationBundle['TEXT_MIC_NOT_FOUND'];
+				layer_textformat=new TextFormat();
+				layer_textformat.font=DefaultStyle.FONT_FAMILY;
+				layer_textformat.size=DefaultStyle.FONT_SIZE;
+				layer_textformat.align=DefaultStyle.FONT_ALIGN;
+				layer_textformat.color=DefaultStyle.PRIVACY_BUTTON_FONT_COLOR_UPSTATE;
+				
+				layer_textfield=new TextField();
+				layer_textfield.autoSize = TextFieldAutoSize.CENTER;
+				layer_textfield.defaultTextFormat=layer_textformat;
+				//Don't use the width property of the sprite, it might be wrong because adding text changes the size of the container to fit the text
+				layer_textfield.width=DefaultStyle.PRIVACY_RETRY_WIDTH;
+				layer_textfield.wordWrap=true;
+				
+				layer.addChild(layer_textfield);
+			}	
+			layer_textfield.text=text;
+			layer_textfield.y=layer.height*0.3+layer_padding;
+			layer_textfield.x=(DefaultStyle.PRIVACY_RETRY_WIDTH-layer_textfield.width)/2;
 			
-			acceptButton.label=localizationBundle['BUTTON_RETRY'];
-			acceptButton.addEventListener(MouseEvent.CLICK, retryClickHandler);
-			cancelButton.label=localizationBundle['BUTTON_CANCEL'];
-			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
-			
-			acceptButton.x=10;
-			acceptButton.y=layer.height * 0.9 - acceptButton.height/2;
-			cancelButton.x=acceptButton.x + acceptButton.width + 10;
-			cancelButton.y=layer.height * 0.9 - cancelButton.height/2;
-			
-			layer.addChild(message);
-			//layer.addChild(layerImg);
-			layer.addChild(acceptButton);
-			layer.addChild(cancelButton);
-			
-			var layerShadow:DropShadowFilter = new DropShadowFilter();
-			layerShadow.color=DefaultStyle.PRIVACY_RETRY_SHADOW_COLOR;
-			layerShadow.blurX=DefaultStyle.PRIVACY_RETRY_SHADOW_BLURX;
-			layerShadow.blurY=DefaultStyle.PRIVACY_RETRY_SHADOW_BLURY;
-			layerShadow.alpha=DefaultStyle.PRIVACY_RETRY_SHADOW_ALPHA;
-			layerShadow.strength=DefaultStyle.PRIVACY_RETRY_SHADOW_STRENGTH;
-			layerShadow.distance=DefaultStyle.PRIVACY_RETRY_SHADOW_DISTANCE;
-			layerShadow.angle=DefaultStyle.PRIVACY_RETRY_SHADOW_ANGLE;
-			
-			layer.filters = [layerShadow];
-			
+			//Add buttons
+			if(layer.contains(cancelButton)) layer.removeChild(cancelButton);
+			if(layer.contains(acceptButton)) layer.removeChild(acceptButton);
+			switch (flags){
+				case IGNORE:
+					layer.addChild(cancelButton);
+					cancelButton.x = (layer.width - cancelButton.width) - layer_padding;
+					cancelButton.y = (layer.height - cancelButton.height) - layer_padding;
+					break;
+				case RETRY:
+					layer.addChild(cancelButton);
+					acceptButton.x = (layer.width - acceptButton.width) - layer_padding;
+					acceptButton.y = (layer.height - acceptButton.height) - layer_padding;
+					break;
+				case RETRY | IGNORE:
+					layer.addChild(cancelButton);
+					layer.addChild(acceptButton);
+					cancelButton.x = (layer.width - cancelButton.width) - layer_padding;
+					
+					cancelButton.y = (layer.height - cancelButton.height) - layer_padding;
+					acceptButton.x = (cancelButton.x - acceptButton.width) - layer_padding;
+					acceptButton.y = (layer.height - acceptButton.height) - layer_padding;
+					break;
+				default:
+					break;
+			}
 		}
 		
 		protected function scaleDisplayObject(target:DisplayObject, scaled_width:uint, scaled_height:uint):void{
@@ -245,154 +263,6 @@ package view
 			target.scaleX=target.scaleY=scaleC;
 		}
 		
-		private function drawBackground(nWidth:uint, nHeight:uint, padding:uint=30, gap:uint=2):void
-		{
-			this.graphics.clear();
-			this.graphics.beginFill(0x000000, 0.75);
-			this.graphics.drawRect(0, 0, nWidth, nHeight);
-			this.graphics.endFill();
-
-			titleFmt.font="Arial";
-			titleFmt.color=0xffffff;
-			titleFmt.size=18;
-			titleFmt.bold=true;
-			title.defaultTextFormat=titleFmt;
-			title.text=localizationBundle['TITLE_PRIVACY_SETTINGS'] ? localizationBundle['TITLE_PRIVACY_SETTINGS'].toUpperCase() : '';
-			title.width=nWidth - 2 * padding;
-			title.x=padding;
-			title.y=padding;
-
-			container.graphics.clear();
-			container.graphics.lineStyle(1, 0xA7A7A7);
-			container.graphics.beginFill(0x000000, 0.0);
-			container.graphics.drawRect(0, 0, nWidth - (2 * padding), nHeight - (2 * padding) - title.textHeight - gap);
-			container.graphics.endFill();
-			container.x=padding;
-			container.y=padding + title.textHeight + gap;
-
-			containerBgImg.x=width - padding - containerBgImg.width; //rightmost, top
-			containerBgImg.y=0;
-
-			layer.graphics.clear();
-			layer.graphics.beginFill(0x000000, 0.0);
-			layer.graphics.drawRect(0, 0, container.width - (2 * padding), container.height - (2 * padding));
-			layer.graphics.endFill();
-			layer.x=layer.y=padding;
-
-			container.addChild(containerBgImg);
-			container.addChild(layer);
-
-			addChild(title);
-			addChild(container);
-		}
-
-		private function drawMicNotFound():void
-		{
-			layer.removeChildren();
-
-			var message:TextField=new TextField();
-			var messageFmt:TextFormat=new TextFormat();
-			
-			message.text=SharedData.getInstance().getText('TEXT_MIC_NOT_FOUND');
-
-			acceptButton.label=SharedData.getInstance().getText('BUTTON_RETRY');
-			acceptButton.addEventListener(MouseEvent.CLICK, retryClickHandler);
-			cancelButton.label=SharedData.getInstance().getText('BUTTON_CANCEL');
-			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
-
-			layer.addChild(message);
-			//layer.addChild(layerImg);
-			layer.addChild(acceptButton);
-			layer.addChild(cancelButton);
-		}
-
-		private function drawCamNotFound():void
-		{
-			layer.removeChildren();
-
-			var message:TextField=new TextField();
-			var messageFmt:TextFormat=new TextFormat();
-
-			message.text=SharedData.getInstance().getText('TEXT_CAMERA_NOT_FOUND');
-
-			acceptButton.label=SharedData.getInstance().getText('BUTTON_RETRY');
-			acceptButton.addEventListener(MouseEvent.CLICK, retryClickHandler);
-			cancelButton.label=SharedData.getInstance().getText('BUTTON_CANCEL');
-			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
-
-			layer.addChild(message);
-			//layer.addChild(layerImg);
-			layer.addChild(acceptButton);
-			layer.addChild(cancelButton);
-		}
-
-		private function drawAdmForbid():void
-		{
-			layer.removeChildren();
-
-			var message:TextField=new TextField();
-			var messageFmt:TextFormat=new TextFormat();
-
-			message.text=SharedData.getInstance().getText('TEXT_ADMINISTRATIVELY_DISABLED');
-
-			cancelButton.label=SharedData.getInstance().getText('BUTTON_CANCEL');
-			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
-
-			layer.addChild(message);
-			//layer.addChild(layerImg);
-			layer.addChild(cancelButton);
-			container.addChild(layer);
-		}
-
-		private function drawPrivacyNotice():void
-		{
-			layer.removeChildren();
-
-			var message:TextField=new TextField();
-			var messageFmt:TextFormat=new TextFormat();
-
-			messageFmt.font="Arial";
-			messageFmt.size=14;
-			messageFmt.color=0xffffff;
-			messageFmt.bold=false;
-			message.defaultTextFormat=messageFmt;
-
-			message.text=localizationBundle['TEXT_PRIVACY_RIGHTS_EXPLAIN'];
-			message.width=layer.width * 0.65;
-			message.y=(layer.height-message.height)/2;
-			message.wordWrap=true;
-			
-			var layerImg:MicImage = new MicImage();
-
-			var scaleY:Number=(layer.width * 0.3) / layerImg.height;
-			var scaleX:Number=(layer.width * 0.3) / layerImg.width;
-			var scaleC:Number=scaleX < scaleY ? scaleX : scaleY;
-
-			layerImg.width*=scaleC;
-			layerImg.height*=scaleC;	
-
-			//Shapes can have offsets in their local coordinate system. We use get getRect() against themselves to get the offset and then we scale it accordingly.
-			//Doing this we put the shape in the (0,0) point of its parent container.
-			var layerImgOffsetX:Number = (scaleC*layerImg.getRect(layerImg).x);
-			var layerImgOffsetY:Number = (scaleC*layerImg.getRect(layerImg).y);
-			
-			layerImg.x = -layerImgOffsetX + (layer.width - layerImg.width) - (layer.width * 0.3 - layerImg.width) / 2;
-			layerImg.y = -layerImgOffsetY + (layer.height - layerImg.height) / 2;
-
-			acceptButton.label=SharedData.getInstance().getText('BUTTON_SHOW_PRIVACY_SETTINGS');
-			acceptButton.addEventListener(MouseEvent.CLICK, acceptClickHandler);
-			acceptButton.y=layer.height * 0.9;
-			cancelButton.label=SharedData.getInstance().getText('BUTTON_CANCEL');
-			cancelButton.addEventListener(MouseEvent.CLICK, cancelClickHandler);
-			cancelButton.x=acceptButton.width + 20;
-			cancelButton.y=layer.height * 0.9;
-
-			layer.addChild(message);
-			layer.addChild(layerImg);
-			layer.addChild(acceptButton);
-			layer.addChild(cancelButton);
-		}
-		
 		/*
 		 * Methods to deal with user interaction
 		 */
@@ -405,36 +275,59 @@ package view
 		
 		private function deviceStateChangeHandler(event:PrivacyEvent):void
 		{
+			var errormsg:String;
+			var explainmsg:String;
+			var icon:VectorShape;
 			switch (event.state)
 			{
 				case PrivacyEvent.AV_HARDWARE_DISABLED:
 				{
-					drawAdmForbid();
+					errormsg=localizationBundle['DEVICES_ADM_DISABLED'];
+					drawErrorLayer(errormsg,IGNORE);
 					break;
 				}
 				case PrivacyEvent.NO_MICROPHONE_FOUND:
 				{
-					drawMicNotFound();
+					errormsg=localizationBundle['MIC_NOT_FOUND'] + '\n' + localizationBundle['TRY_AGAIN'];
+					icon=new VectorShape(DefaultStyle.ASSET_DEFAULT_WIDTH, DefaultStyle.ASSET_DEFAULT_HEIGHT,
+														 DefaultStyle.ASSET_MIC_VECCMD, DefaultStyle.ASSET_MIC_VECDATA,
+														 DefaultStyle.ASSET_GRADIENT_TYPE, DefaultStyle.ASSET_GRADIENT_COLORS, 
+														 DefaultStyle.ASSET_GRADIENT_ALPHAS, DefaultStyle.ASSET_GRADIENT_RATIOS, 
+														 DefaultStyle.ASSET_GRADIENT_ANGLE_DEC);
+					drawErrorLayer(errormsg, RETRY|IGNORE, icon);
 					break;
 				}
 				case PrivacyEvent.NO_CAMERA_FOUND:
 				{
-					drawCamNotFound();
+					errormsg=localizationBundle['WEBCAM_NOT_FOUND'] + '\n' + localizationBundle['TRY_AGAIN'];
+					icon=new VectorShape(DefaultStyle.ASSET_DEFAULT_WIDTH, DefaultStyle.ASSET_DEFAULT_HEIGHT,
+														 DefaultStyle.ASSET_WEBCAM_VECCMD, DefaultStyle.ASSET_WEBCAM_VECDATA,
+														 DefaultStyle.ASSET_GRADIENT_TYPE, DefaultStyle.ASSET_GRADIENT_COLORS, 
+														 DefaultStyle.ASSET_GRADIENT_ALPHAS, DefaultStyle.ASSET_GRADIENT_RATIOS, 
+														 DefaultStyle.ASSET_GRADIENT_ANGLE_DEC);
+					drawErrorLayer(errormsg, RETRY|IGNORE, icon);
 					break;
 				}
 				case PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED:
 				{
-					drawPrivacyNotice2("SELECT_ALLOW");
-					//drawPrivacyNotice();
-					//acceptClickHandler(null);
+					explainmsg=localizationBundle['SELECT_ALLOW'];
+					drawExplanationLayer(explainmsg);
+					
+					errormsg=localizationBundle['DEVICES_NOT_ACTIVATED'] + '\n' + localizationBundle['TRY_AGAIN'];
+					icon=new VectorShape(DefaultStyle.ASSET_DEFAULT_WIDTH, DefaultStyle.ASSET_DEFAULT_HEIGHT,
+										 DefaultStyle.ASSET_WARNING_VECCMD, DefaultStyle.ASSET_WARNING_VECDATA,
+										 DefaultStyle.ASSET_GRADIENT_TYPE, DefaultStyle.ASSET_LOCK_GRADIENT_COLORS, 
+										 DefaultStyle.ASSET_GRADIENT_ALPHAS, DefaultStyle.ASSET_GRADIENT_RATIOS, 
+										 DefaultStyle.ASSET_GRADIENT_ANGLE_DEC);
+					drawErrorLayer(errormsg, RETRY|IGNORE, icon);
 					break;
 				}
 				case PrivacyEvent.DEVICE_ACCESS_GRANTED:
 				{
-					drawPrivacyNotice2("NOW_CLICK_REMEMBER");
-					//acceptButton.label=ResourceManager.getInstance().getString('messages', 'BUTTON_RECORD');
-					//drawPrivacyNotice();
-					//acceptButton.label=SharedData.getInstance().getText('BUTTON_RECORD');
+					explainmsg=localizationBundle['NOW_CLICK_REMEMBER'];
+					drawExplanationLayer(explainmsg);
+
+					if(layer) this.removeChild(layer);
 					break;
 				}
 				default:
@@ -452,14 +345,6 @@ package view
 		private function cancelClickHandler(event:MouseEvent):void
 		{
 			dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_CANCEL));
-		}
-		
-		private function acceptClickHandler(event:MouseEvent):void
-		{
-			if (!SharedData.getInstance().privacyManager.deviceAccessGranted)
-				privacyManager.showPrivacySettings();
-			else
-				dispatchEvent(new PrivacyEvent(PrivacyEvent.CLOSE_ACCEPT));
 		}
 	}
 }
