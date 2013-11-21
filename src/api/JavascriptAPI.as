@@ -236,8 +236,8 @@ package api
 		}
 		
 		private function micActivityLevel():Number{
-			if (SharedData.getInstance().privacyManager.microphone)
-				return SharedData.getInstance().privacyManager.microphone.activityLevel;
+			if (SharedData.getInstance().userDeviceManager.microphone)
+				return SharedData.getInstance().userDeviceManager.microphone.activityLevel;
 			else
 				return -1;
 		}

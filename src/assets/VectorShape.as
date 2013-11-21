@@ -51,7 +51,7 @@ package assets
 			gradient_colors = colors ? colors : [0xffffff,0xf0f0f0];
 			gradient_alphas = alphas ? alphas : [1,1];
 			gradient_ratios = ratios ? ratios : [0,255];
-			gradient_angle = angle*Math.PI/180;
+			gradient_angle = 90*Math.PI/angle;
 					
 			matrix.createGradientBox(shape_width, shape_height, gradient_angle, 0, 0);
 			

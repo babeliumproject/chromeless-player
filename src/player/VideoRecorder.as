@@ -62,14 +62,14 @@ package player
 		private var _camera:Camera;
 		
 		private var _camVideo:Video;
-		private var _defaultCamWidth:Number=SharedData.getInstance().privacyManager.defaultCameraWidth;
-		private var _defaultCamHeight:Number=SharedData.getInstance().privacyManager.defaultCameraHeight;
+		private var _defaultCamWidth:Number=SharedData.getInstance().userDeviceManager.defaultCameraWidth;
+		private var _defaultCamHeight:Number=SharedData.getInstance().userDeviceManager.defaultCameraHeight;
 		private var _blackPixelsBetweenVideos:uint = 0;
 		private var _lastVideoHeight:Number=0;
 
 		private var _micCamEnabled:Boolean=false;
 
-		private var privacyRights:UserDeviceManager;
+		private var userDeviceManagerInstance:UserDeviceManager;
 
 		private var _countdown:Timer;
 		private var _countdownTxt:TextField;
@@ -105,6 +105,13 @@ package player
 			//Retrieve the instance of the event point manager for later use
 			eventPointManager = SharedData.getInstance().eventPointManager;
 			
+			//Retrieve the instance of the user device manager for later use
+			userDeviceManagerInstance = SharedData.getInstance().userDeviceManager;
+			
+			privacySprite = new PrivacyPanel(_lastWidth, _lastHeight);
+			privacySprite.addEventListener(PrivacyEvent.CLOSE_ACCEPT, privacyCloseAccept);
+			privacySprite.addEventListener(PrivacyEvent.CLOSE_CANCEL, privacyCloseCancel);
+			
 			//Set initial state to playback
 			_state=VideoRecorder.PLAY_STATE;
 			
@@ -113,12 +120,6 @@ package player
 			_camVideo=new Video();
 			_micImage=new MicImage();
 		
-			
-			/*
-			privacySprite=new PrivacyPanel(_lastWidth, _lastHeight);
-			privacyRights=new UserDeviceManager();
-			privacyRights.addEventListener(PrivacyEvent.DEVICE_STATE_CHANGE, onPrivacyStateChange);
-			*/
 			addChild(_micImage);
 			addChild(_camVideo);
 			addChild(_countdownTxt);
@@ -202,7 +203,7 @@ package player
 
 			
 			//Privacy rights overlay
-			//privacySprite.updateChildren(this.width, this.height);
+			privacySprite.updateDisplayList(nwidth, nheight);
 		}
 		
 		
@@ -559,14 +560,10 @@ package player
 
 		private function prepareDevices():void
 		{
-			var requestMicAndCam:Boolean = _state == RECORD_MICANDCAM_STATE ? true : false;
-			var privacyManager:UserDeviceManager=SharedData.getInstance().privacyManager;
+			userDeviceManagerInstance.useMicAndCamera = (_state == RECORD_MICANDCAM_STATE) ? true : false;
 			
-			privacyManager.useMicAndCamera = requestMicAndCam;
-			privacyManager.initDevices();
-			
-			var micReady:Boolean = privacyManager.microphoneReady();
-			var micAndCamReady:Boolean = micReady && privacyManager.cameraReady();
+			var micReady:Boolean = userDeviceManagerInstance.microphoneReady();
+			var micAndCamReady:Boolean = micReady && userDeviceManagerInstance.cameraReady();
 			
 			logger.info("Camera ready: {0}", [micAndCamReady]);
 			logger.info("Microphone ready: {0}", [micReady]);
@@ -578,9 +575,6 @@ package player
 			}
 			else
 			{
-				privacySprite = new PrivacyPanel(_lastWidth, _lastHeight);
-				privacySprite.addEventListener(PrivacyEvent.CLOSE_ACCEPT, privacyCloseAccept);
-				privacySprite.addEventListener(PrivacyEvent.CLOSE_CANCEL, privacyCloseCancel);
 				privacySprite.displaySettings();
 				
 				_topLayer.removeChildren();
@@ -589,14 +583,13 @@ package player
 		}
 
 		private function configureDevices():void
-		{	
-			var privacyManager:UserDeviceManager=SharedData.getInstance().privacyManager;
+		{
 			if (getState() == RECORD_MICANDCAM_STATE)
 			{
-				_camera=privacyManager.camera;
-				_camera.setMode(privacyManager.defaultCameraWidth, privacyManager.defaultCameraHeight, 15, false);
+				_camera=userDeviceManagerInstance.camera;
+				_camera.setMode(userDeviceManagerInstance.defaultCameraWidth, userDeviceManagerInstance.defaultCameraHeight, 15, false);
 			}
-			_mic=privacyManager.microphone;
+			_mic=userDeviceManagerInstance.microphone;
 			//_mic.setUseEchoSuppression(true);
 			_mic.setLoopBack(false); // Don't echo the microphone to local speakers
 			_mic.setSilenceLevel(0, 600000);
@@ -623,6 +616,7 @@ package player
 		
 		private function privacyCloseCancel(event:Event):void{
 			//Remove the privacy settings & the rest of layers from the top layer
+			logger.debug("Privacy close cancel event");
 			_topLayer.removeChildren();
 			abortRecording();
 			dispatchEvent(new RecordingEvent(RecordingEvent.ABORTED));
@@ -630,22 +624,20 @@ package player
 
 		private function privacyCloseAccept(event:Event):void
 		{
-			var privacyManager:UserDeviceManager=SharedData.getInstance().privacyManager;
-			
 			//Remove the privacy settings & the rest of layers from the top layer
 			_topLayer.removeChildren();
 
-			_micCamEnabled=privacyManager.deviceAccessGranted;
+			_micCamEnabled=userDeviceManagerInstance.deviceAccessGranted;
 			if (getState() == RECORD_MIC_STATE)
 			{
-				if (_micCamEnabled && privacyManager.microphoneFound)
+				if (_micCamEnabled && userDeviceManagerInstance.microphoneFound)
 					configureDevices();
 				else
 					dispatchEvent(new RecordingEvent(RecordingEvent.ABORTED));
 			}
 			if (getState() == RECORD_MICANDCAM_STATE)
 			{
-				if (_micCamEnabled && privacyManager.microphoneFound && privacyManager.cameraFound)
+				if (_micCamEnabled && userDeviceManagerInstance.microphoneFound && userDeviceManagerInstance.cameraFound)
 					configureDevices();
 				else
 					dispatchEvent(new RecordingEvent(RecordingEvent.ABORTED));

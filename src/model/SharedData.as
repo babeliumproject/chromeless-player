@@ -1,16 +1,13 @@
 package model
 {
 	import commands.EventPointManager;
-	
-	import media.RTMPMediaManager;
 	import media.UserDeviceManager;
 
 	public class SharedData
 	{
 		public static var instance:SharedData;
 		
-		public var privacyManager:UserDeviceManager;
-		//public var streamingManager:MediaManager;
+		public var userDeviceManager:UserDeviceManager;
 		public var eventPointManager:EventPointManager;
 		public var localizationBundle:Object;
 		
@@ -32,7 +29,7 @@ package model
 		 */		
 		public function SharedData()
 		{
-			privacyManager=new UserDeviceManager();
+			userDeviceManager=new UserDeviceManager();
 			//streamingManager=new MediaManager();
 			eventPointManager=new EventPointManager();
 			localizationBundle=new Object();

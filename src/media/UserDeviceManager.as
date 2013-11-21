@@ -11,9 +11,14 @@ package media
 	import flash.system.Capabilities;
 	import flash.system.Security;
 	import flash.system.SecurityPanel;
+	
+	import org.as3commons.logging.api.ILogger;
+	import org.as3commons.logging.api.getLogger;
 
 	public class UserDeviceManager extends EventDispatcher
 	{
+		protected static const logger:ILogger = getLogger(UserDeviceManager);
+		
 		private var _microphoneChanged:Boolean=false;
 		private var _microphoneSoundTestPassed:Boolean=false;
 		
@@ -51,9 +56,9 @@ package media
 		{
 			if (devicesAdministrativelyProhibited())
 			{
-				//dispatchEvent(new PrivacyEvent(PrivacyEvent.AV_HARDWARE_DISABLED));
 				dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.AV_HARDWARE_DISABLED));
-				trace("Error: User has no rigths to access devices.");
+				logger.debug("Error: User has no rigths to access devices.");
+				return;
 			}
 			else
 			{
@@ -70,20 +75,18 @@ package media
 					{
 						_microphoneChanged=true;
 						microphone=currentMic;
-						trace("Mic device changed.");
+						logger.debug("Mic device changed.");
 					}
 					if (microphone.muted)
 					{
 						deviceAccessGranted=false;
-						//showPrivacySettings();
 						microphone.addEventListener(StatusEvent.STATUS, microphonePrivacyStatus);
-						//dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED));
-						dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED));
+						logger.debug("Mic access not granted.");
 					}
 					else
 					{
 						deviceAccessGranted=true;
-						dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.DEVICE_ACCESS_GRANTED));
+						//dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.DEVICE_ACCESS_GRANTED));
 					}
 					
 					if (useMicAndCamera)
@@ -102,42 +105,44 @@ package media
 								_cameraChanged=true;
 								camera=currentCam;
 								
-								trace("Camera device changed.");
+								logger.debug("Camera device changed.");
 							}
 							if (camera.muted)
 							{
 								deviceAccessGranted=false;
-								//showPrivacySettings();
 								camera.addEventListener(StatusEvent.STATUS, cameraPrivacyStatus);
-								//dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED));
-								dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED));
+								logger.debug("Camera access not granted.");
 							}
 							else
 							{
 								deviceAccessGranted=true;
-								dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.DEVICE_ACCESS_GRANTED));
+								//dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.DEVICE_ACCESS_GRANTED));
 							}
 						}
 						else
 						{
 							cameraFound=false;
-							//dispatchEvent(new PrivacyEvent(PrivacyEvent.NO_CAMERA_FOUND));
+							deviceAccessGranted=false;
 							dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.NO_CAMERA_FOUND));
-							trace("Error: No camera was detected.");
+							logger.debug("Error: No camera was detected.");
+							return;
 						}
 					}
 				}
 				else
 				{
 					microphoneFound=false;
-					//dispatchEvent(new PrivacyEvent(PrivacyEvent.NO_MICROPHONE_FOUND));
+					deviceAccessGranted=false;
 					dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.NO_MICROPHONE_FOUND));
-					trace("Error: No mic was detected.");
+					logger.debug("Error: No mic was detected.");
+					return;
 				}
 			}
 			if (deviceAccessGranted)
 			{
 				devicesAllowed();
+			} else {
+				dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED));
 			}
 		}
 		
@@ -184,6 +189,7 @@ package media
 			if (event.code == "Microphone.Muted")
 			{
 				deviceAccessGranted=false;
+				logger.debug("Microphone privacy listener: not granted");
 				dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED));
 			}
 			if (event.code == "Microphone.Unmuted")
@@ -198,6 +204,7 @@ package media
 			if (event.code == "Camera.Muted")
 			{
 				deviceAccessGranted=false;
+				logger.debug("Camera privacy listener: not granted");
 				dispatchEvent(new PrivacyEvent(PrivacyEvent.DEVICE_STATE_CHANGE, PrivacyEvent.DEVICE_ACCESS_NOT_GRANTED));
 			}
 			if (event.code == "Camera.Unmuted")

@@ -70,6 +70,10 @@ package
 			
 			loadLocalizationBundle(language_file);
 			
+			
+		}
+		
+		private function loadMediaRecorder():void{
 			mediarecorder = new VideoRecorder();
 			//mediaplayer.addEventListener(VideoPlayerEvent.CREATION_COMPLETE, onVideoPlayerLoaded);
 			
@@ -102,6 +106,7 @@ package
 				messages[msg.@name] = msg.text();
 			}
 			SharedData.getInstance().localizationBundle = messages;
+			loadMediaRecorder();
 		}
 		
 	
