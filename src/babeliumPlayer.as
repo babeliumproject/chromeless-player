@@ -26,10 +26,11 @@ package
 	import mx.utils.ObjectUtil;
 	
 	import org.as3commons.logging.api.LOGGER_FACTORY;
+	import org.as3commons.logging.setup.HierarchicalSetup;
 	import org.as3commons.logging.setup.LevelTargetSetup;
 	import org.as3commons.logging.setup.LogSetupLevel;
-	import org.as3commons.logging.setup.target.FirebugTarget;
-	import org.as3commons.logging.setup.target.TraceTarget;
+	import org.as3commons.logging.setup.log4j.Log4JStyleSetup;
+	import org.as3commons.logging.setup.log4j.log4jPropertiesToSetup;
 	
 	import player.VideoRecorder;
 	
@@ -39,7 +40,7 @@ package
 	public class babeliumPlayer extends Sprite
 	{
 		//LOGGER_FACTORY.setup = new LevelTargetSetup( new TraceTarget, LogSetupLevel.DEBUG );
-		LOGGER_FACTORY.setup = new LevelTargetSetup(new FirebugTarget, LogSetupLevel.DEBUG );
+		//LOGGER_FACTORY.setup = new LevelTargetSetup(new FirebugTarget, LogSetupLevel.DEBUG );
 		
 		private var video_id:String=null;
 		private var video_url:String=null;
@@ -68,9 +69,19 @@ package
 			video_id=this.root.loaderInfo.parameters.video_id;
 			language_file=this.root.loaderInfo.parameters.language_file;
 			
+			loadLoggingConfig('http://development/chromeless_player/logging.properties');
 			loadLocalizationBundle(language_file);
-			
-			
+		}
+		
+		private function loadLoggingConfig(url:String):void{
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, parseLoggingConfig);
+			loader.addEventListener(IOErrorEvent.IO_ERROR, urlNotAvailable);
+			loader.load(new URLRequest(url));
+		}
+		
+		private function parseLoggingConfig(event:Event):void{
+			LOGGER_FACTORY.setup = log4jPropertiesToSetup(event.target.data);
 		}
 		
 		private function loadMediaRecorder():void{
