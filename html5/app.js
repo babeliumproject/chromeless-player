@@ -14,7 +14,6 @@ recorderApp.factory('jsonFactory', function($http){
 recorderApp.controller('RecorderController', [ '$scope' , 'jsonFactory', function($scope, jsonFactory) {
 	$scope.stream = null;
 	$scope.recording = false;
-	$scope.micActivityBarStyle = {"width": "0%"};
 	$scope.encoder = null;
 	$scope.ws = null;
 	$scope.input = null;
@@ -31,13 +30,15 @@ recorderApp.controller('RecorderController', [ '$scope' , 'jsonFactory', functio
 	$scope.audioContext = window.AudioCtx ? new window.AudioCtx() : null; 
 	$scope.recAudioContext = window.AudioCtx ? new window.AudioCtx() : null;
 	$scope.recAudioAnalyser;
-	$scope.micLevelCanvas = document.getElementById('micLevel');
-	$scope.micLevelCanvasCtx = $scope.micLevelCanvas.getContext('2d');
 	$scope.CANVAS_HEIGHT;
 	$scope.CANVAS_WIDTH;	
 
 	$scope.roles = [];
 	$scope.chosenRole = '';
+	$scope.previous_time=0;
+
+	$scope.cuepoint_target_recorded = 'exercise';
+	$scope.cuepoint_target_live = 'response';
 
 	//Dirty hack to pass all 0's to the encoder when recording something that's not from our chosen role
 	$scope.silencedMicInputBufferData = new Float32Array(4096);
@@ -60,47 +61,24 @@ recorderApp.controller('RecorderController', [ '$scope' , 'jsonFactory', functio
 		}
 		console.log($scope.roles); 
 	});
-	/*
-	$scope.trackElements = document.querySelectorAll("track");
-	// for each track element
-	for (var i = 0; i < $scope.trackElements.length; i++) {
-		$scope.trackElements[i].addEventListener("load", function() {
-			if(this.default){
-				$scope.textTrack = this.track; // "this" is an HTMLTrackElement, not a TextTrack object
-				$scope.textTrackKind = this.kind;
-				$scope.textTrackMode = $scope.textTrack.mode; // e.g. "disabled", "hidden" or "showing"
-				for (var j=0; j<$scope.textTrack.cues.length; j++){
-					var cue = $scope.textTrack.cues[j];
-					cue.onenter = function(e){
-						//e.target, e.srcElement, e.currentTarget, e.timeStamp, e.type
-						console.log(e.timeStamp);
-						//console.log("Cue enter");
-					};
-					cue.onexit = function(e){
-						console.log("Cue exit");
-					};
-				}	
-				$scope.textTrack.oncuechange = function(){
-					for(var k=0; k<this.activeCues.length; k++){
-						var acue = this.activeCues[k];
-						var fragment = acue.getCueAsHTML();
-						var node = document.createElement('div');
-						node.appendChild(fragment);
-						if(node.childNodes[0].getAttribute('title') === $scope.chosenRole){
-							//console.log(acue);
-							console.log(node.childNodes[0].innerHTML);
-							$scope.videoElement.muted=true;
-							$scope.yourTurn=false;
-						} else {
-							$scope.videoElement.muted=false;
-							$scope.yourTurn=true;
-						}
-					}		
-				};
-			}
-		});
+
+	$scope.appendRecControls = function(){
+		$(".rec-inner").remove();
+		$(".mejs-inner").append($("<div></div>").addClass("rec-inner"));
+		$(".rec-inner").append($("<div></div>").addClass("rec-controls"));		
+		$(".rec-controls").append($("<div></div>").addClass("mic-activity-rail"));
+
+		//Take into account the padding to calculate the height
+		var d = $scope.videoElementHandle.height,
+			pt = parseInt($(".mic-activity-rail").css("padding-top")),
+			pb = parseInt($(".mic-activity-rail").css("padding-bottom")),
+			ch = parseInt($(".mejs-controls").css("height")),
+			rheight = d-pt-pb-ch,
+			theight = rheight-pt-pb;
+		$(".mic-activity-rail").css("height",rheight+"px");
+		$(".mic-activity-rail").append($("<span></span>").addClass("mic-activity-total").css("height",theight+"px"));
+		$(".mic-activity-rail .mic-activity-total").append($("<span></span>").addClass("mic-activity-current"));
 	}
-	*/
 
 	$scope.drawMicLevel = function(){
 		var WIDTH = $scope.micLevelCanvas.width,
@@ -115,10 +93,9 @@ recorderApp.controller('RecorderController', [ '$scope' , 'jsonFactory', functio
 		if ($scope.recording)
 			return;
 
-		$scope.cue_points = [{'startTime':2090, 'endTime':8390}, {'startTime':12590,'endTime':16790}, {'startTime':23440,'endTime':26340}];
-
-		$scope.prepareCuepoints($scope.chosenRole);
-		$scope.draw_cue_points();
+		//Rewind the video to the start
+		$scope.videoElementHandle.pause();
+		$scope.videoElementHandle.setCurrentTime(0);
 
 		$scope.encoder = new Worker('encoder.js');
 		$scope.encoder.onmessage = function(e) {
@@ -126,81 +103,131 @@ recorderApp.controller('RecorderController', [ '$scope' , 'jsonFactory', functio
 			if($scope.ws.readyState == 1){
 			    $scope.ws.send(e.data.buf);
 			    if (e.data.cmd == 'end') {
-				$scope.ws.close();
-				$scope.ws = null;
-				$scope.encoder.terminate();
-				$scope.encoder = null;
+					$scope.ws.close();
+					$scope.ws = null;
+					$scope.encoder.terminate();
+					$scope.encoder = null;
 			    }
 			}
 		};
 
-		$scope.ws = new WebSocket("ws://" + window.location.host + ":8080/ws/audio?h=U1McDtQfkp&d=32&f=48000");
+		//Init user devices
+		navigator.getMedia = ( navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
+		navigator.getMedia({ video: false, audio: true }, $scope.gotUserMedia, $scope.userMediaFailed);
+	};
+
+	$scope.prepare_cuepoints = function(chosenRole){
+		$scope.role_cuepoints;
+		for(i=0; i<$scope.interaction_data.length; i++){
+			if($scope.interaction_data[i].voiceId == chosenRole){
+				$scope.role_cuepoints = $scope.interaction_data[i].cuepoints;
+				break;
+			}
+		}
+		if($scope.role_cuepoints){
+			$scope.cuepoint_gaps = [];
+			for (j=0; j<$scope.role_cuepoints.length; j++){
+				//Get all the interactions that affect the exercise
+				if($scope.role_cuepoints[j].hasOwnProperty('gapend')){
+					$scope.cuepoint_gaps.push({'startTime':$scope.role_cuepoints[j].time, 'endTime':$scope.role_cuepoints[j].gapend});
+				}
+			}
+			//console.log($scope.cuepoint_gaps);
+		}
+	}
+
+	$scope.initWebsocket = function(){
+		$scope.wsport = 8080;
+		$scope.wsapp = 'ws/audio';
+		
+		$devicesamplerate = $scope.in_samplerate;
+		
+		maxduration = $scope.chosenRole ? $scope.videoElement.duration : 300;
+
+		$scope.recordinghash = Math.random().toString(36).substr(2);
+
+		$scope.ws = new WebSocket("ws://" + window.location.host + ":" + $scope.wsport + "/" + $scope.wsapp +
+									"/" + $scope.recordinghash + "/" + $devicesamplerate + "/" + maxduration);
 		$scope.ws.onopen = function() {
-			navigator.getMedia = ( navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
-			navigator.getMedia({ video: false, audio: true }, $scope.gotUserMedia, $scope.userMediaFailed);
+			console.log("WebSocket opened");
+			$scope.onWebsocketReady();
 		};
 		$scope.ws.onclose = function() {
 			console.log("WebSocket closed");
-			//The webSocket went down unexpectedly, close the connection
-			if($scope.ws) $scope.stopRecording();
+			//The webSocket went down unexpectedly, abort the recording
+			//TODO
 		};
 		$scope.ws.onerror = function(err) {
 			console.log("Error connecting to WebSocket");
 		};
-	};
 
-	$scope.prepareCuepoints = function(chosenRole){
-		var roleCuepoints;
-		for(i=0; i<$scope.interaction_data.length; i++){
-			if($scope.interaction_data[i].voiceId == chosenRole){
-				roleCuepoints = $scope.interaction_data[i].cuepoints;
-				break;
-			}
-		}
-		if(roleCuepoints){
-			for (j=0; j<roleCuepoints.length; ++j){
-				//Get all the interactions that affect the exercise
-				if(roleCuepoints[j].hasOwnProperty('exercise') && roleCuepoints[j].exercise.hasOwnProperty('gapstart')){
-					console.log(roleCuepoints[j].time + " " + roleCuepoints[j].exercise.gapstart);
-				}
-			}
-		}
 	}
 
-	$scope.userMediaFailed = function(code) {
-		console.log('grabbing microphone failed: ' + code);
+	$scope.userMediaFailed = function(error) {
+		console.log('Getting access to microphone failed: ' + error.message);
+		//If webSocket is open close it
+		if($scope.ws.readyState  == 1){
+			$scope.ws.close();
+			$scope.ws = null;
+			$scope.encoder.terminate();
+			$scope.encoder = null;
+		}
+		//Stop cue_point triggering timer
+		clearInterval($scope.trigger_cuepoints);
+
+		//Clear the cuepoint gaps
+		$(".mejs-cuepoint").remove();
 	};
 
 	$scope.gotUserMedia = function(localMediaStream) {
-		console.log('success grabbing microphone');
+		console.log('Successfully got acccess to the microphone');
+		$scope.stream = localMediaStream;
+		$scope.initWebsocket();
+	}
 
+	$scope.onWebsocketReady = function(){
 		if($scope.audioContext){
+			$scope.prepare_cuepoints($scope.chosenRole);
+			$scope.draw_cuepoints();
+
+			$scope.appendRecControls();
+			$scope.micActivityHeight = parseInt($(".mic-activity-total").css("height"));
+
 			$scope.recording = true;
 			$scope.recordButtonStyle = '';
 
-			$scope.stream = localMediaStream;
+			//$scope.stream = localMediaStream;
 			$scope.input = $scope.audioContext.createMediaStreamSource($scope.stream);
 			
 			//Function createJavaScriptNode renamed in favor of createScriptProcessor
-			//$scope.node = $scope.input.context.createJavaScriptNode(4096, 1, 1);
 			$scope.node = $scope.input.context.createScriptProcessor(4096, 1, 1);
 
 			//Firefox and Chrome's samplerate differ: 48000Hz, 44100Hz
 			$scope.in_samplerate = $scope.input.context.sampleRate;
-			console.log('Input sampleRate: ' + $scope.in_samplerate);
-
-			console.log('initializing encoder with samplerate = ' + $scope.out_samplerate + ' and bitrate = ' + $scope.bitrate);
+			console.log('Device sampleRate: ' + $scope.in_samplerate);
+			console.log('Initializing encoder with sampleRate = ' + $scope.out_samplerate + ' and bitrate = ' + $scope.bitrate);
+			
 			$scope.encoder.postMessage({ cmd: 'init', config: { in_samplerate: $scope.in_samplerate, out_samplerate: $scope.out_samplerate, bitrate: $scope.bitrate } });
 
-			$scope.micLevelCanvas.height = $scope.videoElement.height;
-			$scope.micLevelCanvas.width = 20;
+			//$scope.micLevelCanvas.height = $scope.videoElement.height;
+			//$scope.micLevelCanvas.width = 20;
 
-			$scope.drawMicLevel();
+			//$scope.drawMicLevel();
+
+			$scope.videoElementHandle.play();
+
+			//<video> 'timeupdate' event fires at different intervals: Firefox every video frame, Webkit 250ms, Opera 200ms
+			setInterval($scope.trigger_cuepoints, 100);
+
+			$scope.videoElement.addEventListener('ended', $scope.onMediaEnded);
 	
 			$scope.node.onaudioprocess = function(e) {
 				if (!$scope.recording)
 					return;
+
 				var channelLeft = e.inputBuffer.getChannelData(0);
+				if($scope.recordingMuted)
+					channelLeft = $scope.silencedMicInputBufferData;
 
 				$scope.maxVal = 0;
 				//Get mic activity level
@@ -209,24 +236,51 @@ recorderApp.controller('RecorderController', [ '$scope' , 'jsonFactory', functio
 						$scope.maxVal = channelLeft[i];
 					}
 				}
+				
+				//Draw the current mic activity level
+				var marginpercent = 1-$scope.maxVal,
+					activityheight = $scope.micActivityHeight * $scope.maxVal,
+					marginheight = $scope.micActivityHeight * marginpercent;
+				$(".mic-activity-current").css("margin-top",marginheight+"px").css("height",activityheight+"px");
+
 				$scope.encoder.postMessage({ cmd: 'encode', buf: channelLeft });
 			};
 
 			$scope.input.connect($scope.node);
 			$scope.node.connect($scope.audioContext.destination);
 
+			//Refresh the angularjs bindings
 			$scope.$apply();
 		} else {
 			console.log("Your browser does not support Web Audio API. You can't grab the mic's raw data.");
 		}
 	};
 
+	$scope.onMediaEnded = function(e){
+		//If role chosen, end recording
+		console.log("Video playback ended");
+		$scope.videoElement.removeEventListener('ended',$scope.onMediaEnded);
+		clearInterval($scope.trigger_cuepoints);
+		$scope.stopRecording();
+
+
+
+		//Called the stopRecording function without explicit user interaction, call $apply() to update the bindings
+		$scope.$apply();
+	}
+
+	$scope.setupSimultaneousPlayback = function(){
+		$scope.videoElement.addEventListener("play",$scope.simultaneusPlay);
+		$scope.videoElement.addEventListener("pause", $scope.simultaneusPause);
+		$scope.videoElement.addEventListener("ended", $scope.simultaneusEnded);
+	}
+
 	$scope.stopRecording = function() {
 		if (!$scope.recording) {
 			return;
 		}
 		$scope.recordButtonStyle = "red-btn";
-		console.log('stop recording');
+		console.log('Stop recording');
 		$scope.stream.stop();
 		$scope.recording = false;
 		$scope.encoder.postMessage({ cmd: 'finish' });
@@ -234,48 +288,103 @@ recorderApp.controller('RecorderController', [ '$scope' , 'jsonFactory', functio
 		$scope.input.disconnect();
 		$scope.node.disconnect();
 		$scope.input = $scope.node = null;
-		cancelAnimationFrame($scope.micAnimation);
+		//cancelAnimationFrame($scope.micAnimation);
 	};
 
-	$scope.draw_cue_points = function () {
-        	var i, time_total_rail, percent, self = this;
-        	if ($scope.cue_points && !$scope.cue_points_installed) {
+	$scope.draw_cuepoints = function () {
+        	var i, time_total_rail, percent;
+        	if ($scope.cuepoint_gaps) {
             		if ($scope.videoElement.duration <= 0 || isNaN($scope.videoElement.duration)) 
-				return setTimeout(function () { $scope.draw_cue_points() }, 200), void 0;
-            		$scope.cue_points_installed = !0;
+				return setTimeout(function () { $scope.draw_cuepoints() }, 200), void 0;
+            		//$scope.cue_points_installed = !0;
             		var margin = 1,
                 	    maxTime = $scope.videoElement.duration - margin,
 			    time_total_rail = $scope.videoElementHandle.controls.find(".mejs-time-total"),
 			    pxpersec = time_total_rail.width()/$scope.videoElement.duration;
-			    console.log(pxpersec);
-            		for ( i = 0; i < $scope.cue_points.length; i++) {
-                		if ($scope.cue_points[i].startTime/1000 > maxTime)
-					$scope.cue_points[i].startTime = maxTime*1000;
-				
-				var cue_width = Math.floor(($scope.cue_points[i].endTime-$scope.cue_points[i].startTime)/1000*pxpersec) + 'px'; 
-				console.log(cue_width); 
+			    //console.log(pxpersec);
 
-                		percent = ($scope.cue_points[i].startTime / 1000) / $scope.videoElement.duration, 
+			$(".mejs-cuepoint").remove();
+
+            		for ( i = 0; i < $scope.cuepoint_gaps.length; i++) {
+                		if ($scope.cuepoint_gaps[i].startTime > maxTime)
+					$scope.cuepoint_gaps[i].startTime = maxTime;
+				
+				var cue_width = Math.floor(($scope.cuepoint_gaps[i].endTime-$scope.cuepoint_gaps[i].startTime)*pxpersec) + 'px'; 
+				//console.log(cue_width); 
+
+                		percent = ($scope.cuepoint_gaps[i].startTime) / $scope.videoElement.duration, 
 				percent = Math.floor(1e4 * percent) / 100 + "%", 
 				time_total_rail.append($("<div></div>").addClass("mejs-cuepoint").css("position", "absolute").css("left", percent).css("width", cue_width));
             		}
         	}
 	};
 
-	$scope.triggerCuePoints = function () {
-        	if ($scope.cue_points)
-                        if (!$scope.videoElement.paused) {
-                            var i, cue_point_time, triggered_cue_points, currentTime = $scope.videoElement.currentTime,
-                                timeDelta = currentTime - $scope.previous_time;
-                            if (timeDelta > 0 && 2 > timeDelta) {
-                                for (triggered_cue_points = [], i = 0; i < $scope.cue_points.length; i++)
-                                    if (cue_point_time = $scope.cue_points[i].time, $scope.previous_time < cue_point_time && currentTime >= cue_point_time) 
-					triggered_cue_points.push($scope.cue_points[i]);
-                                if (triggered_cue_points.length > 0 && null !== $scope.cue_point_handler) $scope.cue_point_handler(triggered_cue_points)
+	$scope.trigger_cuepoints = function () {
+        	if ($scope.role_cuepoints){
+            	if (!$scope.videoElement.paused) {
+                    var i, 
+                        cue_point_time, 
+                        triggered_cue_points, 
+                        currentTime = $scope.videoElement.currentTime,
+                        timeDelta = currentTime - $scope.previous_time;
+                    if (timeDelta > 0 && 2 > timeDelta) {
+                        for (triggered_cue_points = [], i = 0; i < $scope.role_cuepoints.length; i++){
+                        	cue_point_time = $scope.role_cuepoints[i].time;
+                            if (($scope.previous_time < cue_point_time || (cue_point_time == 0 && $scope.previous_time <= cue_point_time)) && currentTime >= cue_point_time){
+                               	triggered_cue_points.push($scope.role_cuepoints[i]);
                             }
-                            $scope.previous_time = currentTime
-                        }
+						}
+                        if (triggered_cue_points.length > 0 && null !== $scope.cue_point_handler){
+                           	//console.log(triggered_cue_points);
+							$scope.cue_point_handler(triggered_cue_points);
+						}
+                    }
+                    $scope.previous_time = currentTime;
+                }
+			}
         };
+
+	$scope.cue_point_handler = function(triggered_cuepoints){
+		var i,j,k;
+		for(i=0; i<triggered_cuepoints.length; i++){
+			var cuepoint = triggered_cuepoints[i];
+			for(j=0; j<cuepoint.actions.length; j++){
+				var parameters = cuepoint.actions[j].hasOwnProperty('parameters') ? cuepoint.actions[j].parameters : null;
+				if(cuepoint.actions[j].target == $scope.cuepoint_target_recorded){
+					switch(cuepoint.actions[j].function){
+						case 'mute':
+							$scope.videoElementHandle.setMuted(true);
+							break;
+						case 'unmute':
+							$scope.videoElementHandle.setMuted(false);
+							break;
+						case 'volumechange':
+							$scope.videoElementHandle.setVolume(parameters);
+							break;
+						default:
+							break;
+					}
+				}
+				if(cuepoint.actions[j].target == $scope.cuepoint_target_live){
+					switch(cuepoint.actions[j].function){
+						case 'mute':
+							//Send the encoder a buffer of 'silence' until told otherwise
+							$scope.recordingMuted = !0;
+							break;
+						case 'unmute':
+							$scope.recordingMuted = !1;
+							break;
+						case 'volumechange':
+							//TODO Apply a GainNode with the given value before passing the raw input to the  encoding worker
+							break;
+						default:
+							break;
+					}
+				}
+				//console.log("[" + cuepoint.time + "]" + cuepoint.actions[j].target + ":" + cuepoint.actions[j].function + ":" + cuepoint.actions[j].parameters);
+			}	
+		}
+	}
 
 }]);
 

@@ -24,7 +24,7 @@ $audiouploadinstance->setEncodingChecks(false);
 //$server->run();
 
 $app = new App($domain, $port);
-$app->route('/ws/audio', $audiouploadinstance);
+$app->route('/ws/audio/{recordingid}/{inputhz}/{maxduration}', $audiouploadinstance);
 
 //TODO
 //$app->route('/livestreaming', $livestreaminginstance);
