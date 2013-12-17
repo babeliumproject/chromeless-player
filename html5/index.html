@@ -3,13 +3,14 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Speech to Server</title>
-		<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.min.css" rel="stylesheet">
-		<link href="//netdna.bootstrapcdn.com/font-awesome/3.0.2/css/font-awesome.css" rel="stylesheet">
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
 		<link rel="stylesheet" href="js/mediaelement/mediaelementplayer.css">
-		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.5/angular.min.js"></script>
 		<script src="app.js"></script>
 		<style type="text/css"> 
 			.red-btn { color: #D00000; }
+
 			.mejs-controls div .mejs-cuepoint{
 				background: rgba(255,255,0,0.5);
 				height: 100%;
@@ -41,7 +42,35 @@
 				background: -o-linear-gradient(left, rgba(50,50,50,0.7), rgba(0,0,0,0.7)); 
 				background: -ms-linear-gradient(left, rgba(50,50,50,0.7), rgba(0,0,0,0.7)); 	
 				background: linear-gradient(rgba(50,50,50,0.7), rgba(0,0,0,0.7));
+			}
+
+			.rec-controls .rec-button button {
+				cursor: default;
+				display: block;
+				font-size: 0;
+				line-height: 0;
+				text-decoration: none;
+				margin: 7px 5px;
+				padding: 0;
+				position: absolute;
+				height: 16px;
+				width: 16px;
+				border: 0;
+				background: transparent url(mic.svg) no-repeat;
+			}
+
+			.no-svg .rec-controls .rec-button button { 
+				background-image: url(mic.png);
+			}
+
+			/* :focus for accessibility */
+			.rec-controls .rec-button button:focus {
+				outline: solid 1px yellow;
 			}			
+
+			.rec-controls .rec-mic button {
+				background-position: 0 0;
+			}
 
 			.rec-controls .mic-activity-rail{
 				padding: 5px;
@@ -84,32 +113,49 @@
 		</style>
 	</head>
 	<body ng-controller="RecorderController">
-			<div class="row">
-				<div class="playerWrapper">	
-				<video preload="metadata" controls="" height=360 width=640 id="videoPlayer" poster="sintel_fragment.jpg">
-					<source src="sintel_fragment.webm" type="video/webm">
-					<track kind="subtitles" src="sintel_en.vtt" type="text/vtt" srclang="en" label="English" default=""></track>
-					<track kind="subtitles" src="sintel_es.vtt" type="text/vtt" srclang="es" label="Español" default=""></track>
-				    </video>
-	</div>
-			</div>
-			<div class="row">
-				<div class="offset3 span3 text-center">
-					<label>Choose role: <select ng-model="chosenRole" ng-options="r for r in roles"></select></label>
+		<div class="container">
+				<h3>Exercise title</h3>
+				<div class="row">
+					<div id="playerWrapper" class="center-block">	
+						<video preload="metadata" controls="" height=360 width=640 id="videoPlayer" poster="sintel_fragment.jpg">
+							<source src="sintel_fragment.webm" type="video/webm">
+							<track kind="subtitles" src="sintel_en.vtt" type="text/vtt" srclang="en" label="English" default=""></track>
+							<track kind="subtitles" src="sintel_es.vtt" type="text/vtt" srclang="es" label="Español" default=""></track>
+					    </video>
+					</div>
 				</div>
-				<div class="offset3 span3 text-center">
-					<button class="btn" ng-click="startRecording()" ng-disabled="recording"><i class="icon-circle" ng-class="recordButtonStyle"></i>&nbsp;Start recording</button>
+				<div class="row">
+					<form class="form-horizontal" role="form">
+						<div class="form-group">
+							<label for="roleselect" class="col-md-2 control-label">Choose role:</label>
+							<div class="col-md-3">
+								<select id="roleselect" class="form-control" ng-disabled="recording" ng-model="activeRole" ng-options="r for r in roles"></select>
+							</div>
+						</div>
+					</form>
 				</div>
-				<div class="span3 text-center">
-					<button class="btn" ng-click="stopRecording()" ng-disabled="!recording"><i class="icon-stop"></i>&nbsp;Stop recording</button>
+				<div class="row">
+					<div class="col-md-2">
+						<button class="btn btn-default" ng-click="onRecButtonClick()"><span ng-class="recordButtonStyle"></span>&nbsp;{{recordButtonLabel}}</button>
+					</div>
+					<!--
+						<button class="btn btn-default" ng-click="stopRecording()" ng-disabled="!recording"><span class="glyphicon glyphicon-stop"></span>&nbsp;Stop recording</button>
+					-->
+					<div class="col-md-2">
+						<button class="btn btn-default" ng-click="playRecording()" ng-disabled="recording" ng-show="!recording && recordinghash">Play Recording</button>
+					</div>
+					<div class="col-md-2">
+						<button class="btn btn-default" ng-click="playExercise()" ng-disabled="recording" ng-show="!recording && recordinghash">Play Exercise</button>
+					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="span12 text-center" ng-show="recording">
-					<span class="label label-important">Recording...</label>
+				<div class="row">
+					<div class="span12 text-center" ng-show="recording">
+						<label class="label label-important">Recording...</label>
+					</div>
 				</div>
-			</div>
+		</div>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 		<script src="js/mediaelement/mediaelement-and-player.js"></script>
 	</body>
 </html>

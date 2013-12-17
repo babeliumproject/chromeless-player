@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- The icon can be used freely in both personal and commercial projects with no attribution required, but always appreciated. 
+You may NOT sub-license, resell, rent, redistribute or otherwise transfer the icon without express written permission from iconmonstr.com -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:svg="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xml:space="preserve"
+     version="1.1"
+     x="0px"
+     y="0px"
+     width="16"
+     height="16"
+     viewBox="0 0 16 16"
+     id="additional-controls">
+   <defs id="fill-definitions">
+      <linearGradient id="gradient1" x1="50%" y1="0%" x2="50%" y2="100%">
+         <stop stop-color="#ffffff" stop-opacity="1" offset="0%"/>
+         <stop stop-color="#c8c8c8" stop-opacity="1" offset="100%"/>
+      </linearGradient>
+   </defs>
+   <g id="microphone">
+      <path id="microphone-4-icon"
+            d="M 5.6875101,7.2915 V 3.31264 c 0,-1.27714 1.03535,-2.31249 2.31249,-2.31249 1.27718,0 2.3124899,1.03535 2.3124899,2.31249 V 7.2915 c 0,1.27721 -1.0353099,2.31255 -2.3124899,2.31255 C 6.7228601,9.60405 5.68751,8.56871 5.68751,7.2915 z M 11.33271,6.10124 V 7.2915 c 0,1.83771 -1.4950599,3.33277 -3.3327099,3.33277 -1.83765,0 -3.3327101,-1.49506 -3.3327101,-3.33277 V 6.10124 H 3.3070001 V 7.2915 c 0,2.32725 1.7027799,4.26386 3.92784,4.63036 v 1.4048 c -1.30084,0.0949 -2.26149,0.42733 -2.26149,0.823 0,0.46955 1.35295,0.85019 3.0219299,0.85019 1.6689301,0 3.02188,-0.38064 3.02188,-0.85019 0,-0.39465 -0.95598,-0.72649 -2.2520399,-0.82228 V 11.92186 C 10.99022,11.55536 12.693,9.61875 12.693,7.2915 V 6.10124 h -1.36029 z"
+            fill="url(#gradient1)" />
+   </g>
+</svg>
