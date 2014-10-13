@@ -9,7 +9,10 @@ package
 	import flash.display.GraphicsPathCommand;
 	import flash.display.SpreadMethod;
 	import flash.display.Sprite;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
 	import flash.events.Event;
+	import flash.events.EventPhase;
 	import flash.events.IOErrorEvent;
 	import flash.events.KeyboardEvent;
 	import flash.geom.Matrix;
@@ -31,13 +34,15 @@ package
 	import org.as3commons.logging.setup.LogSetupLevel;
 	import org.as3commons.logging.setup.log4j.Log4JStyleSetup;
 	import org.as3commons.logging.setup.log4j.log4jPropertiesToSetup;
+	import org.osmf.layout.ScaleMode;
 	
 	import player.VideoRecorder;
 	
-	import utils.Helpers;
+	import util.Helpers;
+	import util.StageProxy;
 	
 	[SWF(width="640", height="480")]
-	public class babeliumPlayer extends Sprite
+	public class BabeliumPlayer extends Sprite
 	{
 		//LOGGER_FACTORY.setup = new LevelTargetSetup( new TraceTarget, LogSetupLevel.DEBUG );
 		//LOGGER_FACTORY.setup = new LevelTargetSetup(new FirebugTarget, LogSetupLevel.DEBUG );
@@ -48,12 +53,58 @@ package
 		
 		private var mediarecorder:VideoRecorder;
 		
-		private var appWidth:uint;
-		private var appHeight:uint;
+		private var appWidth:Number;
+		private var appHeight:Number;
 		
-		public function babeliumPlayer()
+		private var stageProxy:StageProxy;
+		
+		public function BabeliumPlayer()
 		{
-			this.root.loaderInfo.addEventListener(Event.COMPLETE, complete);
+			loaderInfo.addEventListener(Event.INIT, onLoaderInfoInit);
+		}
+		
+		protected function onLoaderInfoInit(event:Event):void{
+			stageProxy = new StageProxy(this);
+			stageProxy.align=StageAlign.TOP_LEFT;
+			stageProxy.scaleMode=StageScaleMode.NO_SCALE;
+			init();
+		}
+		
+		private function init():void{
+			stageProxy.addEventListener(Event.RESIZE, onResize);
+		}
+		
+		private function afterInit():void{
+			//super.afterInit();
+			this.onResize();
+			this.startApplication();
+			this.addCallbacks();
+		}
+		
+		public function startApplication():void{
+			//Check the state of the video player
+			//if the user provided some videoid try to play it,
+			//otherwise show empty player
+		}
+		
+		/**
+		 * Add the functions available through the API
+		 **/
+		public function addCallbacks():void{
+			//Add the
+		}
+		
+		public function onResize(event:Event = null):void{
+			if (event && event.eventPhase != EventPhase.AT_TARGET)
+			{
+				return;
+			}
+			this.resizeApplication(stageProxy.stageWidth, stageProxy.stageHeight);
+		}
+		
+		public function resizeApplication(width:Number, height:Number):void{
+			this.appWidth = width;
+			this.appHeight = height;
 		}
 		
 		private function complete(event:Event):void{

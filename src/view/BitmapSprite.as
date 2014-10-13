@@ -8,7 +8,7 @@ package view
 	import flash.events.IOErrorEvent;
 	import flash.net.URLRequest;
 	
-	import utils.Helpers;
+	import util.Helpers;
 
 	public class BitmapSprite extends Sprite
 	{

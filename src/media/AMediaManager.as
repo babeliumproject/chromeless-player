@@ -19,7 +19,7 @@ package media
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getLogger;
 	
-	import utils.Helpers;
+	import util.Helpers;
 
 	public class AMediaManager extends EventDispatcher implements INetConnectionCallbacks, INetStreamCallbacks
 	{

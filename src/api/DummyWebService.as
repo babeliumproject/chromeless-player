@@ -1,6 +1,6 @@
 package api
 {
-	import utils.Helpers;
+	import util.Helpers;
 
 	/**
 	 * Fake the service until we develop the actual API. Requests should be accompanied of an access_token the
