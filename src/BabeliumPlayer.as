@@ -5,21 +5,27 @@ package
 	
 	import events.VideoPlayerEvent;
 	
+	import flash.display.DisplayObject;
 	import flash.display.GradientType;
 	import flash.display.GraphicsPathCommand;
+	import flash.display.LoaderInfo;
 	import flash.display.SpreadMethod;
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
 	import flash.events.EventPhase;
+	import flash.events.IEventDispatcher;
 	import flash.events.IOErrorEvent;
 	import flash.events.KeyboardEvent;
+	import flash.external.ExternalInterface;
 	import flash.geom.Matrix;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import flash.system.Security;
 	import flash.system.System;
+	
+	import flashx.textLayout.formats.WhiteSpaceCollapse;
 	
 	import media.RTMPMediaManager;
 	
@@ -41,7 +47,6 @@ package
 	import util.Helpers;
 	import util.StageProxy;
 	
-	[SWF(width="640", height="480")]
 	public class BabeliumPlayer extends Sprite
 	{
 		//LOGGER_FACTORY.setup = new LevelTargetSetup( new TraceTarget, LogSetupLevel.DEBUG );
@@ -53,8 +58,8 @@ package
 		
 		private var mediarecorder:VideoRecorder;
 		
-		private var appWidth:Number;
-		private var appHeight:Number;
+		private var appWidth:Number=640;;
+		private var appHeight:Number=480;
 		
 		private var stageProxy:StageProxy;
 		
@@ -72,6 +77,7 @@ package
 		
 		private function init():void{
 			stageProxy.addEventListener(Event.RESIZE, onResize);
+			afterInit();
 		}
 		
 		private function afterInit():void{
@@ -85,6 +91,7 @@ package
 			//Check the state of the video player
 			//if the user provided some videoid try to play it,
 			//otherwise show empty player
+			complete(null);
 		}
 		
 		/**
@@ -95,32 +102,49 @@ package
 		}
 		
 		public function onResize(event:Event = null):void{
+			//Only resize if the event is in the target node
 			if (event && event.eventPhase != EventPhase.AT_TARGET)
 			{
+				trace("Stageproxy called resize");
 				return;
 			}
-			this.resizeApplication(stageProxy.stageWidth, stageProxy.stageHeight);
+			var embeddedInSwf:Boolean=false;
+			
+			if(stageProxy.stageAvailable && !embeddedInSwf){
+				trace("Stage dimensions: "+stageProxy.stageWidth+"x"+stageProxy.stageHeight);
+				//this.resizeApplication(stageProxy.stageWidth, stageProxy.stageHeight);
+			}
+			else
+				updateDisplayList();
 		}
 		
 		public function resizeApplication(width:Number, height:Number):void{
 			this.appWidth = width;
 			this.appHeight = height;
+			updateDisplayList();
 		}
 		
-		private function complete(event:Event):void{
-			
-			stage.color=0x00ff00;
-			
+		/** update all children element sizes **/
+		private function updateDisplayList():void{
+			var i:int = numChildren - 1;
+			while(i >= 0){
+				var child:DisplayObject = getChildAt(i);
+				//update child size
+				i--;
+			}
+		}
+		
+		private function complete(event:Event):void{	
 			Security.allowDomain("*");
 			
-			appWidth=this.root.loaderInfo.width;
-			appHeight=this.root.loaderInfo.height;
+			//appWidth=this.root.loaderInfo.width;
+			//appHeight=this.root.loaderInfo.height;
 			
 			video_url=this.root.loaderInfo.parameters.video_url;
 			video_id=this.root.loaderInfo.parameters.video_id;
 			language_file=this.root.loaderInfo.parameters.language_file;
 			
-			loadLoggingConfig('http://development/chromeless_player/logging.properties');
+			loadLoggingConfig('/chromeless_player/logging.properties');
 			loadLocalizationBundle(language_file);
 		}
 		
@@ -184,6 +208,7 @@ package
 			if (video_id != null){
 				mediarecorder.loadVideoById(video_id);
 			}
+			trace("Everything loaded, Stage dimensions: "+stage.stageWidth+"x"+stage.stageHeight);
 		}
 		
 		private function set onUpdateVPHeight(height:int):void

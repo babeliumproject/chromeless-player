@@ -25,7 +25,7 @@ package util
 		{
 			try
 			{
-				return this.element.stage.hasOwnProperty(name);
+				return this.container.stage.hasOwnProperty(name);
 			}
 			catch (e:SecurityError)
 			{
@@ -74,13 +74,18 @@ package util
 		{
 			try
 			{
-				this.element.stage.addEventListener(type, listener, useCapture, priority, useWeakReference);
+				this.container.stage.addEventListener(type, listener, useCapture, priority, useWeakReference);
 			}
 			catch (e:SecurityError)
 			{
 				stageAllowedValue=false;
 			}
 		}
+		
+		public function get stageAvailable():Boolean
+		{
+			return stageAllowedValue && this.container && this.container.stage;
+		} 
 		
 		/**
 		 * If the stage uses ScaleMode.NO_SCALE is used the Stage will dispatch a resize event and update 
