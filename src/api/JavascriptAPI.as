@@ -74,6 +74,8 @@ package api
 			addCB("loadStreamByUrl", loadVideoByUrl);
 			addCB("loadStreamById", loadVideoById);
 			
+			addCB("loadSideBySideStreamsByUrl", loadSideBySideVideosByUrl);
+			
 			//Events
 			addCB("addEventListener",addEventListener);
 			addCB("removeEventListener",removeEventListener);
@@ -263,6 +265,10 @@ package api
 		
 		private function loadVideoById(id:String):void{
 			VP.loadVideoById(id);
+		}
+		
+		private function loadSideBySideVideosByUrl(leftUrl:String, rightUrl:String):void{
+			VP.loadSideBySideVideosByUrl(leftUrl, rightUrl);
 		}
 		
 		private function abortRecording():void{

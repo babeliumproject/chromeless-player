@@ -539,6 +539,7 @@ package player
 				case PLAY_SIDEBYSIDE_STATE:
 					//_micActivityBar.visible=false;
 					//dispatchEvent(new ControlDisplayEvent(ControlDisplayEvent.DISPLAY_MIC_ACTIVITY,false));
+					scaleCamVideo(_lastWidth,_lastHeight,false);
 					this.updateDisplayList(0,0);
 					break;
 
@@ -726,6 +727,8 @@ package player
 				startCountdown();
 			}
 			if(_videoReady && _sideBySideReady){
+				setState(PLAY_SIDEBYSIDE_STATE);
+				splitVideoPanel();
 				logger.debug("NetStreamClient {0} is ready", [event.streamId]);
 				_camVideo.attachNetStream(_sbsNsc.netStream);
 				_camVideo.visible=true;
@@ -926,7 +929,49 @@ package player
 		}
 		
 		public function loadSideBySideVideosByUrl(leftStreamUrl:String, rightStreamUrl:String, eventData:Object = null):void{
-			//TODO
+			logger.debug("Load simultaneous urls was called: {0}, {1}", [leftStreamUrl, rightStreamUrl]);
+			
+			if (leftStreamUrl != '' && rightStreamUrl != '')
+			{
+				_videoUrl=leftStreamUrl;
+				super.loadVideo();
+				_secondStreamSource=rightStreamUrl;
+				loadSecondaryVideo();
+			}
+			else
+			{
+				logger.info("Empty video urls provided");
+			}
+		}
+		
+		protected function loadSecondaryVideo():void{
+			_sideBySideReady=false;
+			if (_secondStreamSource != '')
+			{
+				if(streamReady(_sbsNsc)){
+					_sbsNsc.netStream.close();
+					_sbsNsc.netStream.dispose();
+					_sbsNsc.removeEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+				}
+				
+				_sbsNsc=null;
+				var rtmpFragment:Array=Helpers.parseRTMPUrl(_secondStreamSource);
+				if(rtmpFragment){
+					_sbsNsc=new ARTMPManager("sidebysideStream");
+					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_ERROR, onNetStreamUnready);
+					_sbsNsc.setup(rtmpFragment[1], rtmpFragment[2]);
+				} else {
+					_sbsNsc=new AVideoManager("sidebysideStream");
+					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_READY, onNetStreamReady);
+					_sbsNsc.addEventListener(NetStreamClientEvent.NETSTREAM_ERROR, onNetStreamUnready);
+					_sbsNsc.setup(_secondStreamSource);
+				}
+			}
+			else
+			{
+				logger.error("Empty video URL provided");
+			}
 		}
 		
 		
